@@ -72,10 +72,34 @@ model Crop {
   expectedEndYear  Int?
   status           String   @default("Active")
   notes            String?
+  expenses         Expense[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
   zameen Zameen @relation(fields: [zameenId], references: [id], onDelete: Cascade)
 
   @@index([zameenId])
+}
+
+model Expense {
+  id              String   @id @default(cuid())
+  cropId          String
+  expenseCategory String
+  description     String
+  amount          Float
+  expenseDate     DateTime
+  expenseMonth    Int
+  expenseYear     Int
+  paymentStatus   String?
+  paymentMethod   String?
+  notes           String?
+  receiptImageUrl String?
+  sharedGroupId   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  crop Crop @relation(fields: [cropId], references: [id], onDelete: Cascade)
+
+  @@index([cropId])
+  @@index([expenseMonth, expenseYear])
 }
