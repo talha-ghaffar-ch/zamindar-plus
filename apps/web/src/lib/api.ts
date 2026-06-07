@@ -107,6 +107,37 @@ export type CreateCropPayload = {
   notes?: string;
 };
 
+export type Expense = {
+  id: string;
+  cropId: string;
+  expenseCategory: string;
+  description: string;
+  amount: number;
+  expenseDate: string;
+  expenseMonth: number;
+  expenseYear: number;
+  paymentStatus: string | null;
+  paymentMethod: string | null;
+  notes: string | null;
+  receiptImageUrl: string | null;
+  sharedGroupId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateExpensePayload = {
+  cropId: string;
+  expenseCategory: string;
+  description: string;
+  amount: number;
+  expenseDate: string;
+  expenseMonth: number;
+  expenseYear: number;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  notes?: string;
+};
+
 async function requestJson<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
@@ -167,6 +198,17 @@ export function getCrops() {
 
 export function createCrop(payload: CreateCropPayload) {
   return requestJson<Crop>('/crops', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getExpenses() {
+  return requestJson<Expense[]>('/expenses');
+}
+
+export function createExpense(payload: CreateExpensePayload) {
+  return requestJson<Expense>('/expenses', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
