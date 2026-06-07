@@ -17,20 +17,43 @@ export type User = {
   updatedAt: string;
 };
 
-async function getJson<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`);
+export type CreateUserPayload = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  password: string;
+  farmerType?: string;
+};
+
+async function requestJson<T>(path: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+  });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
+    const errorText = await response.text();
+    throw new Error(errorText || `API request failed: ${response.status}`);
   }
 
   return response.json() as Promise<T>;
 }
 
 export function getReportSummary() {
-  return getJson<ReportSummary>('/reports/summary');
+  return requestJson<ReportSummary>('/reports/summary');
 }
 
 export function getUsers() {
-  return getJson<User[]>('/users');
+  return requestJson<User[]>('/users');
+}
+
+export function createUser(payload: CreateUserPayload) {
+  return requestJson<User>('/users', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
