@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { ZameenModule } from './zameen/zameen.module';
 import { CropsModule } from './crops/crops.module';
+import { ExpensesModule } from './expenses/expenses.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CropsModule } from './crops/crops.module';
     ProfilesModule,
     ZameenModule,
     CropsModule,
+    ExpensesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
