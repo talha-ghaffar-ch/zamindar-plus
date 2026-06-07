@@ -9,13 +9,30 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   firstName    String
   lastName     String
-  email        String   @unique
+  email        String    @unique
   phone        String?
   passwordHash String
   farmerType   String?
+  profiles     Profile[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Profile {
+  id           String   @id @default(cuid())
+  userId       String
+  profileName  String
+  city         String?
+  chakAreaName String?
+  villageName  String?
+  notes        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
