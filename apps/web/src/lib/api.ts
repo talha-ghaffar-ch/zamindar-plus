@@ -47,6 +47,35 @@ export type CreateUserPayload = {
   farmerType?: string;
 };
 
+export type Zameen = {
+  id: string;
+  profileId: string;
+  murabbaNumber: string | null;
+  zameenName: string;
+  killaNumber: string | null;
+  khasraNumber: string | null;
+  totalAreaValue: number;
+  totalAreaUnit: string;
+  totalAreaSqft: number;
+  ownershipType: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateZameenPayload = {
+  profileId: string;
+  murabbaNumber?: string;
+  zameenName: string;
+  killaNumber?: string;
+  khasraNumber?: string;
+  totalAreaValue: number;
+  totalAreaUnit: string;
+  totalAreaSqft: number;
+  ownershipType?: string;
+  notes?: string;
+};
+
 async function requestJson<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
@@ -85,6 +114,17 @@ export function getProfiles() {
 
 export function createProfile(payload: CreateProfilePayload) {
   return requestJson<Profile>('/profiles', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getZameen() {
+  return requestJson<Zameen[]>('/zameen');
+}
+
+export function createZameen(payload: CreateZameenPayload) {
+  return requestJson<Zameen>('/zameen', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
