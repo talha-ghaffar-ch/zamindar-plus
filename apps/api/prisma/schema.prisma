@@ -50,10 +50,32 @@ model Zameen {
   totalAreaSqft  Float
   ownershipType  String?
   notes          String?
+  crops          Crop[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@index([profileId])
+}
+
+model Crop {
+  id               String   @id @default(cuid())
+  zameenId         String
+  cropName         String
+  cropAreaValue    Float
+  cropAreaUnit     String
+  cropAreaSqft     Float
+  startMonth       Int?
+  startYear        Int?
+  expectedEndMonth Int?
+  expectedEndYear  Int?
+  status           String   @default("Active")
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  zameen Zameen @relation(fields: [zameenId], references: [id], onDelete: Cascade)
+
+  @@index([zameenId])
 }
