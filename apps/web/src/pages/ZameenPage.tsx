@@ -1,4 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react';
+import { AREA_UNITS, toSquareFeet, type AreaUnit } from '@zamindar/shared';
+
 import {
   createZameen,
   getProfiles,
@@ -6,8 +8,6 @@ import {
   type Profile,
   type Zameen,
 } from '../lib/api';
-
-const areaUnits = ['Acre', 'Killa', 'Murabba', 'Kanal', 'Marla', 'Square feet'];
 
 const initialForm = {
   profileId: '',
@@ -20,19 +20,6 @@ const initialForm = {
   ownershipType: 'Own land',
   notes: '',
 };
-
-function toSquareFeet(value: number, unit: string) {
-  const multipliers: Record<string, number> = {
-    Acre: 43560,
-    Killa: 43560,
-    Murabba: 1089000,
-    Kanal: 5445,
-    Marla: 272.25,
-    'Square feet': 1,
-  };
-
-  return value * (multipliers[unit] ?? 1);
-}
 
 export function ZameenPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -89,7 +76,7 @@ export function ZameenPage() {
     setIsSaving(true);
 
     const areaValue = Number(form.totalAreaValue);
-    const totalAreaSqft = toSquareFeet(areaValue, form.totalAreaUnit);
+    const totalAreaSqft = toSquareFeet(areaValue, form.totalAreaUnit as AreaUnit);
 
     try {
       await createZameen({
@@ -185,7 +172,7 @@ export function ZameenPage() {
               value={form.totalAreaUnit}
               onChange={(event) => setForm({ ...form, totalAreaUnit: event.target.value })}
             >
-              {areaUnits.map((unit) => (
+              {AREA_UNITS.map((unit) => (
                 <option key={unit}>{unit}</option>
               ))}
             </select>

@@ -1,4 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react';
+import { AREA_UNITS, toSquareFeet, type AreaUnit } from '@zamindar/shared';
+
 import {
   createCrop,
   getCrops,
@@ -7,7 +9,6 @@ import {
   type Zameen,
 } from '../lib/api';
 
-const areaUnits = ['Acre', 'Killa', 'Kanal', 'Marla', 'Square feet'];
 const cropNames = ['Wheat', 'Rice', 'Sugarcane', 'Cotton', 'Maize', 'Fodder'];
 
 const initialForm = {
@@ -20,18 +21,6 @@ const initialForm = {
   status: 'Active',
   notes: '',
 };
-
-function toSquareFeet(value: number, unit: string) {
-  const multipliers: Record<string, number> = {
-    Acre: 43560,
-    Killa: 43560,
-    Kanal: 5445,
-    Marla: 272.25,
-    'Square feet': 1,
-  };
-
-  return value * (multipliers[unit] ?? 1);
-}
 
 export function CropsPage() {
   const [zameen, setZameen] = useState<Zameen[]>([]);
@@ -88,8 +77,7 @@ export function CropsPage() {
     setIsSaving(true);
 
     const areaValue = Number(form.cropAreaValue);
-    const cropAreaSqft = toSquareFeet(areaValue, form.cropAreaUnit);
-
+    const cropAreaSqft = toSquareFeet(areaValue, form.cropAreaUnit as AreaUnit);
     try {
       await createCrop({
         zameenId: form.zameenId,
@@ -177,7 +165,7 @@ export function CropsPage() {
               value={form.cropAreaUnit}
               onChange={(event) => setForm({ ...form, cropAreaUnit: event.target.value })}
             >
-              {areaUnits.map((unit) => (
+              {AREA_UNITS.filter((unit) => unit !== 'Murabba').map((unit) => (
                 <option key={unit}>{unit}</option>
               ))}
             </select>
