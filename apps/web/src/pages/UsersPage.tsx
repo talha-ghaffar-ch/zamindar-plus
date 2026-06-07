@@ -22,9 +22,23 @@ export function UsersPage() {
   }
 
   useEffect(() => {
-    void loadUsers().catch((loadError) => {
-      setError(loadError instanceof Error ? loadError.message : 'Failed to load users.');
-    });
+    let isActive = true;
+
+    getUsers()
+      .then((usersData) => {
+        if (isActive) {
+          setUsers(usersData);
+        }
+      })
+      .catch((loadError) => {
+        if (isActive) {
+          setError(loadError instanceof Error ? loadError.message : 'Failed to load users.');
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

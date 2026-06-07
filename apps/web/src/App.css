@@ -189,13 +189,19 @@ th {
 }
 
 .form-grid input,
-.form-grid select {
+.form-grid select,
+.form-grid textarea {
   min-height: 42px;
   border: 1px solid #ded8ca;
   border-radius: 7px;
   padding: 8px 10px;
   background: #ffffff;
   color: #1e2b25;
+}
+
+.form-grid textarea {
+  min-height: 84px;
+  resize: vertical;
 }
 
 .primary-button {

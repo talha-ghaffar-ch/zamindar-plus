@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import './App.css';
 import { DashboardPage } from './pages/DashboardPage';
+import { ProfilesPage } from './pages/ProfilesPage';
 import { UsersPage } from './pages/UsersPage';
 
 const navItems = [
@@ -44,6 +45,8 @@ function App() {
           <DashboardPage />
         ) : activePage === 'Users' ? (
           <UsersPage />
+        ) : activePage === 'Profiles' ? (
+          <ProfilesPage />
         ) : (
           <section className="page-header">
             <div>

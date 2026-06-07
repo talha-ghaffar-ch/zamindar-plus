@@ -17,6 +17,27 @@ export type User = {
   updatedAt: string;
 };
 
+export type Profile = {
+  id: string;
+  userId: string;
+  profileName: string;
+  city: string | null;
+  chakAreaName: string | null;
+  villageName: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateProfilePayload = {
+  userId: string;
+  profileName: string;
+  city?: string;
+  chakAreaName?: string;
+  villageName?: string;
+  notes?: string;
+};
+
 export type CreateUserPayload = {
   firstName: string;
   lastName: string;
@@ -53,6 +74,17 @@ export function getUsers() {
 
 export function createUser(payload: CreateUserPayload) {
   return requestJson<User>('/users', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getProfiles() {
+  return requestJson<Profile[]>('/profiles');
+}
+
+export function createProfile(payload: CreateProfilePayload) {
+  return requestJson<Profile>('/profiles', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
