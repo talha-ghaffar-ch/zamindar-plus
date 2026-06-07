@@ -1,0 +1,28 @@
+{
+  "name": "zamindar-plus",
+  "version": "1.0.0",
+  "description": "Farm ledger platform for managing zameen, crops, expenses, income, reports, and farm records.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:web": "npm run dev -w apps/web",
+    "build:web": "npm run build -w apps/web",
+    "lint:web": "npm run lint -w apps/web"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/talha-ghaffar-ch/zamindar-plus.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/talha-ghaffar-ch/zamindar-plus/issues"
+  },
+  "homepage": "https://github.com/talha-ghaffar-ch/zamindar-plus#readme",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
