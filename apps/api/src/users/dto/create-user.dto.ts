@@ -18,7 +18,7 @@ export class CreateUserDto {
 
   @IsString()
   @MinLength(8)
-  passwordHash: string;
+  password: string;
 
   @IsOptional()
   @IsString()
