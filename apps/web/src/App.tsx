@@ -1,122 +1,93 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState } from 'react';
+import './App.css';
+import { getReportSummary, getUsers, type ReportSummary, type User } from './lib/api';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [summary, setSummary] = useState<ReportSummary | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    async function loadDashboard() {
+      try {
+        const [summaryData, usersData] = await Promise.all([
+          getReportSummary(),
+          getUsers(),
+        ]);
+
+        setSummary(summaryData);
+        setUsers(usersData);
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : 'Failed to load dashboard.');
+      }
+    }
+
+    void loadDashboard();
+  }, []);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
+    <main className="app">
+      <section className="hero">
         <div>
-          <h1>Get started</h1>
+          <p className="eyebrow">Zamindar Plus</p>
+          <h1>Farm ledger dashboard</h1>
           <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+            Track zameen, crops, expenses, income, and profit from one shared backend.
           </p>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
       </section>
 
-      <div className="ticks"></div>
+      {error ? <p className="error">{error}</p> : null}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
+      <section className="summary-grid">
+        <article>
+          <span>Total Expense</span>
+          <strong>{summary ? `Rs ${summary.totalExpense.toLocaleString()}` : 'Loading...'}</strong>
+        </article>
+        <article>
+          <span>Total Income</span>
+          <strong>{summary ? `Rs ${summary.totalIncome.toLocaleString()}` : 'Loading...'}</strong>
+        </article>
+        <article>
+          <span>Net Profit</span>
+          <strong>{summary ? `Rs ${summary.netProfit.toLocaleString()}` : 'Loading...'}</strong>
+        </article>
       </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <section className="panel">
+        <div className="panel-header">
+          <div>
+            <p className="eyebrow">Users</p>
+            <h2>Registered farmers</h2>
+          </div>
+          <span>{users.length} total</span>
+        </div>
+
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Farmer Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id}>
+                  <td>{user.firstName} {user.lastName}</td>
+                  <td>{user.email}</td>
+                  <td>{user.phone ?? '-'}</td>
+                  <td>{user.farmerType ?? '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  );
 }
 
-export default App
+export default App;
