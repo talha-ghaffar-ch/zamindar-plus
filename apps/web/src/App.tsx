@@ -4,6 +4,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { ProfilesPage } from './pages/ProfilesPage';
 import { UsersPage } from './pages/UsersPage';
 import { ZameenPage } from './pages/ZameenPage';
+import { CropsPage } from './pages/CropsPage';
 
 const navItems = [
   'Dashboard',
@@ -50,6 +51,8 @@ function App() {
           <ProfilesPage />
         ) : activePage === 'Zameen' ? (
           <ZameenPage />
+        ) : activePage === 'Crops' ? (
+          <CropsPage />
         ) : (
           <section className="page-header">
             <div>

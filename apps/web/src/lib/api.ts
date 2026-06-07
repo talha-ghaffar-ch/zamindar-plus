@@ -76,6 +76,37 @@ export type CreateZameenPayload = {
   notes?: string;
 };
 
+export type Crop = {
+  id: string;
+  zameenId: string;
+  cropName: string;
+  cropAreaValue: number;
+  cropAreaUnit: string;
+  cropAreaSqft: number;
+  startMonth: number | null;
+  startYear: number | null;
+  expectedEndMonth: number | null;
+  expectedEndYear: number | null;
+  status: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateCropPayload = {
+  zameenId: string;
+  cropName: string;
+  cropAreaValue: number;
+  cropAreaUnit: string;
+  cropAreaSqft: number;
+  startMonth?: number;
+  startYear?: number;
+  expectedEndMonth?: number;
+  expectedEndYear?: number;
+  status?: string;
+  notes?: string;
+};
+
 async function requestJson<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
@@ -125,6 +156,17 @@ export function getZameen() {
 
 export function createZameen(payload: CreateZameenPayload) {
   return requestJson<Zameen>('/zameen', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getCrops() {
+  return requestJson<Crop[]>('/crops');
+}
+
+export function createCrop(payload: CreateCropPayload) {
+  return requestJson<Crop>('/crops', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
