@@ -138,6 +138,39 @@ export type CreateExpensePayload = {
   notes?: string;
 };
 
+export type Income = {
+  id: string;
+  cropId: string;
+  incomeType: string;
+  quantity: number | null;
+  quantityUnit: string | null;
+  rate: number | null;
+  totalAmount: number;
+  incomeDate: string;
+  incomeMonth: number;
+  incomeYear: number;
+  paymentStatus: string | null;
+  buyerName: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateIncomePayload = {
+  cropId: string;
+  incomeType: string;
+  quantity?: number;
+  quantityUnit?: string;
+  rate?: number;
+  totalAmount: number;
+  incomeDate: string;
+  incomeMonth: number;
+  incomeYear: number;
+  paymentStatus?: string;
+  buyerName?: string;
+  notes?: string;
+};
+
 async function requestJson<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
@@ -209,6 +242,17 @@ export function getExpenses() {
 
 export function createExpense(payload: CreateExpensePayload) {
   return requestJson<Expense>('/expenses', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getIncome() {
+  return requestJson<Income[]>('/income');
+}
+
+export function createIncome(payload: CreateIncomePayload) {
+  return requestJson<Income>('/income', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
