@@ -1,92 +1,57 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import './App.css';
-import { getReportSummary, getUsers, type ReportSummary, type User } from './lib/api';
+import { DashboardPage } from './pages/DashboardPage';
+
+const navItems = [
+  'Dashboard',
+  'Users',
+  'Profiles',
+  'Zameen',
+  'Crops',
+  'Expenses',
+  'Income',
+  'Reports',
+];
 
 function App() {
-  const [summary, setSummary] = useState<ReportSummary | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    async function loadDashboard() {
-      try {
-        const [summaryData, usersData] = await Promise.all([
-          getReportSummary(),
-          getUsers(),
-        ]);
-
-        setSummary(summaryData);
-        setUsers(usersData);
-      } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : 'Failed to load dashboard.');
-      }
-    }
-
-    void loadDashboard();
-  }, []);
+  const [activePage, setActivePage] = useState('Dashboard');
 
   return (
-    <main className="app">
-      <section className="hero">
-        <div>
-          <p className="eyebrow">Zamindar Plus</p>
-          <h1>Farm ledger dashboard</h1>
-          <p>
-            Track zameen, crops, expenses, income, and profit from one shared backend.
-          </p>
-        </div>
-      </section>
-
-      {error ? <p className="error">{error}</p> : null}
-
-      <section className="summary-grid">
-        <article>
-          <span>Total Expense</span>
-          <strong>{summary ? `Rs ${summary.totalExpense.toLocaleString()}` : 'Loading...'}</strong>
-        </article>
-        <article>
-          <span>Total Income</span>
-          <strong>{summary ? `Rs ${summary.totalIncome.toLocaleString()}` : 'Loading...'}</strong>
-        </article>
-        <article>
-          <span>Net Profit</span>
-          <strong>{summary ? `Rs ${summary.netProfit.toLocaleString()}` : 'Loading...'}</strong>
-        </article>
-      </section>
-
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <p className="eyebrow">Users</p>
-            <h2>Registered farmers</h2>
-          </div>
-          <span>{users.length} total</span>
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand">
+          <strong>Zamindar Plus</strong>
+          <span>Farm ledger platform</span>
         </div>
 
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Farmer Type</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td>{user.firstName} {user.lastName}</td>
-                  <td>{user.email}</td>
-                  <td>{user.phone ?? '-'}</td>
-                  <td>{user.farmerType ?? '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
+        <nav className="nav-list">
+          {navItems.map((item) => (
+            <button
+              className={item === activePage ? 'nav-button active' : 'nav-button'}
+              key={item}
+              type="button"
+              onClick={() => setActivePage(item)}
+            >
+              {item}
+            </button>
+          ))}
+        </nav>
+      </aside>
+
+      <main className="workspace">
+        {activePage === 'Dashboard' ? (
+          <DashboardPage />
+        ) : (
+          <section className="page-header">
+            <div>
+              <p className="eyebrow">{activePage}</p>
+              <h1>{activePage}</h1>
+            </div>
+            <p className="muted">This screen will be built next.</p>
+          </section>
+        )}
+      </main>
+    </div>
   );
 }
 

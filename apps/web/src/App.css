@@ -2,45 +2,75 @@
   min-height: 100vh;
 }
 
-body {
-  margin: 0;
-  background: #f4f1e8;
-  color: #1e2b25;
-  font-family: "Segoe UI", Arial, sans-serif;
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 20px;
+  background: #20372f;
+  color: #f8f5ec;
 }
 
-.app {
-  width: min(1120px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 32px 0;
+.brand {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 24px;
 }
 
-.hero {
+.brand strong {
+  font-size: 20px;
+}
+
+.brand span {
+  color: #d6dfd2;
+  font-size: 13px;
+}
+
+.nav-list {
+  display: grid;
+  gap: 8px;
+}
+
+.nav-button {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  border-radius: 7px;
+  padding: 10px 12px;
+  color: #eaf0e5;
+  background: transparent;
+  text-align: left;
+}
+
+.nav-button:hover,
+.nav-button.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.workspace {
+  min-width: 0;
   padding: 32px;
-  border: 1px solid #ded8ca;
-  border-radius: 8px;
-  background: #fffdf8;
-  box-shadow: 0 14px 34px rgba(44, 39, 29, 0.12);
 }
 
-.hero h1 {
-  margin: 0 0 8px;
-  font-size: 38px;
-  line-height: 1.1;
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 24px;
 }
 
-.hero p {
-  max-width: 680px;
+.page-header h1 {
   margin: 0;
-  color: #66746e;
-  line-height: 1.6;
+  font-size: 34px;
+  line-height: 1.15;
 }
 
 .eyebrow {
@@ -52,11 +82,15 @@ textarea {
   text-transform: uppercase;
 }
 
+.muted {
+  color: #66746e;
+}
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
-  margin: 24px 0;
+  margin-bottom: 24px;
 }
 
 .summary-grid article,
@@ -129,20 +163,34 @@ th {
   padding: 14px 16px;
   border: 1px solid #b83b3b;
   border-radius: 8px;
+  margin-bottom: 16px;
   background: #fff4f4;
   color: #b83b3b;
 }
 
-@media (max-width: 760px) {
-  .summary-grid {
+@media (max-width: 800px) {
+  .app-shell {
     grid-template-columns: 1fr;
   }
 
-  .hero {
-    padding: 24px;
+  .sidebar {
+    position: static;
+    height: auto;
   }
 
-  .hero h1 {
-    font-size: 30px;
+  .nav-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workspace {
+    padding: 24px 16px;
+  }
+
+  .page-header {
+    display: grid;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
   }
 }
