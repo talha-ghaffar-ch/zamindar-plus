@@ -68,4 +68,30 @@ export class CropsService {
       },
     });
   }
+
+  async remove(id: string) {
+    const crop = await this.prisma.crop.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!crop) {
+      throw new NotFoundException('Crop not found.');
+    }
+
+    await this.prisma.crop.delete({
+      where: {
+        id,
+      },
+    });
+
+    return {
+      deleted: true,
+      id,
+    };
+  }
 }

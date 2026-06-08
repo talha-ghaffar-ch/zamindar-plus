@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { CropsService } from './crops.service';
 
@@ -19,5 +19,10 @@ export class CropsController {
   @Get('zameen/:zameenId')
   findByZameen(@Param('zameenId') zameenId: string) {
     return this.cropsService.findByZameen(zameenId);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.cropsService.remove(id);
   }
 }
