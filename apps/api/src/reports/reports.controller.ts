@@ -12,4 +12,14 @@ export class ReportsController {
   getSummary(@CurrentUserId() userId: string) {
     return this.reportsService.getSummary(userId);
   }
+
+  @Get('crop-profitability')
+  getCropProfitability(@CurrentUserId() userId: string) {
+    return this.reportsService.getCropProfitability(userId);
+  }
+
+  @Get('monthly-summary')
+  getMonthlySummary(@CurrentUserId() userId: string) {
+    return this.reportsService.getMonthlySummary(userId);
+  }
 }
