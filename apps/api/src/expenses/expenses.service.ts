@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
+import { UpdateExpenseDto } from './dto/update-expense.dto';
 
 @Injectable()
 export class ExpensesService {
@@ -53,6 +54,43 @@ export class ExpensesService {
       orderBy: {
         expenseDate: 'desc',
       },
+    });
+  }
+
+  async update(id: string, updateExpenseDto: UpdateExpenseDto) {
+    const expense = await this.prisma.expense.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!expense) {
+      throw new NotFoundException('Expense not found.');
+    }
+
+    if (updateExpenseDto.cropId) {
+      const crop = await this.prisma.crop.findUnique({
+        where: {
+          id: updateExpenseDto.cropId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!crop) {
+        throw new NotFoundException('Crop not found.');
+      }
+    }
+
+    return this.prisma.expense.update({
+      where: {
+        id,
+      },
+      data: updateExpenseDto,
     });
   }
 

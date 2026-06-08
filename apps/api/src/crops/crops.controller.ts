@@ -1,5 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { CreateCropDto } from './dto/create-crop.dto';
+import { UpdateCropDto } from './dto/update-crop.dto';
 import { CropsService } from './crops.service';
 
 @Controller('crops')
@@ -19,6 +28,11 @@ export class CropsController {
   @Get('zameen/:zameenId')
   findByZameen(@Param('zameenId') zameenId: string) {
     return this.cropsService.findByZameen(zameenId);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateCropDto: UpdateCropDto) {
+    return this.cropsService.update(id, updateCropDto);
   }
 
   @Delete(':id')

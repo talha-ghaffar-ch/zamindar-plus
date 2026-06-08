@@ -1,5 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { CreateZameenDto } from './dto/create-zameen.dto';
+import { UpdateZameenDto } from './dto/update-zameen.dto';
 import { ZameenService } from './zameen.service';
 
 @Controller('zameen')
@@ -19,6 +28,11 @@ export class ZameenController {
   @Get('profile/:profileId')
   findByProfile(@Param('profileId') profileId: string) {
     return this.zameenService.findByProfile(profileId);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateZameenDto: UpdateZameenDto) {
+    return this.zameenService.update(id, updateZameenDto);
   }
 
   @Delete(':id')

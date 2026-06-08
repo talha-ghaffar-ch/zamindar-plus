@@ -6,6 +6,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 const safeUserSelect = {
   id: true,
@@ -57,6 +58,55 @@ export class UsersService {
       orderBy: {
         createdAt: 'desc',
       },
+    });
+  }
+
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    if (updateUserDto.email) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: {
+          email: updateUserDto.email,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (existingUser && existingUser.id !== id) {
+        throw new ConflictException('A user with this email already exists.');
+      }
+    }
+
+    const passwordHash = updateUserDto.password
+      ? await bcrypt.hash(updateUserDto.password, 12)
+      : undefined;
+
+    return this.prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        firstName: updateUserDto.firstName,
+        lastName: updateUserDto.lastName,
+        email: updateUserDto.email,
+        phone: updateUserDto.phone,
+        farmerType: updateUserDto.farmerType,
+        passwordHash,
+      },
+      select: safeUserSelect,
     });
   }
 

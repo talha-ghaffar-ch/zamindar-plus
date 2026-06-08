@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateZameenDto } from './dto/create-zameen.dto';
+import { UpdateZameenDto } from './dto/update-zameen.dto';
 
 @Injectable()
 export class ZameenService {
@@ -41,6 +42,43 @@ export class ZameenService {
       orderBy: {
         createdAt: 'desc',
       },
+    });
+  }
+
+  async update(id: string, updateZameenDto: UpdateZameenDto) {
+    const zameen = await this.prisma.zameen.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!zameen) {
+      throw new NotFoundException('Zameen not found.');
+    }
+
+    if (updateZameenDto.profileId) {
+      const profile = await this.prisma.profile.findUnique({
+        where: {
+          id: updateZameenDto.profileId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!profile) {
+        throw new NotFoundException('Profile not found.');
+      }
+    }
+
+    return this.prisma.zameen.update({
+      where: {
+        id,
+      },
+      data: updateZameenDto,
     });
   }
 
