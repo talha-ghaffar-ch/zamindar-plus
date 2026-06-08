@@ -43,4 +43,30 @@ export class ZameenService {
       },
     });
   }
+
+  async remove(id: string) {
+    const zameen = await this.prisma.zameen.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!zameen) {
+      throw new NotFoundException('Zameen not found.');
+    }
+
+    await this.prisma.zameen.delete({
+      where: {
+        id,
+      },
+    });
+
+    return {
+      deleted: true,
+      id,
+    };
+  }
 }
