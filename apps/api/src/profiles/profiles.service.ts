@@ -43,4 +43,30 @@ export class ProfilesService {
       },
     });
   }
+
+  async remove(id: string) {
+    const profile = await this.prisma.profile.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Profile not found.');
+    }
+
+    await this.prisma.profile.delete({
+      where: {
+        id,
+      },
+    });
+
+    return {
+      deleted: true,
+      id,
+    };
+  }
 }
