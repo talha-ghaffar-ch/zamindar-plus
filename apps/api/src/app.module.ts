@@ -9,6 +9,7 @@ import { CropsModule } from './crops/crops.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { IncomeModule } from './income/income.module';
 import { ReportsModule } from './reports/reports.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ReportsModule } from './reports/reports.module';
     ExpensesModule,
     IncomeModule,
     ReportsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
