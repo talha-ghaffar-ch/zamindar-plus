@@ -7,34 +7,26 @@ import { UpdateIncomeDto } from './dto/update-income.dto';
 export class IncomeService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createIncomeDto: CreateIncomeDto) {
-    const crop = await this.prisma.crop.findUnique({
-      where: {
-        id: createIncomeDto.cropId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!crop) {
-      throw new NotFoundException('Crop not found.');
-    }
+  async create(userId: string, createIncomeDto: CreateIncomeDto) {
+    await this.assertCropOwnedByUser(userId, createIncomeDto.cropId);
 
     return this.prisma.income.create({
       data: createIncomeDto,
     });
   }
 
-  findAll() {
+  findAll(userId: string) {
     return this.prisma.income.findMany({
+      where: this.userIncomeWhere(userId),
       orderBy: {
         incomeDate: 'desc',
       },
     });
   }
 
-  findByCrop(cropId: string) {
+  async findByCrop(userId: string, cropId: string) {
+    await this.assertCropOwnedByUser(userId, cropId);
+
     return this.prisma.income.findMany({
       where: {
         cropId,
@@ -45,9 +37,10 @@ export class IncomeService {
     });
   }
 
-  findByMonth(year: number, month: number) {
+  findByMonth(userId: string, year: number, month: number) {
     return this.prisma.income.findMany({
       where: {
+        ...this.userIncomeWhere(userId),
         incomeYear: year,
         incomeMonth: month,
       },
@@ -57,10 +50,11 @@ export class IncomeService {
     });
   }
 
-  async update(id: string, updateIncomeDto: UpdateIncomeDto) {
-    const income = await this.prisma.income.findUnique({
+  async update(userId: string, id: string, updateIncomeDto: UpdateIncomeDto) {
+    const income = await this.prisma.income.findFirst({
       where: {
         id,
+        ...this.userIncomeWhere(userId),
       },
       select: {
         id: true,
@@ -72,18 +66,7 @@ export class IncomeService {
     }
 
     if (updateIncomeDto.cropId) {
-      const crop = await this.prisma.crop.findUnique({
-        where: {
-          id: updateIncomeDto.cropId,
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      if (!crop) {
-        throw new NotFoundException('Crop not found.');
-      }
+      await this.assertCropOwnedByUser(userId, updateIncomeDto.cropId);
     }
 
     return this.prisma.income.update({
@@ -94,10 +77,11 @@ export class IncomeService {
     });
   }
 
-  async remove(id: string) {
-    const income = await this.prisma.income.findUnique({
+  async remove(userId: string, id: string) {
+    const income = await this.prisma.income.findFirst({
       where: {
         id,
+        ...this.userIncomeWhere(userId),
       },
       select: {
         id: true,
@@ -117,6 +101,38 @@ export class IncomeService {
     return {
       deleted: true,
       id,
+    };
+  }
+
+  private async assertCropOwnedByUser(userId: string, cropId: string) {
+    const crop = await this.prisma.crop.findFirst({
+      where: {
+        id: cropId,
+        zameen: {
+          profile: {
+            userId,
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!crop) {
+      throw new NotFoundException('Crop not found.');
+    }
+  }
+
+  private userIncomeWhere(userId: string) {
+    return {
+      crop: {
+        zameen: {
+          profile: {
+            userId,
+          },
+        },
+      },
     };
   }
 }

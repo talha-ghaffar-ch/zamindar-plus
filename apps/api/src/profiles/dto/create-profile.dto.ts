@@ -1,8 +1,9 @@
 import { IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateProfileDto {
+  @IsOptional()
   @IsString()
-  userId: string;
+  userId?: string;
 
   @IsString()
   @MinLength(2)

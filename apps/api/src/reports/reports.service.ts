@@ -5,17 +5,48 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getSummary() {
-    const [expenseAggregate, incomeAggregate] = await Promise.all([
+  async getSummary(userId: string) {
+    const [
+      expenseAggregate,
+      incomeAggregate,
+      zameenCount,
+      cropCount,
+      expenseCount,
+      incomeCount,
+    ] = await Promise.all([
       this.prisma.expense.aggregate({
+        where: this.userTransactionWhere(userId),
         _sum: {
           amount: true,
         },
       }),
       this.prisma.income.aggregate({
+        where: this.userTransactionWhere(userId),
         _sum: {
           totalAmount: true,
         },
+      }),
+      this.prisma.zameen.count({
+        where: {
+          profile: {
+            userId,
+          },
+        },
+      }),
+      this.prisma.crop.count({
+        where: {
+          zameen: {
+            profile: {
+              userId,
+            },
+          },
+        },
+      }),
+      this.prisma.expense.count({
+        where: this.userTransactionWhere(userId),
+      }),
+      this.prisma.income.count({
+        where: this.userTransactionWhere(userId),
       }),
     ]);
 
@@ -26,6 +57,22 @@ export class ReportsService {
       totalExpense,
       totalIncome,
       netProfit: totalIncome - totalExpense,
+      zameenCount,
+      cropCount,
+      expenseCount,
+      incomeCount,
+    };
+  }
+
+  private userTransactionWhere(userId: string) {
+    return {
+      crop: {
+        zameen: {
+          profile: {
+            userId,
+          },
+        },
+      },
     };
   }
 }

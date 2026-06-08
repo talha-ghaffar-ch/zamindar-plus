@@ -1,12 +1,15 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { CurrentUserId } from '../auth/current-user-id.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ReportsService } from './reports.service';
 
 @Controller('reports')
+@UseGuards(JwtAuthGuard)
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get('summary')
-  getSummary() {
-    return this.reportsService.getSummary();
+  getSummary(@CurrentUserId() userId: string) {
+    return this.reportsService.getSummary(userId);
   }
 }

@@ -11,14 +11,43 @@ import { UpdateCropDto } from './dto/update-crop.dto';
 export class CropsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createCropDto: CreateCropDto) {
-    const zameen = await this.prisma.zameen.findUnique({
+  async create(userId: string, createCropDto: CreateCropDto) {
+    await this.assertCropAreaFits(
+      userId,
+      createCropDto.zameenId,
+      createCropDto.cropAreaSqft,
+    );
+
+    return this.prisma.crop.create({
+      data: createCropDto,
+    });
+  }
+
+  findAll(userId: string) {
+    return this.prisma.crop.findMany({
       where: {
-        id: createCropDto.zameenId,
+        zameen: {
+          profile: {
+            userId,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  async findByZameen(userId: string, zameenId: string) {
+    const zameen = await this.prisma.zameen.findFirst({
+      where: {
+        id: zameenId,
+        profile: {
+          userId,
+        },
       },
       select: {
         id: true,
-        totalAreaSqft: true,
       },
     });
 
@@ -26,40 +55,6 @@ export class CropsService {
       throw new NotFoundException('Zameen not found.');
     }
 
-    const existingCrops = await this.prisma.crop.findMany({
-      where: {
-        zameenId: createCropDto.zameenId,
-      },
-      select: {
-        cropAreaSqft: true,
-      },
-    });
-
-    const usedAreaSqft = existingCrops.reduce(
-      (total, crop) => total + crop.cropAreaSqft,
-      0,
-    );
-
-    if (usedAreaSqft + createCropDto.cropAreaSqft > zameen.totalAreaSqft) {
-      throw new BadRequestException(
-        'Crop area cannot exceed available zameen area.',
-      );
-    }
-
-    return this.prisma.crop.create({
-      data: createCropDto,
-    });
-  }
-
-  findAll() {
-    return this.prisma.crop.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  }
-
-  findByZameen(zameenId: string) {
     return this.prisma.crop.findMany({
       where: {
         zameenId,
@@ -70,10 +65,15 @@ export class CropsService {
     });
   }
 
-  async update(id: string, updateCropDto: UpdateCropDto) {
-    const crop = await this.prisma.crop.findUnique({
+  async update(userId: string, id: string, updateCropDto: UpdateCropDto) {
+    const crop = await this.prisma.crop.findFirst({
       where: {
         id,
+        zameen: {
+          profile: {
+            userId,
+          },
+        },
       },
     });
 
@@ -84,42 +84,7 @@ export class CropsService {
     const nextZameenId = updateCropDto.zameenId ?? crop.zameenId;
     const nextCropAreaSqft = updateCropDto.cropAreaSqft ?? crop.cropAreaSqft;
 
-    const zameen = await this.prisma.zameen.findUnique({
-      where: {
-        id: nextZameenId,
-      },
-      select: {
-        id: true,
-        totalAreaSqft: true,
-      },
-    });
-
-    if (!zameen) {
-      throw new NotFoundException('Zameen not found.');
-    }
-
-    const siblingCrops = await this.prisma.crop.findMany({
-      where: {
-        zameenId: nextZameenId,
-        NOT: {
-          id,
-        },
-      },
-      select: {
-        cropAreaSqft: true,
-      },
-    });
-
-    const usedAreaSqft = siblingCrops.reduce(
-      (total, siblingCrop) => total + siblingCrop.cropAreaSqft,
-      0,
-    );
-
-    if (usedAreaSqft + nextCropAreaSqft > zameen.totalAreaSqft) {
-      throw new BadRequestException(
-        'Crop area cannot exceed available zameen area.',
-      );
-    }
+    await this.assertCropAreaFits(userId, nextZameenId, nextCropAreaSqft, id);
 
     return this.prisma.crop.update({
       where: {
@@ -129,10 +94,15 @@ export class CropsService {
     });
   }
 
-  async remove(id: string) {
-    const crop = await this.prisma.crop.findUnique({
+  async remove(userId: string, id: string) {
+    const crop = await this.prisma.crop.findFirst({
       where: {
         id,
+        zameen: {
+          profile: {
+            userId,
+          },
+        },
       },
       select: {
         id: true,
@@ -153,5 +123,50 @@ export class CropsService {
       deleted: true,
       id,
     };
+  }
+
+  private async assertCropAreaFits(
+    userId: string,
+    zameenId: string,
+    cropAreaSqft: number,
+    excludeCropId?: string,
+  ) {
+    const zameen = await this.prisma.zameen.findFirst({
+      where: {
+        id: zameenId,
+        profile: {
+          userId,
+        },
+      },
+      select: {
+        id: true,
+        totalAreaSqft: true,
+      },
+    });
+
+    if (!zameen) {
+      throw new NotFoundException('Zameen not found.');
+    }
+
+    const existingCrops = await this.prisma.crop.findMany({
+      where: {
+        zameenId,
+        ...(excludeCropId ? { NOT: { id: excludeCropId } } : {}),
+      },
+      select: {
+        cropAreaSqft: true,
+      },
+    });
+
+    const usedAreaSqft = existingCrops.reduce(
+      (total, crop) => total + crop.cropAreaSqft,
+      0,
+    );
+
+    if (usedAreaSqft + cropAreaSqft > zameen.totalAreaSqft) {
+      throw new BadRequestException(
+        'Crop area cannot exceed available zameen area.',
+      );
+    }
   }
 }

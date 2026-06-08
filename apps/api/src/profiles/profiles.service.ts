@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -7,34 +11,16 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 export class ProfilesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createProfileDto: CreateProfileDto) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: createProfileDto.userId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found.');
-    }
-
+  create(userId: string, createProfileDto: CreateProfileDto) {
     return this.prisma.profile.create({
-      data: createProfileDto,
-    });
-  }
-
-  findAll() {
-    return this.prisma.profile.findMany({
-      orderBy: {
-        createdAt: 'desc',
+      data: {
+        ...createProfileDto,
+        userId,
       },
     });
   }
 
-  findByUser(userId: string) {
+  findAll(userId: string) {
     return this.prisma.profile.findMany({
       where: {
         userId,
@@ -45,10 +31,19 @@ export class ProfilesService {
     });
   }
 
-  async update(id: string, updateProfileDto: UpdateProfileDto) {
-    const profile = await this.prisma.profile.findUnique({
+  findByUser(currentUserId: string, userId: string) {
+    if (currentUserId !== userId) {
+      throw new ForbiddenException('You can only view your own profiles.');
+    }
+
+    return this.findAll(userId);
+  }
+
+  async update(userId: string, id: string, updateProfileDto: UpdateProfileDto) {
+    const profile = await this.prisma.profile.findFirst({
       where: {
         id,
+        userId,
       },
       select: {
         id: true,
@@ -59,33 +54,25 @@ export class ProfilesService {
       throw new NotFoundException('Profile not found.');
     }
 
-    if (updateProfileDto.userId) {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          id: updateProfileDto.userId,
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      if (!user) {
-        throw new NotFoundException('User not found.');
-      }
-    }
-
     return this.prisma.profile.update({
       where: {
         id,
       },
-      data: updateProfileDto,
+      data: {
+        profileName: updateProfileDto.profileName,
+        city: updateProfileDto.city,
+        chakAreaName: updateProfileDto.chakAreaName,
+        villageName: updateProfileDto.villageName,
+        notes: updateProfileDto.notes,
+      },
     });
   }
 
-  async remove(id: string) {
-    const profile = await this.prisma.profile.findUnique({
+  async remove(userId: string, id: string) {
+    const profile = await this.prisma.profile.findFirst({
       where: {
         id,
+        userId,
       },
       select: {
         id: true,

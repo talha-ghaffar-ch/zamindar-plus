@@ -7,45 +7,57 @@ import {
   Patch,
   ParseIntPipe,
   Post,
+  UseGuards,
 } from '@nestjs/common';
+import { CurrentUserId } from '../auth/current-user-id.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { IncomeService } from './income.service';
 
 @Controller('income')
+@UseGuards(JwtAuthGuard)
 export class IncomeController {
   constructor(private readonly incomeService: IncomeService) {}
 
   @Post()
-  create(@Body() createIncomeDto: CreateIncomeDto) {
-    return this.incomeService.create(createIncomeDto);
+  create(
+    @CurrentUserId() userId: string,
+    @Body() createIncomeDto: CreateIncomeDto,
+  ) {
+    return this.incomeService.create(userId, createIncomeDto);
   }
 
   @Get()
-  findAll() {
-    return this.incomeService.findAll();
+  findAll(@CurrentUserId() userId: string) {
+    return this.incomeService.findAll(userId);
   }
 
   @Get('crop/:cropId')
-  findByCrop(@Param('cropId') cropId: string) {
-    return this.incomeService.findByCrop(cropId);
+  findByCrop(@CurrentUserId() userId: string, @Param('cropId') cropId: string) {
+    return this.incomeService.findByCrop(userId, cropId);
   }
 
   @Get('month/:year/:month')
   findByMonth(
+    @CurrentUserId() userId: string,
     @Param('year', ParseIntPipe) year: number,
     @Param('month', ParseIntPipe) month: number,
   ) {
-    return this.incomeService.findByMonth(year, month);
+    return this.incomeService.findByMonth(userId, year, month);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateIncomeDto: UpdateIncomeDto) {
-    return this.incomeService.update(id, updateIncomeDto);
+  update(
+    @CurrentUserId() userId: string,
+    @Param('id') id: string,
+    @Body() updateIncomeDto: UpdateIncomeDto,
+  ) {
+    return this.incomeService.update(userId, id, updateIncomeDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.incomeService.remove(id);
+  remove(@CurrentUserId() userId: string, @Param('id') id: string) {
+    return this.incomeService.remove(userId, id);
   }
 }

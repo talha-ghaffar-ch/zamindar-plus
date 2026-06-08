@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -52,8 +53,11 @@ export class UsersService {
     });
   }
 
-  findAll() {
+  findAll(userId: string) {
     return this.prisma.user.findMany({
+      where: {
+        id: userId,
+      },
       select: safeUserSelect,
       orderBy: {
         createdAt: 'desc',
@@ -61,7 +65,15 @@ export class UsersService {
     });
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(
+    currentUserId: string,
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ) {
+    if (currentUserId !== id) {
+      throw new ForbiddenException('You can only update your own user record.');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: {
         id,
@@ -110,7 +122,11 @@ export class UsersService {
     });
   }
 
-  async remove(id: string) {
+  async remove(currentUserId: string, id: string) {
+    if (currentUserId !== id) {
+      throw new ForbiddenException('You can only delete your own user record.');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: {
         id,

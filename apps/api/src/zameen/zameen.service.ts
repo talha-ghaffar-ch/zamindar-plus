@@ -7,10 +7,11 @@ import { UpdateZameenDto } from './dto/update-zameen.dto';
 export class ZameenService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createZameenDto: CreateZameenDto) {
-    const profile = await this.prisma.profile.findUnique({
+  async create(userId: string, createZameenDto: CreateZameenDto) {
+    const profile = await this.prisma.profile.findFirst({
       where: {
         id: createZameenDto.profileId,
+        userId,
       },
       select: {
         id: true,
@@ -26,15 +27,34 @@ export class ZameenService {
     });
   }
 
-  findAll() {
+  findAll(userId: string) {
     return this.prisma.zameen.findMany({
+      where: {
+        profile: {
+          userId,
+        },
+      },
       orderBy: {
         createdAt: 'desc',
       },
     });
   }
 
-  findByProfile(profileId: string) {
+  async findByProfile(userId: string, profileId: string) {
+    const profile = await this.prisma.profile.findFirst({
+      where: {
+        id: profileId,
+        userId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Profile not found.');
+    }
+
     return this.prisma.zameen.findMany({
       where: {
         profileId,
@@ -45,10 +65,13 @@ export class ZameenService {
     });
   }
 
-  async update(id: string, updateZameenDto: UpdateZameenDto) {
-    const zameen = await this.prisma.zameen.findUnique({
+  async update(userId: string, id: string, updateZameenDto: UpdateZameenDto) {
+    const zameen = await this.prisma.zameen.findFirst({
       where: {
         id,
+        profile: {
+          userId,
+        },
       },
       select: {
         id: true,
@@ -60,9 +83,10 @@ export class ZameenService {
     }
 
     if (updateZameenDto.profileId) {
-      const profile = await this.prisma.profile.findUnique({
+      const profile = await this.prisma.profile.findFirst({
         where: {
           id: updateZameenDto.profileId,
+          userId,
         },
         select: {
           id: true,
@@ -82,10 +106,13 @@ export class ZameenService {
     });
   }
 
-  async remove(id: string) {
-    const zameen = await this.prisma.zameen.findUnique({
+  async remove(userId: string, id: string) {
+    const zameen = await this.prisma.zameen.findFirst({
       where: {
         id,
+        profile: {
+          userId,
+        },
       },
       select: {
         id: true,
