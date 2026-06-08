@@ -1,5 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './App.css';
+import {
+  clearAuthToken,
+  getAuthToken,
+  getMe,
+  setAuthToken,
+  type AuthResponse,
+  type User,
+} from './lib/api';
+import { AuthPage } from './pages/AuthPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProfilesPage } from './pages/ProfilesPage';
 import { UsersPage } from './pages/UsersPage';
@@ -22,6 +31,66 @@ const navItems = [
 
 function App() {
   const [activePage, setActivePage] = useState('Dashboard');
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function restoreSession() {
+      if (!getAuthToken()) {
+        setIsCheckingSession(false);
+        return;
+      }
+
+      try {
+        const user = await getMe();
+
+        if (isActive) {
+          setCurrentUser(user);
+        }
+      } catch {
+        clearAuthToken();
+      } finally {
+        if (isActive) {
+          setIsCheckingSession(false);
+        }
+      }
+    }
+
+    void restoreSession();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  function handleAuthenticated(authResponse: AuthResponse) {
+    setAuthToken(authResponse.accessToken);
+    setCurrentUser(authResponse.user);
+    setActivePage('Dashboard');
+  }
+
+  function handleLogout() {
+    clearAuthToken();
+    setCurrentUser(null);
+    setActivePage('Dashboard');
+  }
+
+  if (isCheckingSession) {
+    return (
+      <main className="auth-screen">
+        <section className="auth-panel">
+          <p className="eyebrow">Zamindar Plus</p>
+          <h1>Opening workspace...</h1>
+        </section>
+      </main>
+    );
+  }
+
+  if (!currentUser) {
+    return <AuthPage onAuthenticated={handleAuthenticated} />;
+  }
 
   return (
     <div className="app-shell">
@@ -29,6 +98,13 @@ function App() {
         <div className="brand">
           <strong>Zamindar Plus</strong>
           <span>Farm ledger platform</span>
+        </div>
+
+        <div className="sidebar-user">
+          <span>
+            {currentUser.firstName} {currentUser.lastName}
+          </span>
+          <small>{currentUser.email}</small>
         </div>
 
         <nav className="nav-list">
@@ -43,13 +119,21 @@ function App() {
             </button>
           ))}
         </nav>
+
+        <button className="logout-button" type="button" onClick={handleLogout}>
+          Sign Out
+        </button>
       </aside>
 
       <main className="workspace">
         {activePage === 'Dashboard' ? (
           <DashboardPage />
         ) : activePage === 'Users' ? (
-          <UsersPage />
+          <UsersPage
+            currentUser={currentUser}
+            onAccountDeleted={handleLogout}
+            onUserUpdated={setCurrentUser}
+          />
         ) : activePage === 'Profiles' ? (
           <ProfilesPage />
         ) : activePage === 'Zameen' ? (

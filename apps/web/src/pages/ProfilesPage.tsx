@@ -1,14 +1,7 @@
 import { type FormEvent, useEffect, useState } from 'react';
-import {
-  createProfile,
-  getProfiles,
-  getUsers,
-  type Profile,
-  type User,
-} from '../lib/api';
+import { createProfile, getProfiles, type Profile } from '../lib/api';
 
 const initialForm = {
-  userId: '',
   profileName: '',
   city: '',
   chakAreaName: '',
@@ -18,43 +11,25 @@ const initialForm = {
 
 export function ProfilesPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   async function loadData() {
-    const [profilesData, usersData] = await Promise.all([getProfiles(), getUsers()]);
+    const profilesData = await getProfiles();
     setProfiles(profilesData);
-    setUsers(usersData);
-
-    if (!form.userId && usersData.length > 0) {
-      setForm((currentForm) => ({
-        ...currentForm,
-        userId: usersData[0].id,
-      }));
-    }
   }
 
   useEffect(() => {
     let isActive = true;
 
-    Promise.all([getProfiles(), getUsers()])
-      .then(([profilesData, usersData]) => {
+    getProfiles()
+      .then((profilesData) => {
         if (!isActive) {
           return;
         }
 
         setProfiles(profilesData);
-        setUsers(usersData);
-
-        if (usersData.length > 0) {
-          setForm((currentForm) =>
-            currentForm.userId
-              ? currentForm
-              : { ...currentForm, userId: usersData[0].id },
-          );
-        }
       })
       .catch((loadError) => {
         if (isActive) {
@@ -74,7 +49,6 @@ export function ProfilesPage() {
 
     try {
       await createProfile({
-        userId: form.userId,
         profileName: form.profileName,
         city: form.city || undefined,
         chakAreaName: form.chakAreaName || undefined,
@@ -82,21 +56,13 @@ export function ProfilesPage() {
         notes: form.notes || undefined,
       });
 
-      setForm({
-        ...initialForm,
-        userId: form.userId,
-      });
+      setForm(initialForm);
       await loadData();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'Failed to create profile.');
     } finally {
       setIsSaving(false);
     }
-  }
-
-  function userName(userId: string) {
-    const user = users.find((item) => item.id === userId);
-    return user ? `${user.firstName} ${user.lastName}` : userId;
   }
 
   return (
@@ -112,21 +78,6 @@ export function ProfilesPage() {
 
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
-          <label>
-            Farmer
-            <select
-              required
-              value={form.userId}
-              onChange={(event) => setForm({ ...form, userId: event.target.value })}
-            >
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.firstName} {user.lastName}
-                </option>
-              ))}
-            </select>
-          </label>
-
           <label>
             Profile Name
             <input
@@ -169,7 +120,7 @@ export function ProfilesPage() {
             />
           </label>
 
-          <button className="primary-button" disabled={isSaving || users.length === 0} type="submit">
+          <button className="primary-button" disabled={isSaving} type="submit">
             {isSaving ? 'Saving...' : 'Create Profile'}
           </button>
         </form>
@@ -187,7 +138,6 @@ export function ProfilesPage() {
               <thead>
                 <tr>
                   <th>Profile</th>
-                  <th>Farmer</th>
                   <th>City</th>
                   <th>Chak / Area</th>
                   <th>Village</th>
@@ -197,7 +147,6 @@ export function ProfilesPage() {
                 {profiles.map((profile) => (
                   <tr key={profile.id}>
                     <td>{profile.profileName}</td>
-                    <td>{userName(profile.userId)}</td>
                     <td>{profile.city ?? '-'}</td>
                     <td>{profile.chakAreaName ?? '-'}</td>
                     <td>{profile.villageName ?? '-'}</td>

@@ -1,9 +1,14 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+const AUTH_TOKEN_STORAGE_KEY = 'zamindar-plus-auth-token';
 
 export type ReportSummary = {
   totalExpense: number;
   totalIncome: number;
   netProfit: number;
+  zameenCount: number;
+  cropCount: number;
+  expenseCount: number;
+  incomeCount: number;
 };
 
 export type User = {
@@ -30,7 +35,6 @@ export type Profile = {
 };
 
 export type CreateProfilePayload = {
-  userId: string;
   profileName: string;
   city?: string;
   chakAreaName?: string;
@@ -45,6 +49,18 @@ export type CreateUserPayload = {
   phone?: string;
   password: string;
   farmerType?: string;
+};
+
+export type UpdateUserPayload = Partial<CreateUserPayload>;
+
+export type LoginPayload = {
+  email: string;
+  password: string;
+};
+
+export type AuthResponse = {
+  accessToken: string;
+  user: User;
 };
 
 export type Zameen = {
@@ -172,20 +188,76 @@ export type CreateIncomePayload = {
 };
 
 async function requestJson<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = getAuthToken();
+
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options?.headers,
     },
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText || `API request failed: ${response.status}`);
+    throw new Error(await getErrorMessage(response));
   }
 
   return response.json() as Promise<T>;
+}
+
+async function getErrorMessage(response: Response) {
+  const errorText = await response.text();
+
+  if (!errorText) {
+    return `API request failed: ${response.status}`;
+  }
+
+  try {
+    const parsedError = JSON.parse(errorText) as { message?: string | string[] };
+
+    if (Array.isArray(parsedError.message)) {
+      return parsedError.message.join(' ');
+    }
+
+    if (parsedError.message) {
+      return parsedError.message;
+    }
+  } catch {
+    return errorText;
+  }
+
+  return errorText;
+}
+
+export function getAuthToken() {
+  return window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+}
+
+export function setAuthToken(token: string) {
+  window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+}
+
+export function clearAuthToken() {
+  window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+}
+
+export function signup(payload: CreateUserPayload) {
+  return requestJson<AuthResponse>('/auth/signup', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function login(payload: LoginPayload) {
+  return requestJson<AuthResponse>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getMe() {
+  return requestJson<User>('/auth/me');
 }
 
 export function getReportSummary() {
@@ -200,6 +272,19 @@ export function createUser(payload: CreateUserPayload) {
   return requestJson<User>('/users', {
     method: 'POST',
     body: JSON.stringify(payload),
+  });
+}
+
+export function updateUser(id: string, payload: UpdateUserPayload) {
+  return requestJson<User>(`/users/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteUser(id: string) {
+  return requestJson<{ deleted: true; id: string }>(`/users/${id}`, {
+    method: 'DELETE',
   });
 }
 
