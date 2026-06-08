@@ -1,8 +1,10 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import {
   createExpense,
+  deleteExpense,
   getCrops,
   getExpenses,
+  updateExpense,
   type Crop,
   type Expense,
 } from '../lib/api';
@@ -39,12 +41,18 @@ function dateParts(dateValue: string) {
   };
 }
 
+function dateInputValue(dateValue: string) {
+  return dateValue.slice(0, 10);
+}
+
 export function ExpensesPage() {
   const [crops, setCrops] = useState<Crop[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [cropFilter, setCropFilter] = useState('all');
 
   async function loadData() {
     const [cropsData, expensesData] = await Promise.all([getCrops(), getExpenses()]);
@@ -94,7 +102,7 @@ export function ExpensesPage() {
     const parts = dateParts(form.expenseDate);
 
     try {
-      await createExpense({
+      const payload = {
         cropId: form.cropId,
         expenseCategory: form.expenseCategory,
         description: form.description,
@@ -105,23 +113,88 @@ export function ExpensesPage() {
         paymentStatus: form.paymentStatus || undefined,
         paymentMethod: form.paymentMethod || undefined,
         notes: form.notes || undefined,
-      });
+      };
+
+      if (editingExpenseId) {
+        await updateExpense(editingExpenseId, payload);
+      } else {
+        await createExpense(payload);
+      }
 
       setForm({
         ...initialForm,
         cropId: form.cropId,
       });
+      setEditingExpenseId(null);
       await loadData();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Failed to create expense.');
+      setError(
+        saveError instanceof Error ? saveError.message : 'Failed to save expense.',
+      );
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  function startEdit(expense: Expense) {
+    setEditingExpenseId(expense.id);
+    setForm({
+      cropId: expense.cropId,
+      expenseCategory: expense.expenseCategory,
+      description: expense.description,
+      amount: String(expense.amount),
+      expenseDate: dateInputValue(expense.expenseDate),
+      paymentStatus: expense.paymentStatus ?? 'Paid',
+      paymentMethod: expense.paymentMethod ?? 'Cash',
+      notes: expense.notes ?? '',
+    });
+  }
+
+  function cancelEdit() {
+    setEditingExpenseId(null);
+    setForm({
+      ...initialForm,
+      cropId: crops[0]?.id ?? '',
+    });
+  }
+
+  async function handleDelete(expense: Expense) {
+    const confirmed = window.confirm(`Delete expense "${expense.description}"?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setError('');
+
+    try {
+      await deleteExpense(expense.id);
+      if (editingExpenseId === expense.id) {
+        cancelEdit();
+      }
+      await loadData();
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : 'Failed to delete expense.',
+      );
     }
   }
 
   function cropName(cropId: string) {
     return crops.find((crop) => crop.id === cropId)?.cropName ?? cropId;
   }
+
+  const filteredExpenses =
+    cropFilter === 'all'
+      ? expenses
+      : expenses.filter((expense) => expense.cropId === cropFilter);
+
+  const filteredExpenseTotal = filteredExpenses.reduce(
+    (total, expense) => total + expense.amount,
+    0,
+  );
 
   return (
     <>
@@ -136,6 +209,15 @@ export function ExpensesPage() {
 
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
+          <div className="form-heading">
+            <h2>{editingExpenseId ? 'Edit Expense' : 'Create Expense'}</h2>
+            {editingExpenseId ? (
+              <button className="text-button" type="button" onClick={cancelEdit}>
+                Cancel
+              </button>
+            ) : null}
+          </div>
+
           <label>
             Crop
             <select
@@ -224,7 +306,11 @@ export function ExpensesPage() {
           </label>
 
           <button className="primary-button" disabled={isSaving || crops.length === 0} type="submit">
-            {isSaving ? 'Saving...' : 'Create Expense'}
+            {isSaving
+              ? 'Saving...'
+              : editingExpenseId
+                ? 'Update Expense'
+                : 'Create Expense'}
           </button>
         </form>
 
@@ -232,7 +318,22 @@ export function ExpensesPage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Expenses</p>
-              <h2>{expenses.length} total</h2>
+              <h2>{filteredExpenses.length} total</h2>
+            </div>
+            <div className="panel-actions">
+              <strong>Rs {filteredExpenseTotal.toLocaleString()}</strong>
+              <select
+                className="inline-filter"
+                value={cropFilter}
+                onChange={(event) => setCropFilter(event.target.value)}
+              >
+                <option value="all">All crops</option>
+                {crops.map((crop) => (
+                  <option key={crop.id} value={crop.id}>
+                    {crop.cropName}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -245,16 +346,31 @@ export function ExpensesPage() {
                   <th>Category</th>
                   <th>Amount</th>
                   <th>Date</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {expenses.map((expense) => (
+                {filteredExpenses.map((expense) => (
                   <tr key={expense.id}>
                     <td>{expense.description}</td>
                     <td>{cropName(expense.cropId)}</td>
                     <td>{expense.expenseCategory}</td>
                     <td>Rs {expense.amount.toLocaleString()}</td>
                     <td>{new Date(expense.expenseDate).toLocaleDateString()}</td>
+                    <td>
+                      <div className="action-row">
+                        <button type="button" onClick={() => startEdit(expense)}>
+                          Edit
+                        </button>
+                        <button
+                          className="danger-text-button"
+                          type="button"
+                          onClick={() => void handleDelete(expense)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

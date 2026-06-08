@@ -42,6 +42,8 @@ export type CreateProfilePayload = {
   notes?: string;
 };
 
+export type UpdateProfilePayload = Partial<CreateProfilePayload>;
+
 export type CreateUserPayload = {
   firstName: string;
   lastName: string;
@@ -92,6 +94,8 @@ export type CreateZameenPayload = {
   notes?: string;
 };
 
+export type UpdateZameenPayload = Partial<CreateZameenPayload>;
+
 export type Crop = {
   id: string;
   zameenId: string;
@@ -123,6 +127,8 @@ export type CreateCropPayload = {
   notes?: string;
 };
 
+export type UpdateCropPayload = Partial<CreateCropPayload>;
+
 export type Expense = {
   id: string;
   cropId: string;
@@ -153,6 +159,8 @@ export type CreateExpensePayload = {
   paymentMethod?: string;
   notes?: string;
 };
+
+export type UpdateExpensePayload = Partial<CreateExpensePayload>;
 
 export type Income = {
   id: string;
@@ -186,6 +194,8 @@ export type CreateIncomePayload = {
   buyerName?: string;
   notes?: string;
 };
+
+export type UpdateIncomePayload = Partial<CreateIncomePayload>;
 
 async function requestJson<T>(path: string, options?: RequestInit): Promise<T> {
   const token = getAuthToken();
@@ -299,6 +309,19 @@ export function createProfile(payload: CreateProfilePayload) {
   });
 }
 
+export function updateProfile(id: string, payload: UpdateProfilePayload) {
+  return requestJson<Profile>(`/profiles/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteProfile(id: string) {
+  return requestJson<{ deleted: true; id: string }>(`/profiles/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 export function getZameen() {
   return requestJson<Zameen[]>('/zameen');
 }
@@ -307,6 +330,19 @@ export function createZameen(payload: CreateZameenPayload) {
   return requestJson<Zameen>('/zameen', {
     method: 'POST',
     body: JSON.stringify(payload),
+  });
+}
+
+export function updateZameen(id: string, payload: UpdateZameenPayload) {
+  return requestJson<Zameen>(`/zameen/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteZameen(id: string) {
+  return requestJson<{ deleted: true; id: string }>(`/zameen/${id}`, {
+    method: 'DELETE',
   });
 }
 
@@ -321,6 +357,19 @@ export function createCrop(payload: CreateCropPayload) {
   });
 }
 
+export function updateCrop(id: string, payload: UpdateCropPayload) {
+  return requestJson<Crop>(`/crops/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteCrop(id: string) {
+  return requestJson<{ deleted: true; id: string }>(`/crops/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 export function getExpenses() {
   return requestJson<Expense[]>('/expenses');
 }
@@ -332,6 +381,19 @@ export function createExpense(payload: CreateExpensePayload) {
   });
 }
 
+export function updateExpense(id: string, payload: UpdateExpensePayload) {
+  return requestJson<Expense>(`/expenses/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteExpense(id: string) {
+  return requestJson<{ deleted: true; id: string }>(`/expenses/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 export function getIncome() {
   return requestJson<Income[]>('/income');
 }
@@ -340,5 +402,18 @@ export function createIncome(payload: CreateIncomePayload) {
   return requestJson<Income>('/income', {
     method: 'POST',
     body: JSON.stringify(payload),
+  });
+}
+
+export function updateIncome(id: string, payload: UpdateIncomePayload) {
+  return requestJson<Income>(`/income/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteIncome(id: string) {
+  return requestJson<{ deleted: true; id: string }>(`/income/${id}`, {
+    method: 'DELETE',
   });
 }

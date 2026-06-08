@@ -1,8 +1,10 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   createIncome,
+  deleteIncome,
   getCrops,
   getIncome,
+  updateIncome,
   type Crop,
   type Income,
 } from '../lib/api';
@@ -30,12 +32,18 @@ function dateParts(dateValue: string) {
   };
 }
 
+function dateInputValue(dateValue: string) {
+  return dateValue.slice(0, 10);
+}
+
 export function IncomePage() {
   const [crops, setCrops] = useState<Crop[]>([]);
   const [income, setIncome] = useState<Income[]>([]);
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null);
+  const [cropFilter, setCropFilter] = useState('all');
 
   const calculatedTotal = useMemo(() => {
     const quantity = Number(form.quantity);
@@ -96,7 +104,7 @@ export function IncomePage() {
     const parts = dateParts(form.incomeDate);
 
     try {
-      await createIncome({
+      const payload = {
         cropId: form.cropId,
         incomeType: form.incomeType,
         quantity: form.quantity ? Number(form.quantity) : undefined,
@@ -109,23 +117,86 @@ export function IncomePage() {
         paymentStatus: form.paymentStatus || undefined,
         buyerName: form.buyerName || undefined,
         notes: form.notes || undefined,
-      });
+      };
+
+      if (editingIncomeId) {
+        await updateIncome(editingIncomeId, payload);
+      } else {
+        await createIncome(payload);
+      }
 
       setForm({
         ...initialForm,
         cropId: form.cropId,
       });
+      setEditingIncomeId(null);
       await loadData();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Failed to create income.');
+      setError(saveError instanceof Error ? saveError.message : 'Failed to save income.');
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  function startEdit(item: Income) {
+    setEditingIncomeId(item.id);
+    setForm({
+      cropId: item.cropId,
+      incomeType: item.incomeType,
+      quantity: item.quantity ? String(item.quantity) : '',
+      quantityUnit: item.quantityUnit ?? 'maund',
+      rate: item.rate ? String(item.rate) : '',
+      totalAmount: String(item.totalAmount),
+      incomeDate: dateInputValue(item.incomeDate),
+      paymentStatus: item.paymentStatus ?? 'Received',
+      buyerName: item.buyerName ?? '',
+      notes: item.notes ?? '',
+    });
+  }
+
+  function cancelEdit() {
+    setEditingIncomeId(null);
+    setForm({
+      ...initialForm,
+      cropId: crops[0]?.id ?? '',
+    });
+  }
+
+  async function handleDelete(item: Income) {
+    const confirmed = window.confirm(`Delete income "${item.incomeType}"?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setError('');
+
+    try {
+      await deleteIncome(item.id);
+      if (editingIncomeId === item.id) {
+        cancelEdit();
+      }
+      await loadData();
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error ? deleteError.message : 'Failed to delete income.',
+      );
     }
   }
 
   function cropName(cropId: string) {
     return crops.find((crop) => crop.id === cropId)?.cropName ?? cropId;
   }
+
+  const filteredIncome =
+    cropFilter === 'all'
+      ? income
+      : income.filter((item) => item.cropId === cropFilter);
+
+  const filteredIncomeTotal = filteredIncome.reduce(
+    (total, item) => total + item.totalAmount,
+    0,
+  );
 
   return (
     <>
@@ -140,6 +211,15 @@ export function IncomePage() {
 
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
+          <div className="form-heading">
+            <h2>{editingIncomeId ? 'Edit Income' : 'Create Income'}</h2>
+            {editingIncomeId ? (
+              <button className="text-button" type="button" onClick={cancelEdit}>
+                Cancel
+              </button>
+            ) : null}
+          </div>
+
           <label>
             Crop
             <select
@@ -248,7 +328,11 @@ export function IncomePage() {
           </label>
 
           <button className="primary-button" disabled={isSaving || crops.length === 0} type="submit">
-            {isSaving ? 'Saving...' : 'Create Income'}
+            {isSaving
+              ? 'Saving...'
+              : editingIncomeId
+                ? 'Update Income'
+                : 'Create Income'}
           </button>
         </form>
 
@@ -256,7 +340,22 @@ export function IncomePage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Income</p>
-              <h2>{income.length} total</h2>
+              <h2>{filteredIncome.length} total</h2>
+            </div>
+            <div className="panel-actions">
+              <strong>Rs {filteredIncomeTotal.toLocaleString()}</strong>
+              <select
+                className="inline-filter"
+                value={cropFilter}
+                onChange={(event) => setCropFilter(event.target.value)}
+              >
+                <option value="all">All crops</option>
+                {crops.map((crop) => (
+                  <option key={crop.id} value={crop.id}>
+                    {crop.cropName}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -269,10 +368,11 @@ export function IncomePage() {
                   <th>Quantity</th>
                   <th>Amount</th>
                   <th>Date</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {income.map((item) => (
+                {filteredIncome.map((item) => (
                   <tr key={item.id}>
                     <td>{item.incomeType}</td>
                     <td>{cropName(item.cropId)}</td>
@@ -281,6 +381,20 @@ export function IncomePage() {
                     </td>
                     <td>Rs {item.totalAmount.toLocaleString()}</td>
                     <td>{new Date(item.incomeDate).toLocaleDateString()}</td>
+                    <td>
+                      <div className="action-row">
+                        <button type="button" onClick={() => startEdit(item)}>
+                          Edit
+                        </button>
+                        <button
+                          className="danger-text-button"
+                          type="button"
+                          onClick={() => void handleDelete(item)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

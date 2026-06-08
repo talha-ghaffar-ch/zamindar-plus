@@ -3,8 +3,10 @@ import { AREA_UNITS, toSquareFeet, type AreaUnit } from '@zamindar/shared';
 
 import {
   createZameen,
+  deleteZameen,
   getProfiles,
   getZameen,
+  updateZameen,
   type Profile,
   type Zameen,
 } from '../lib/api';
@@ -27,6 +29,8 @@ export function ZameenPage() {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [editingZameenId, setEditingZameenId] = useState<string | null>(null);
+  const [profileFilter, setProfileFilter] = useState('all');
 
   async function loadData() {
     const [profilesData, zameenData] = await Promise.all([getProfiles(), getZameen()]);
@@ -79,7 +83,7 @@ export function ZameenPage() {
     const totalAreaSqft = toSquareFeet(areaValue, form.totalAreaUnit as AreaUnit);
 
     try {
-      await createZameen({
+      const payload = {
         profileId: form.profileId,
         murabbaNumber: form.murabbaNumber || undefined,
         zameenName: form.zameenName,
@@ -90,23 +94,84 @@ export function ZameenPage() {
         totalAreaSqft,
         ownershipType: form.ownershipType || undefined,
         notes: form.notes || undefined,
-      });
+      };
+
+      if (editingZameenId) {
+        await updateZameen(editingZameenId, payload);
+      } else {
+        await createZameen(payload);
+      }
 
       setForm({
         ...initialForm,
         profileId: form.profileId,
       });
+      setEditingZameenId(null);
       await loadData();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Failed to create zameen.');
+      setError(
+        saveError instanceof Error ? saveError.message : 'Failed to save zameen.',
+      );
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  function startEdit(item: Zameen) {
+    setEditingZameenId(item.id);
+    setForm({
+      profileId: item.profileId,
+      murabbaNumber: item.murabbaNumber ?? '',
+      zameenName: item.zameenName,
+      killaNumber: item.killaNumber ?? '',
+      khasraNumber: item.khasraNumber ?? '',
+      totalAreaValue: String(item.totalAreaValue),
+      totalAreaUnit: item.totalAreaUnit,
+      ownershipType: item.ownershipType ?? 'Own land',
+      notes: item.notes ?? '',
+    });
+  }
+
+  function cancelEdit() {
+    setEditingZameenId(null);
+    setForm({
+      ...initialForm,
+      profileId: profiles[0]?.id ?? '',
+    });
+  }
+
+  async function handleDelete(item: Zameen) {
+    const confirmed = window.confirm(`Delete zameen "${item.zameenName}"?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setError('');
+
+    try {
+      await deleteZameen(item.id);
+      if (editingZameenId === item.id) {
+        cancelEdit();
+      }
+      await loadData();
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : 'Failed to delete zameen.',
+      );
     }
   }
 
   function profileName(profileId: string) {
     return profiles.find((profile) => profile.id === profileId)?.profileName ?? profileId;
   }
+
+  const filteredZameen =
+    profileFilter === 'all'
+      ? zameen
+      : zameen.filter((item) => item.profileId === profileFilter);
 
   return (
     <>
@@ -121,6 +186,15 @@ export function ZameenPage() {
 
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
+          <div className="form-heading">
+            <h2>{editingZameenId ? 'Edit Zameen' : 'Create Zameen'}</h2>
+            {editingZameenId ? (
+              <button className="text-button" type="button" onClick={cancelEdit}>
+                Cancel
+              </button>
+            ) : null}
+          </div>
+
           <label>
             Profile
             <select
@@ -201,7 +275,11 @@ export function ZameenPage() {
           </label>
 
           <button className="primary-button" disabled={isSaving || profiles.length === 0} type="submit">
-            {isSaving ? 'Saving...' : 'Create Zameen'}
+            {isSaving
+              ? 'Saving...'
+              : editingZameenId
+                ? 'Update Zameen'
+                : 'Create Zameen'}
           </button>
         </form>
 
@@ -209,8 +287,20 @@ export function ZameenPage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Zameen</p>
-              <h2>{zameen.length} total</h2>
+              <h2>{filteredZameen.length} total</h2>
             </div>
+            <select
+              className="inline-filter"
+              value={profileFilter}
+              onChange={(event) => setProfileFilter(event.target.value)}
+            >
+              <option value="all">All profiles</option>
+              {profiles.map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.profileName}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="table-wrap">
@@ -222,10 +312,11 @@ export function ZameenPage() {
                   <th>Murabba</th>
                   <th>Area</th>
                   <th>Ownership</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {zameen.map((item) => (
+                {filteredZameen.map((item) => (
                   <tr key={item.id}>
                     <td>{item.zameenName}</td>
                     <td>{profileName(item.profileId)}</td>
@@ -234,6 +325,20 @@ export function ZameenPage() {
                       {item.totalAreaValue} {item.totalAreaUnit}
                     </td>
                     <td>{item.ownershipType ?? '-'}</td>
+                    <td>
+                      <div className="action-row">
+                        <button type="button" onClick={() => startEdit(item)}>
+                          Edit
+                        </button>
+                        <button
+                          className="danger-text-button"
+                          type="button"
+                          onClick={() => void handleDelete(item)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

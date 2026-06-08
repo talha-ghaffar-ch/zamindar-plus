@@ -3,8 +3,10 @@ import { AREA_UNITS, toSquareFeet, type AreaUnit } from '@zamindar/shared';
 
 import {
   createCrop,
+  deleteCrop,
   getCrops,
   getZameen,
+  updateCrop,
   type Crop,
   type Zameen,
 } from '../lib/api';
@@ -28,6 +30,8 @@ export function CropsPage() {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [editingCropId, setEditingCropId] = useState<string | null>(null);
+  const [zameenFilter, setZameenFilter] = useState('all');
 
   async function loadData() {
     const [zameenData, cropsData] = await Promise.all([getZameen(), getCrops()]);
@@ -79,7 +83,7 @@ export function CropsPage() {
     const areaValue = Number(form.cropAreaValue);
     const cropAreaSqft = toSquareFeet(areaValue, form.cropAreaUnit as AreaUnit);
     try {
-      await createCrop({
+      const payload = {
         zameenId: form.zameenId,
         cropName: form.cropName,
         cropAreaValue: areaValue,
@@ -89,23 +93,79 @@ export function CropsPage() {
         startYear: Number(form.startYear),
         status: form.status,
         notes: form.notes || undefined,
-      });
+      };
+
+      if (editingCropId) {
+        await updateCrop(editingCropId, payload);
+      } else {
+        await createCrop(payload);
+      }
 
       setForm({
         ...initialForm,
         zameenId: form.zameenId,
       });
+      setEditingCropId(null);
       await loadData();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Failed to create crop.');
+      setError(saveError instanceof Error ? saveError.message : 'Failed to save crop.');
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  function startEdit(crop: Crop) {
+    setEditingCropId(crop.id);
+    setForm({
+      zameenId: crop.zameenId,
+      cropName: crop.cropName,
+      cropAreaValue: String(crop.cropAreaValue),
+      cropAreaUnit: crop.cropAreaUnit,
+      startMonth: String(crop.startMonth ?? 1),
+      startYear: String(crop.startYear ?? 2026),
+      status: crop.status,
+      notes: crop.notes ?? '',
+    });
+  }
+
+  function cancelEdit() {
+    setEditingCropId(null);
+    setForm({
+      ...initialForm,
+      zameenId: zameen[0]?.id ?? '',
+    });
+  }
+
+  async function handleDelete(crop: Crop) {
+    const confirmed = window.confirm(`Delete crop "${crop.cropName}"?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setError('');
+
+    try {
+      await deleteCrop(crop.id);
+      if (editingCropId === crop.id) {
+        cancelEdit();
+      }
+      await loadData();
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error ? deleteError.message : 'Failed to delete crop.',
+      );
     }
   }
 
   function zameenName(zameenId: string) {
     return zameen.find((item) => item.id === zameenId)?.zameenName ?? zameenId;
   }
+
+  const filteredCrops =
+    zameenFilter === 'all'
+      ? crops
+      : crops.filter((crop) => crop.zameenId === zameenFilter);
 
   return (
     <>
@@ -120,6 +180,15 @@ export function CropsPage() {
 
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
+          <div className="form-heading">
+            <h2>{editingCropId ? 'Edit Crop' : 'Create Crop'}</h2>
+            {editingCropId ? (
+              <button className="text-button" type="button" onClick={cancelEdit}>
+                Cancel
+              </button>
+            ) : null}
+          </div>
+
           <label>
             Zameen
             <select
@@ -213,7 +282,11 @@ export function CropsPage() {
           </label>
 
           <button className="primary-button" disabled={isSaving || zameen.length === 0} type="submit">
-            {isSaving ? 'Saving...' : 'Create Crop'}
+            {isSaving
+              ? 'Saving...'
+              : editingCropId
+                ? 'Update Crop'
+                : 'Create Crop'}
           </button>
         </form>
 
@@ -221,8 +294,20 @@ export function CropsPage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Crops</p>
-              <h2>{crops.length} total</h2>
+              <h2>{filteredCrops.length} total</h2>
             </div>
+            <select
+              className="inline-filter"
+              value={zameenFilter}
+              onChange={(event) => setZameenFilter(event.target.value)}
+            >
+              <option value="all">All zameen</option>
+              {zameen.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.zameenName}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="table-wrap">
@@ -234,10 +319,11 @@ export function CropsPage() {
                   <th>Area</th>
                   <th>Start</th>
                   <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {crops.map((crop) => (
+                {filteredCrops.map((crop) => (
                   <tr key={crop.id}>
                     <td>{crop.cropName}</td>
                     <td>{zameenName(crop.zameenId)}</td>
@@ -248,6 +334,20 @@ export function CropsPage() {
                       {crop.startMonth ?? '-'} / {crop.startYear ?? '-'}
                     </td>
                     <td>{crop.status}</td>
+                    <td>
+                      <div className="action-row">
+                        <button type="button" onClick={() => startEdit(crop)}>
+                          Edit
+                        </button>
+                        <button
+                          className="danger-text-button"
+                          type="button"
+                          onClick={() => void handleDelete(crop)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -1,5 +1,11 @@
 import { type FormEvent, useEffect, useState } from 'react';
-import { createProfile, getProfiles, type Profile } from '../lib/api';
+import {
+  createProfile,
+  deleteProfile,
+  getProfiles,
+  updateProfile,
+  type Profile,
+} from '../lib/api';
 
 const initialForm = {
   profileName: '',
@@ -14,6 +20,7 @@ export function ProfilesPage() {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
 
   async function loadData() {
     const profilesData = await getProfiles();
@@ -48,20 +55,69 @@ export function ProfilesPage() {
     setIsSaving(true);
 
     try {
-      await createProfile({
+      const payload = {
         profileName: form.profileName,
         city: form.city || undefined,
         chakAreaName: form.chakAreaName || undefined,
         villageName: form.villageName || undefined,
         notes: form.notes || undefined,
-      });
+      };
+
+      if (editingProfileId) {
+        await updateProfile(editingProfileId, payload);
+      } else {
+        await createProfile(payload);
+      }
 
       setForm(initialForm);
+      setEditingProfileId(null);
       await loadData();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Failed to create profile.');
+      setError(
+        saveError instanceof Error ? saveError.message : 'Failed to save profile.',
+      );
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  function startEdit(profile: Profile) {
+    setEditingProfileId(profile.id);
+    setForm({
+      profileName: profile.profileName,
+      city: profile.city ?? '',
+      chakAreaName: profile.chakAreaName ?? '',
+      villageName: profile.villageName ?? '',
+      notes: profile.notes ?? '',
+    });
+  }
+
+  function cancelEdit() {
+    setEditingProfileId(null);
+    setForm(initialForm);
+  }
+
+  async function handleDelete(profile: Profile) {
+    const confirmed = window.confirm(`Delete profile "${profile.profileName}"?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setError('');
+
+    try {
+      await deleteProfile(profile.id);
+      if (editingProfileId === profile.id) {
+        cancelEdit();
+      }
+      await loadData();
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : 'Failed to delete profile.',
+      );
     }
   }
 
@@ -78,6 +134,15 @@ export function ProfilesPage() {
 
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
+          <div className="form-heading">
+            <h2>{editingProfileId ? 'Edit Profile' : 'Create Profile'}</h2>
+            {editingProfileId ? (
+              <button className="text-button" type="button" onClick={cancelEdit}>
+                Cancel
+              </button>
+            ) : null}
+          </div>
+
           <label>
             Profile Name
             <input
@@ -121,7 +186,11 @@ export function ProfilesPage() {
           </label>
 
           <button className="primary-button" disabled={isSaving} type="submit">
-            {isSaving ? 'Saving...' : 'Create Profile'}
+            {isSaving
+              ? 'Saving...'
+              : editingProfileId
+                ? 'Update Profile'
+                : 'Create Profile'}
           </button>
         </form>
 
@@ -141,6 +210,7 @@ export function ProfilesPage() {
                   <th>City</th>
                   <th>Chak / Area</th>
                   <th>Village</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -150,6 +220,20 @@ export function ProfilesPage() {
                     <td>{profile.city ?? '-'}</td>
                     <td>{profile.chakAreaName ?? '-'}</td>
                     <td>{profile.villageName ?? '-'}</td>
+                    <td>
+                      <div className="action-row">
+                        <button type="button" onClick={() => startEdit(profile)}>
+                          Edit
+                        </button>
+                        <button
+                          className="danger-text-button"
+                          type="button"
+                          onClick={() => void handleDelete(profile)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
