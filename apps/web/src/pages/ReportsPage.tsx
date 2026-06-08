@@ -1,29 +1,52 @@
 import { useEffect, useState } from 'react';
 import {
-  getExpenses,
-  getIncome,
+  getCropProfitabilityReport,
+  getMonthlySummaryReport,
   getReportSummary,
-  type Expense,
-  type Income,
+  type CropProfitabilityReport,
+  type MonthlySummaryReport,
   type ReportSummary,
 } from '../lib/api';
 
+const monthNames = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+function formatMonth(report: MonthlySummaryReport) {
+  return `${monthNames[report.month - 1] ?? report.month} ${report.year}`;
+}
+
 export function ReportsPage() {
   const [summary, setSummary] = useState<ReportSummary | null>(null);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [income, setIncome] = useState<Income[]>([]);
+  const [cropReports, setCropReports] = useState<CropProfitabilityReport[]>([]);
+  const [monthlyReports, setMonthlyReports] = useState<MonthlySummaryReport[]>([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let isActive = true;
 
-    Promise.all([getReportSummary(), getExpenses(), getIncome()])
-      .then(([summaryData, expensesData, incomeData]) => {
+    Promise.all([
+      getReportSummary(),
+      getCropProfitabilityReport(),
+      getMonthlySummaryReport(),
+    ])
+      .then(([summaryData, cropReportData, monthlyReportData]) => {
         if (!isActive) return;
 
         setSummary(summaryData);
-        setExpenses(expensesData);
-        setIncome(incomeData);
+        setCropReports(cropReportData);
+        setMonthlyReports(monthlyReportData);
       })
       .catch((loadError) => {
         if (isActive) {
@@ -66,8 +89,8 @@ export function ReportsPage() {
         <section className="panel">
           <div className="panel-header">
             <div>
-              <p className="eyebrow">Expenses</p>
-              <h2>{expenses.length} records</h2>
+              <p className="eyebrow">Crop Profitability</p>
+              <h2>{cropReports.length} crops</h2>
             </div>
           </div>
 
@@ -75,19 +98,23 @@ export function ReportsPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Description</th>
-                  <th>Category</th>
-                  <th>Amount</th>
-                  <th>Date</th>
+                  <th>Crop</th>
+                  <th>Zameen</th>
+                  <th>Status</th>
+                  <th>Expense</th>
+                  <th>Income</th>
+                  <th>Net</th>
                 </tr>
               </thead>
               <tbody>
-                {expenses.map((expense) => (
-                  <tr key={expense.id}>
-                    <td>{expense.description}</td>
-                    <td>{expense.expenseCategory}</td>
-                    <td>Rs {expense.amount.toLocaleString()}</td>
-                    <td>{new Date(expense.expenseDate).toLocaleDateString()}</td>
+                {cropReports.map((report) => (
+                  <tr key={report.cropId}>
+                    <td>{report.cropName}</td>
+                    <td>{report.zameenName}</td>
+                    <td>{report.status}</td>
+                    <td>Rs {report.totalExpense.toLocaleString()}</td>
+                    <td>Rs {report.totalIncome.toLocaleString()}</td>
+                    <td>Rs {report.netProfit.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -98,8 +125,8 @@ export function ReportsPage() {
         <section className="panel">
           <div className="panel-header">
             <div>
-              <p className="eyebrow">Income</p>
-              <h2>{income.length} records</h2>
+              <p className="eyebrow">Monthly Summary</p>
+              <h2>{monthlyReports.length} months</h2>
             </div>
           </div>
 
@@ -107,19 +134,21 @@ export function ReportsPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Type</th>
-                  <th>Buyer</th>
-                  <th>Amount</th>
-                  <th>Date</th>
+                  <th>Month</th>
+                  <th>Expense</th>
+                  <th>Income</th>
+                  <th>Net</th>
+                  <th>Records</th>
                 </tr>
               </thead>
               <tbody>
-                {income.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.incomeType}</td>
-                    <td>{item.buyerName ?? '-'}</td>
-                    <td>Rs {item.totalAmount.toLocaleString()}</td>
-                    <td>{new Date(item.incomeDate).toLocaleDateString()}</td>
+                {monthlyReports.map((report) => (
+                  <tr key={`${report.year}-${report.month}`}>
+                    <td>{formatMonth(report)}</td>
+                    <td>Rs {report.totalExpense.toLocaleString()}</td>
+                    <td>Rs {report.totalIncome.toLocaleString()}</td>
+                    <td>Rs {report.netProfit.toLocaleString()}</td>
+                    <td>{report.expenseCount + report.incomeCount}</td>
                   </tr>
                 ))}
               </tbody>

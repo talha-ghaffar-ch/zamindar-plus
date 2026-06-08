@@ -11,6 +11,28 @@ export type ReportSummary = {
   incomeCount: number;
 };
 
+export type CropProfitabilityReport = {
+  cropId: string;
+  cropName: string;
+  zameenName: string;
+  status: string;
+  totalExpense: number;
+  totalIncome: number;
+  netProfit: number;
+  expenseCount: number;
+  incomeCount: number;
+};
+
+export type MonthlySummaryReport = {
+  year: number;
+  month: number;
+  totalExpense: number;
+  totalIncome: number;
+  netProfit: number;
+  expenseCount: number;
+  incomeCount: number;
+};
+
 export type User = {
   id: string;
   firstName: string;
@@ -272,6 +294,14 @@ export function getMe() {
 
 export function getReportSummary() {
   return requestJson<ReportSummary>('/reports/summary');
+}
+
+export function getCropProfitabilityReport() {
+  return requestJson<CropProfitabilityReport[]>('/reports/crop-profitability');
+}
+
+export function getMonthlySummaryReport() {
+  return requestJson<MonthlySummaryReport[]>('/reports/monthly-summary');
 }
 
 export function getUsers() {

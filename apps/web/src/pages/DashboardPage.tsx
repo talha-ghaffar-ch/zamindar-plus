@@ -48,6 +48,22 @@ export function DashboardPage() {
           <span>Net Profit</span>
           <strong>{summary ? `Rs ${summary.netProfit.toLocaleString()}` : 'Loading...'}</strong>
         </article>
+        <article>
+          <span>Zameen Records</span>
+          <strong>{summary ? summary.zameenCount.toLocaleString() : 'Loading...'}</strong>
+        </article>
+        <article>
+          <span>Crop Records</span>
+          <strong>{summary ? summary.cropCount.toLocaleString() : 'Loading...'}</strong>
+        </article>
+        <article>
+          <span>Transactions</span>
+          <strong>
+            {summary
+              ? (summary.expenseCount + summary.incomeCount).toLocaleString()
+              : 'Loading...'}
+          </strong>
+        </article>
       </section>
 
       <section className="panel">
