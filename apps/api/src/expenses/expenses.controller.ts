@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -34,5 +35,10 @@ export class ExpensesController {
     @Param('month', ParseIntPipe) month: number,
   ) {
     return this.expensesService.findByMonth(year, month);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.expensesService.remove(id);
   }
 }

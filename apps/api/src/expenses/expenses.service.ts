@@ -55,4 +55,30 @@ export class ExpensesService {
       },
     });
   }
+
+  async remove(id: string) {
+    const expense = await this.prisma.expense.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!expense) {
+      throw new NotFoundException('Expense not found.');
+    }
+
+    await this.prisma.expense.delete({
+      where: {
+        id,
+      },
+    });
+
+    return {
+      deleted: true,
+      id,
+    };
+  }
 }
