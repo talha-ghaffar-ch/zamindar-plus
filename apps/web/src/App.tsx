@@ -6,8 +6,8 @@ import {
   LandPlot,
   LayoutDashboard,
   LogOut,
+  Settings,
   Sprout,
-  UserRound,
   UsersRound,
   Wheat,
   type LucideIcon,
@@ -25,7 +25,7 @@ import {
 import { AuthPage } from './pages/AuthPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProfilesPage } from './pages/ProfilesPage';
-import { UsersPage } from './pages/UsersPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { ZameenPage } from './pages/ZameenPage';
 import { CropsPage } from './pages/CropsPage';
 import { ExpensesPage } from './pages/ExpensesPage';
@@ -34,7 +34,7 @@ import { ReportsPage } from './pages/ReportsPage';
 
 const navItems: Array<{ label: string; icon: LucideIcon }> = [
   { label: 'Dashboard', icon: LayoutDashboard },
-  { label: 'Users', icon: UserRound },
+  { label: 'Settings', icon: Settings },
   { label: 'Profiles', icon: UsersRound },
   { label: 'Zameen', icon: LandPlot },
   { label: 'Crops', icon: Wheat },
@@ -137,7 +137,11 @@ function App() {
 
         <div className="sidebar-user">
           <div className="sidebar-user-avatar" aria-hidden="true">
-            {currentUser.firstName.slice(0, 1)}
+            {currentUser.profileImageUrl ? (
+              <img alt="" src={currentUser.profileImageUrl} />
+            ) : (
+              currentUser.firstName.slice(0, 1)
+            )}
           </div>
           <span>
             {currentUser.firstName} {currentUser.lastName}
@@ -171,8 +175,8 @@ function App() {
       <main className="workspace">
         {activePage === 'Dashboard' ? (
           <DashboardPage currentUser={currentUser} />
-        ) : activePage === 'Users' ? (
-          <UsersPage
+        ) : activePage === 'Settings' ? (
+          <SettingsPage
             currentUser={currentUser}
             onAccountDeleted={handleLogout}
             onUserUpdated={setCurrentUser}

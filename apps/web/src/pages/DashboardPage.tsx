@@ -8,11 +8,11 @@ import {
   CircleDollarSign,
   LandPlot,
   ShieldCheck,
+  SlidersHorizontal,
   Sprout,
-  UsersRound,
   Wheat,
 } from 'lucide-react';
-import { getReportSummary, getUsers, type ReportSummary, type User } from '../lib/api';
+import { getReportSummary, type ReportSummary, type User } from '../lib/api';
 
 type DashboardPageProps = {
   currentUser: User;
@@ -34,9 +34,7 @@ function metricStyle(value: number, maxValue: number) {
 
 export function DashboardPage({ currentUser }: DashboardPageProps) {
   const [summary, setSummary] = useState<ReportSummary | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
 
   const maxMoneyValue = useMemo(
     () =>
@@ -124,17 +122,9 @@ export function DashboardPage({ currentUser }: DashboardPageProps) {
   useEffect(() => {
     async function loadDashboard() {
       try {
-        const [summaryData, usersData] = await Promise.all([
-          getReportSummary(),
-          getUsers(),
-        ]);
-
-        setSummary(summaryData);
-        setUsers(usersData);
+        setSummary(await getReportSummary());
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : 'Failed to load dashboard.');
-      } finally {
-        setIsLoading(false);
       }
     }
 
@@ -163,8 +153,8 @@ export function DashboardPage({ currentUser }: DashboardPageProps) {
               {currentUser.farmerType ?? 'Farmer'}
             </span>
             <span>
-              <UsersRound size={15} aria-hidden="true" />
-              {users.length || 1} account
+              <SlidersHorizontal size={15} aria-hidden="true" />
+              {currentUser.preferredAreaUnit} / {currentUser.preferredCurrency}
             </span>
           </div>
         </div>
@@ -265,52 +255,6 @@ export function DashboardPage({ currentUser }: DashboardPageProps) {
         </article>
       </section>
 
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <p className="eyebrow">Users</p>
-            <h2>Registered farmers</h2>
-          </div>
-          <span>{users.length} total</span>
-        </div>
-
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Farmer Type</th>
-                <th>Role</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={5}>Loading account...</td>
-                </tr>
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan={5}>No account data found.</td>
-                </tr>
-              ) : (
-                users.map((user) => (
-                <tr key={user.id}>
-                  <td>
-                    {user.firstName} {user.lastName}
-                  </td>
-                  <td>{user.email}</td>
-                  <td>{user.phone ?? '-'}</td>
-                  <td>{user.farmerType ?? '-'}</td>
-                  <td>{user.role}</td>
-                </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
     </>
   );
 }

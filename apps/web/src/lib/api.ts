@@ -44,6 +44,14 @@ export type User = {
   phone: string | null;
   farmerType: string | null;
   role: string;
+  profileImageUrl: string | null;
+  preferredAreaUnit: string;
+  preferredCurrency: string;
+  preferredLanguage: string;
+  dateFormat: string;
+  emailNotifications: boolean;
+  smsNotifications: boolean;
+  weeklyReport: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -79,7 +87,16 @@ export type CreateUserPayload = {
   farmerType?: string;
 };
 
-export type UpdateUserPayload = Partial<CreateUserPayload>;
+export type UpdateUserPayload = Partial<CreateUserPayload> & {
+  profileImageUrl?: string;
+  preferredAreaUnit?: string;
+  preferredCurrency?: string;
+  preferredLanguage?: string;
+  dateFormat?: string;
+  emailNotifications?: boolean;
+  smsNotifications?: boolean;
+  weeklyReport?: boolean;
+};
 
 export type LoginPayload = {
   email: string;

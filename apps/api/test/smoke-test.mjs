@@ -95,7 +95,7 @@ async function signup(email) {
       email,
       phone: '03000000000',
       password,
-      farmerType: 'Land owner',
+      farmerType: 'Land Owner',
     },
   });
 }
@@ -146,6 +146,37 @@ try {
   });
 
   assert(loginResponse.accessToken, 'Login did not return an access token.');
+
+  const updatedOwner = await requestJson(`/users/${ownerAuth.user.id}`, {
+    method: 'PATCH',
+    token: ownerAuth.accessToken,
+    body: {
+      firstName: 'Updated',
+      preferredAreaUnit: 'Kanal',
+      preferredCurrency: 'PKR',
+      preferredLanguage: 'English',
+      dateFormat: 'YYYY-MM-DD',
+      emailNotifications: false,
+      smsNotifications: true,
+      weeklyReport: false,
+      profileImageUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" />',
+    },
+  });
+
+  assert(updatedOwner.firstName === 'Updated', 'User first name was not updated.');
+  assert(
+    updatedOwner.preferredAreaUnit === 'Kanal',
+    'Preferred area unit was not saved.',
+  );
+  assert(
+    updatedOwner.emailNotifications === false,
+    'Email notification setting was not saved.',
+  );
+  assert(
+    updatedOwner.smsNotifications === true,
+    'SMS notification setting was not saved.',
+  );
+  assert(updatedOwner.weeklyReport === false, 'Weekly report setting was not saved.');
 
   const profile = await requestJson('/profiles', {
     method: 'POST',

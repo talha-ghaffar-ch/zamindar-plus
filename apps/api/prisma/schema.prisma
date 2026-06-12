@@ -9,17 +9,25 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  firstName    String
-  lastName     String
-  email        String    @unique
-  phone        String?
-  passwordHash String
-  farmerType   String?
-  role         String    @default("USER")
-  profiles     Profile[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  firstName          String
+  lastName           String
+  email              String    @unique
+  phone              String?
+  passwordHash       String
+  farmerType         String?
+  role               String    @default("USER")
+  profileImageUrl    String?
+  preferredAreaUnit  String    @default("Acre")
+  preferredCurrency  String    @default("PKR")
+  preferredLanguage  String    @default("English")
+  dateFormat         String    @default("DD/MM/YYYY")
+  emailNotifications Boolean   @default(true)
+  smsNotifications   Boolean   @default(false)
+  weeklyReport       Boolean   @default(true)
+  profiles           Profile[]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 model Profile {
@@ -61,7 +69,7 @@ model Zameen {
 }
 
 model Crop {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   zameenId         String
   cropName         String
   cropAreaValue    Float
@@ -71,12 +79,12 @@ model Crop {
   startYear        Int?
   expectedEndMonth Int?
   expectedEndYear  Int?
-  status           String   @default("Active")
+  status           String    @default("Active")
   notes            String?
   expenses         Expense[]
-  incomes  	   Income[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  incomes          Income[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   zameen Zameen @relation(fields: [zameenId], references: [id], onDelete: Cascade)
 

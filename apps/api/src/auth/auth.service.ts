@@ -17,6 +17,14 @@ const safeUserSelect = {
   phone: true,
   farmerType: true,
   role: true,
+  profileImageUrl: true,
+  preferredAreaUnit: true,
+  preferredCurrency: true,
+  preferredLanguage: true,
+  dateFormat: true,
+  emailNotifications: true,
+  smsNotifications: true,
+  weeklyReport: true,
   createdAt: true,
   updatedAt: true,
 };
@@ -86,6 +94,14 @@ export class AuthService {
       phone: user.phone,
       farmerType: user.farmerType,
       role: user.role,
+      profileImageUrl: user.profileImageUrl,
+      preferredAreaUnit: user.preferredAreaUnit,
+      preferredCurrency: user.preferredCurrency,
+      preferredLanguage: user.preferredLanguage,
+      dateFormat: user.dateFormat,
+      emailNotifications: user.emailNotifications,
+      smsNotifications: user.smsNotifications,
+      weeklyReport: user.weeklyReport,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });
@@ -114,6 +130,14 @@ export class AuthService {
     phone: string | null;
     farmerType: string | null;
     role: string;
+    profileImageUrl: string | null;
+    preferredAreaUnit: string;
+    preferredCurrency: string;
+    preferredLanguage: string;
+    dateFormat: string;
+    emailNotifications: boolean;
+    smsNotifications: boolean;
+    weeklyReport: boolean;
     createdAt: Date;
     updatedAt: Date;
   }) {

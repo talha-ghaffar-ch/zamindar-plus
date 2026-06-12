@@ -1,4 +1,12 @@
-import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsIn,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -27,4 +35,37 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   farmerType?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(250000)
+  profileImageUrl?: string;
+
+  @IsOptional()
+  @IsIn(['Acre', 'Kanal', 'Marla'])
+  preferredAreaUnit?: string;
+
+  @IsOptional()
+  @IsIn(['PKR', 'USD', 'SAR', 'AED'])
+  preferredCurrency?: string;
+
+  @IsOptional()
+  @IsIn(['English', 'Urdu', 'Punjabi'])
+  preferredLanguage?: string;
+
+  @IsOptional()
+  @IsIn(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'])
+  dateFormat?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  emailNotifications?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  smsNotifications?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  weeklyReport?: boolean;
 }
