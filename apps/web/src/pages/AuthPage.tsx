@@ -2,6 +2,8 @@ import { type FormEvent, useState } from 'react';
 import {
   BadgeCheck,
   BarChart3,
+  Eye,
+  EyeOff,
   LogIn,
   ShieldCheck,
   UserPlus,
@@ -24,7 +26,7 @@ const initialSignupForm: CreateUserPayload = {
   email: '',
   phone: '',
   password: '',
-  farmerType: 'Land owner',
+  farmerType: 'Land Owner',
 };
 
 const initialLoginForm: LoginPayload = {
@@ -38,6 +40,8 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
   const [signupForm, setSignupForm] = useState(initialSignupForm);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoginPasswordVisible, setIsLoginPasswordVisible] = useState(false);
+  const [isSignupPasswordVisible, setIsSignupPasswordVisible] = useState(false);
   const isLoginReady =
     loginForm.email.trim().length > 0 && loginForm.password.length >= 8;
   const isSignupReady =
@@ -96,7 +100,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
 
         <div className="auth-card">
           <div className="auth-card-header">
-            <p className="eyebrow">Secure access</p>
+            <p className="eyebrow">Secure Access</p>
             <h2>{mode === 'login' ? 'Sign In' : 'Create Account'}</h2>
             <p>
               {mode === 'login'
@@ -108,15 +112,15 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
           <div className="auth-status-row">
             <span>
               <ShieldCheck size={14} aria-hidden="true" />
-              Secure session
+              Secure Session
             </span>
             <span>
               <BarChart3 size={14} aria-hidden="true" />
-              Profit reports
+              Profit Reports
             </span>
             <span>
               <BadgeCheck size={14} aria-hidden="true" />
-              Private data
+              Private Data
             </span>
           </div>
 
@@ -159,15 +163,33 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
 
               <label>
                 Password
-                <input
-                  required
-                  minLength={8}
-                  type="password"
-                  value={loginForm.password}
-                  onChange={(event) =>
-                    setLoginForm({ ...loginForm, password: event.target.value })
-                  }
-                />
+                <span className="password-field">
+                  <input
+                    required
+                    minLength={8}
+                    type={isLoginPasswordVisible ? 'text' : 'password'}
+                    value={loginForm.password}
+                    onChange={(event) =>
+                      setLoginForm({ ...loginForm, password: event.target.value })
+                    }
+                  />
+                  <button
+                    aria-label={
+                      isLoginPasswordVisible ? 'Hide password' : 'Show password'
+                    }
+                    className="password-toggle"
+                    type="button"
+                    onClick={() =>
+                      setIsLoginPasswordVisible((isVisible) => !isVisible)
+                    }
+                  >
+                    {isLoginPasswordVisible ? (
+                      <EyeOff size={17} aria-hidden="true" />
+                    ) : (
+                      <Eye size={17} aria-hidden="true" />
+                    )}
+                  </button>
+                </span>
               </label>
 
               <button
@@ -235,15 +257,33 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
 
               <label>
                 Password
-                <input
-                  required
-                  minLength={8}
-                  type="password"
-                  value={signupForm.password}
-                  onChange={(event) =>
-                    setSignupForm({ ...signupForm, password: event.target.value })
-                  }
-                />
+                <span className="password-field">
+                  <input
+                    required
+                    minLength={8}
+                    type={isSignupPasswordVisible ? 'text' : 'password'}
+                    value={signupForm.password}
+                    onChange={(event) =>
+                      setSignupForm({ ...signupForm, password: event.target.value })
+                    }
+                  />
+                  <button
+                    aria-label={
+                      isSignupPasswordVisible ? 'Hide password' : 'Show password'
+                    }
+                    className="password-toggle"
+                    type="button"
+                    onClick={() =>
+                      setIsSignupPasswordVisible((isVisible) => !isVisible)
+                    }
+                  >
+                    {isSignupPasswordVisible ? (
+                      <EyeOff size={17} aria-hidden="true" />
+                    ) : (
+                      <Eye size={17} aria-hidden="true" />
+                    )}
+                  </button>
+                </span>
               </label>
 
               <label>
@@ -257,11 +297,11 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
                     })
                   }
                 >
-                  <option>Land owner</option>
-                  <option>Thekka farmer</option>
-                  <option>Batai farmer</option>
-                  <option>Family member</option>
-                  <option>Farm manager</option>
+                  <option>Land Owner</option>
+                  <option>Thekka Farmer</option>
+                  <option>Batai Farmer</option>
+                  <option>Family Member</option>
+                  <option>Farm Manager</option>
                 </select>
               </label>
 

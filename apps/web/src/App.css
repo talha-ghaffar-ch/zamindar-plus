@@ -1217,6 +1217,45 @@ tbody tr:hover {
   background: rgba(255, 255, 255, 0.95);
 }
 
+.password-field {
+  position: relative;
+  display: grid;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  color: #52635d;
+  background: transparent;
+  transition:
+    transform 160ms ease,
+    color 160ms ease,
+    background 160ms ease;
+  transform: translateY(-50%);
+}
+
+.password-toggle:hover {
+  color: var(--green);
+  background: rgba(23, 120, 79, 0.1);
+}
+
+.password-toggle:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(22, 139, 160, 0.16);
+}
+
 .signup-form {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px 12px;
