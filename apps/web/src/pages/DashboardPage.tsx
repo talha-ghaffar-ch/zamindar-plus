@@ -4,51 +4,123 @@ import {
   ArrowUpRight,
   BanknoteArrowDown,
   BanknoteArrowUp,
-  ChartNoAxesCombined,
+  BarChart3,
+  CalendarDays,
   CircleDollarSign,
+  ClipboardList,
+  Gauge,
   LandPlot,
-  ShieldCheck,
-  SlidersHorizontal,
+  LineChart,
+  PlusCircle,
+  ReceiptText,
+  Route,
   Sprout,
+  TrendingUp,
   Wheat,
 } from 'lucide-react';
-import { getReportSummary, type ReportSummary, type User } from '../lib/api';
+import {
+  getCropProfitabilityReport,
+  getMonthlySummaryReport,
+  getReportSummary,
+  type CropProfitabilityReport,
+  type MonthlySummaryReport,
+  type ReportSummary,
+  type User,
+} from '../lib/api';
 
 type DashboardPageProps = {
   currentUser: User;
+  onNavigate: (page: string) => void;
 };
 
 type MetricTone = 'expense' | 'income' | 'profit' | 'land' | 'crop' | 'activity';
+
+const monthNames = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 
 function formatCurrency(value: number) {
   return `Rs ${value.toLocaleString()}`;
 }
 
-function metricStyle(value: number, maxValue: number) {
-  const normalizedValue = maxValue > 0 ? Math.max((value / maxValue) * 100, 12) : 18;
+function formatMonth(report: MonthlySummaryReport) {
+  return `${monthNames[report.month - 1] ?? report.month} ${report.year}`;
+}
+
+function percentStyle(value: number, maxValue: number) {
+  const normalizedValue = maxValue > 0 ? Math.max((value / maxValue) * 100, 8) : 8;
 
   return {
     '--metric-level': `${Math.min(normalizedValue, 100)}%`,
   } as CSSProperties;
 }
 
-export function DashboardPage({ currentUser }: DashboardPageProps) {
+function ringStyle(value: number) {
+  return {
+    '--ring-value': `${Math.max(Math.min(value, 100), 0)}%`,
+  } as CSSProperties;
+}
+
+export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
   const [summary, setSummary] = useState<ReportSummary | null>(null);
+  const [monthlyReports, setMonthlyReports] = useState<MonthlySummaryReport[]>([]);
+  const [cropReports, setCropReports] = useState<CropProfitabilityReport[]>([]);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    let isActive = true;
+
+    Promise.all([
+      getReportSummary(),
+      getMonthlySummaryReport(),
+      getCropProfitabilityReport(),
+    ])
+      .then(([summaryData, monthlyData, cropData]) => {
+        if (!isActive) return;
+
+        setSummary(summaryData);
+        setMonthlyReports(monthlyData);
+        setCropReports(cropData);
+      })
+      .catch((loadError) => {
+        if (isActive) {
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : 'Failed to load dashboard.',
+          );
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const transactionCount = summary
+    ? summary.expenseCount + summary.incomeCount
+    : 0;
   const maxMoneyValue = useMemo(
     () =>
       Math.max(
         summary?.totalExpense ?? 0,
         summary?.totalIncome ?? 0,
         Math.abs(summary?.netProfit ?? 0),
+        1,
       ),
     [summary],
   );
-
-  const transactionCount = summary
-    ? summary.expenseCount + summary.incomeCount
-    : 0;
   const profitMargin =
     summary && summary.totalIncome > 0
       ? Math.round((summary.netProfit / summary.totalIncome) * 100)
@@ -60,6 +132,24 @@ export function DashboardPage({ currentUser }: DashboardPageProps) {
             100,
         )
       : 0;
+  const recordCount = summary
+    ? summary.zameenCount +
+      summary.cropCount +
+      summary.expenseCount +
+      summary.incomeCount
+    : 0;
+  const topCrop = cropReports.reduce<CropProfitabilityReport | null>(
+    (bestCrop, crop) =>
+      !bestCrop || crop.netProfit > bestCrop.netProfit ? crop : bestCrop,
+    null,
+  );
+  const recentMonths = monthlyReports.slice(-6);
+  const maxMonthlyValue = Math.max(
+    ...recentMonths.map((report) =>
+      Math.max(report.totalExpense, report.totalIncome, Math.abs(report.netProfit)),
+    ),
+    1,
+  );
 
   const metricCards: Array<{
     label: string;
@@ -70,17 +160,17 @@ export function DashboardPage({ currentUser }: DashboardPageProps) {
     rawValue: number;
   }> = [
     {
-      label: 'Total Expense',
+      label: 'Expense',
       value: summary ? formatCurrency(summary.totalExpense) : 'Loading...',
-      hint: `${expenseShare}% of recorded cash movement`,
+      hint: `${expenseShare}% of movement`,
       tone: 'expense',
       icon: BanknoteArrowDown,
       rawValue: summary?.totalExpense ?? 0,
     },
     {
-      label: 'Total Income',
+      label: 'Income',
       value: summary ? formatCurrency(summary.totalIncome) : 'Loading...',
-      hint: 'Crop sale and received payments',
+      hint: 'received and recorded',
       tone: 'income',
       icon: BanknoteArrowUp,
       rawValue: summary?.totalIncome ?? 0,
@@ -88,173 +178,250 @@ export function DashboardPage({ currentUser }: DashboardPageProps) {
     {
       label: 'Net Profit',
       value: summary ? formatCurrency(summary.netProfit) : 'Loading...',
-      hint: `${profitMargin}% margin from income`,
+      hint: `${profitMargin}% margin`,
       tone: 'profit',
       icon: CircleDollarSign,
       rawValue: Math.abs(summary?.netProfit ?? 0),
     },
     {
-      label: 'Zameen Records',
+      label: 'Zameen',
       value: summary ? summary.zameenCount.toLocaleString() : 'Loading...',
-      hint: 'Managed land entries',
+      hint: 'managed records',
       tone: 'land',
       icon: LandPlot,
       rawValue: summary?.zameenCount ?? 0,
     },
     {
-      label: 'Crop Records',
+      label: 'Crops',
       value: summary ? summary.cropCount.toLocaleString() : 'Loading...',
-      hint: 'Active and historical crops',
+      hint: 'crop cycles',
       tone: 'crop',
       icon: Wheat,
       rawValue: summary?.cropCount ?? 0,
     },
     {
-      label: 'Transactions',
+      label: 'Entries',
       value: summary ? transactionCount.toLocaleString() : 'Loading...',
-      hint: 'Expense and income entries',
+      hint: 'expense + income',
       tone: 'activity',
-      icon: ChartNoAxesCombined,
+      icon: ClipboardList,
       rawValue: transactionCount,
     },
   ];
 
-  useEffect(() => {
-    async function loadDashboard() {
-      try {
-        setSummary(await getReportSummary());
-      } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : 'Failed to load dashboard.');
-      }
-    }
+  const quickActions = [
+    {
+      label: 'Add Profile',
+      page: 'Profiles',
+      icon: PlusCircle,
+      hint: 'farm owner or farm book',
+    },
+    {
+      label: 'Add Zameen',
+      page: 'Zameen',
+      icon: LandPlot,
+      hint: 'land and ownership',
+    },
+    {
+      label: 'Add Crop',
+      page: 'Crops',
+      icon: Wheat,
+      hint: 'area and season',
+    },
+    {
+      label: 'Add Expense',
+      page: 'Expenses',
+      icon: ReceiptText,
+      hint: 'kharcha entry',
+    },
+    {
+      label: 'Add Income',
+      page: 'Income',
+      icon: CircleDollarSign,
+      hint: 'sale or payment',
+    },
+    {
+      label: 'Open Reports',
+      page: 'Reports',
+      icon: BarChart3,
+      hint: 'profit details',
+    },
+  ];
 
-    void loadDashboard();
-  }, []);
+  const nextSteps = [
+    {
+      label: 'Land records',
+      value: summary?.zameenCount ? 'Ready' : 'Add first zameen',
+      page: 'Zameen',
+    },
+    {
+      label: 'Crop cycles',
+      value: summary?.cropCount ? 'Tracked' : 'Create crop allocation',
+      page: 'Crops',
+    },
+    {
+      label: 'Money flow',
+      value: transactionCount ? 'Active' : 'Record expense or income',
+      page: transactionCount ? 'Reports' : 'Expenses',
+    },
+  ];
 
   return (
-    <>
-      <section className="dashboard-hero">
-        <div className="dashboard-hero-copy">
-          <p className="eyebrow">Live farm control</p>
-          <h1>
-            Welcome back, <span>{currentUser.firstName}</span>
-          </h1>
-          <p>
-            Your zameen, crops, spending, income, and profit are gathered into
-            one working view.
-          </p>
-          <div className="dashboard-hero-tags">
-            <span>
-              <ShieldCheck size={15} aria-hidden="true" />
-              {currentUser.role === 'ADMIN' ? 'Admin access' : 'User access'}
-            </span>
-            <span>
-              <Sprout size={15} aria-hidden="true" />
-              {currentUser.farmerType ?? 'Farmer'}
-            </span>
-            <span>
-              <SlidersHorizontal size={15} aria-hidden="true" />
-              {currentUser.preferredAreaUnit} / {currentUser.preferredCurrency}
-            </span>
-          </div>
+    <section className="dashboard-screen">
+      <div className="dashboard-titlebar">
+        <div>
+          <p className="eyebrow">Dashboard</p>
+          <h1>Farm command center</h1>
         </div>
-
-        <div className="dashboard-hero-panel" aria-hidden="true">
-          <div className="live-chip">Live ledger</div>
-          <div className="profit-orbit">
-            <strong>{summary ? `${profitMargin}%` : '--'}</strong>
-            <span>profit margin</span>
-          </div>
-          <div className="hero-market-lines">
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
+        <div className="dashboard-user-chip">
+          <Sprout size={16} aria-hidden="true" />
+          <span>{currentUser.farmerType ?? 'Farmer'}</span>
+          <strong>{currentUser.preferredAreaUnit} / {currentUser.preferredCurrency}</strong>
         </div>
-      </section>
+      </div>
 
       {error ? <p className="error">{error}</p> : null}
 
-      <section className="metric-grid">
-        {metricCards.map((card) => (
-          <article
-            className={`metric-card metric-card-${card.tone}`}
-            key={card.label}
-            style={metricStyle(card.rawValue, maxMoneyValue || transactionCount)}
-          >
-            <div className="metric-card-header">
-              <span>{card.label}</span>
-              <card.icon size={20} aria-hidden="true" />
-            </div>
-            <strong>{card.value}</strong>
-            <p>{card.hint}</p>
-            <div className="metric-level" aria-hidden="true" />
-          </article>
-        ))}
-      </section>
-
-      <section className="dashboard-insights">
-        <article className="panel cashflow-panel">
-          <div className="panel-header">
+      <div className="dashboard-grid">
+        <section className="panel dashboard-profit-panel">
+          <div className="panel-header compact-panel-header">
             <div>
-              <p className="eyebrow">Cash Flow</p>
-              <h2>Profit movement</h2>
+              <p className="eyebrow">Financial Pulse</p>
+              <h2>{summary ? formatCurrency(summary.netProfit) : 'Loading...'}</h2>
             </div>
+            <Gauge size={22} aria-hidden="true" />
           </div>
 
-          <div className="cashflow-bars" aria-label="Cash flow comparison">
-            <div className="cashflow-row">
+          <div className="profit-ring" style={ringStyle(profitMargin)}>
+            <strong>{summary ? `${profitMargin}%` : '--'}</strong>
+            <span>profit margin</span>
+          </div>
+
+          <div className="cash-mini-list">
+            <div>
               <span>
-                <ArrowDownRight size={16} aria-hidden="true" />
+                <ArrowDownRight size={15} aria-hidden="true" />
                 Expense
               </span>
-              <div className="cashflow-track">
-                <i
-                  className="cashflow-fill expense-fill"
-                  style={metricStyle(summary?.totalExpense ?? 0, maxMoneyValue)}
-                />
-              </div>
-              <strong>{summary ? formatCurrency(summary.totalExpense) : 'Loading...'}</strong>
+              <b>{summary ? formatCurrency(summary.totalExpense) : 'Loading...'}</b>
             </div>
-            <div className="cashflow-row">
+            <div>
               <span>
-                <ArrowUpRight size={16} aria-hidden="true" />
+                <ArrowUpRight size={15} aria-hidden="true" />
                 Income
               </span>
-              <div className="cashflow-track">
-                <i
-                  className="cashflow-fill income-fill"
-                  style={metricStyle(summary?.totalIncome ?? 0, maxMoneyValue)}
-                />
-              </div>
-              <strong>{summary ? formatCurrency(summary.totalIncome) : 'Loading...'}</strong>
-            </div>
-            <div className="cashflow-row">
-              <span>
-                <CircleDollarSign size={16} aria-hidden="true" />
-                Net
-              </span>
-              <div className="cashflow-track">
-                <i
-                  className="cashflow-fill profit-fill"
-                  style={metricStyle(Math.abs(summary?.netProfit ?? 0), maxMoneyValue)}
-                />
-              </div>
-              <strong>{summary ? formatCurrency(summary.netProfit) : 'Loading...'}</strong>
+              <b>{summary ? formatCurrency(summary.totalIncome) : 'Loading...'}</b>
             </div>
           </div>
-        </article>
+        </section>
 
-        <article className="field-image-panel">
-          <div>
-            <p className="eyebrow">Field View</p>
-            <h2>Records become decisions when the picture is clear.</h2>
+        <section className="metric-grid dashboard-metrics">
+          {metricCards.map((card) => (
+            <article
+              className={`metric-card metric-card-${card.tone}`}
+              key={card.label}
+              style={percentStyle(card.rawValue, maxMoneyValue || transactionCount)}
+            >
+              <div className="metric-card-header">
+                <span>{card.label}</span>
+                <card.icon size={18} aria-hidden="true" />
+              </div>
+              <strong>{card.value}</strong>
+              <p>{card.hint}</p>
+              <div className="metric-level" aria-hidden="true" />
+            </article>
+          ))}
+        </section>
+
+        <section className="panel quick-actions-panel">
+          <div className="panel-header compact-panel-header">
+            <div>
+              <p className="eyebrow">Fast Work</p>
+              <h2>Direct actions</h2>
+            </div>
+            <Route size={20} aria-hidden="true" />
           </div>
-          <span>{summary?.cropCount ?? 0} crops tracked</span>
-        </article>
-      </section>
 
-    </>
+          <div className="quick-action-grid">
+            {quickActions.map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                onClick={() => onNavigate(action.page)}
+              >
+                <action.icon size={18} aria-hidden="true" />
+                <span>{action.label}</span>
+                <small>{action.hint}</small>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="panel dashboard-chart-panel">
+          <div className="panel-header compact-panel-header">
+            <div>
+              <p className="eyebrow">Monthly Movement</p>
+              <h2>{recentMonths.length ? `${recentMonths.length} month trend` : 'No monthly data'}</h2>
+            </div>
+            <LineChart size={20} aria-hidden="true" />
+          </div>
+
+          <div className="monthly-chart" aria-label="Monthly income, expense, and profit chart">
+            {recentMonths.length === 0 ? (
+              <p className="muted">Monthly reports will appear when income and expenses are recorded.</p>
+            ) : (
+              recentMonths.map((report) => (
+                <div className="monthly-column" key={`${report.year}-${report.month}`}>
+                  <div className="monthly-bars">
+                    <span
+                      className="monthly-bar income-fill"
+                      style={percentStyle(report.totalIncome, maxMonthlyValue)}
+                    />
+                    <span
+                      className="monthly-bar expense-fill"
+                      style={percentStyle(report.totalExpense, maxMonthlyValue)}
+                    />
+                    <span
+                      className="monthly-bar profit-fill"
+                      style={percentStyle(Math.abs(report.netProfit), maxMonthlyValue)}
+                    />
+                  </div>
+                  <small>{formatMonth(report)}</small>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="panel dashboard-health-panel">
+          <div className="panel-header compact-panel-header">
+            <div>
+              <p className="eyebrow">Record Health</p>
+              <h2>{recordCount.toLocaleString()} records</h2>
+            </div>
+            <TrendingUp size={20} aria-hidden="true" />
+          </div>
+
+          <div className="health-list">
+            {nextSteps.map((step) => (
+              <button key={step.label} type="button" onClick={() => onNavigate(step.page)}>
+                <span>{step.label}</span>
+                <strong>{step.value}</strong>
+              </button>
+            ))}
+          </div>
+
+          <div className="top-crop-card">
+            <CalendarDays size={18} aria-hidden="true" />
+            <span>Best crop</span>
+            <strong>
+              {topCrop
+                ? `${topCrop.cropName} - ${formatCurrency(topCrop.netProfit)}`
+                : 'Waiting for crop income'}
+            </strong>
+          </div>
+        </section>
+      </div>
+    </section>
   );
 }

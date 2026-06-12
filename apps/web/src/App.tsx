@@ -6,6 +6,8 @@ import {
   LandPlot,
   LayoutDashboard,
   LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
   Settings,
   Sprout,
   UsersRound,
@@ -34,19 +36,20 @@ import { ReportsPage } from './pages/ReportsPage';
 
 const navItems: Array<{ label: string; icon: LucideIcon }> = [
   { label: 'Dashboard', icon: LayoutDashboard },
-  { label: 'Settings', icon: Settings },
   { label: 'Profiles', icon: UsersRound },
   { label: 'Zameen', icon: LandPlot },
   { label: 'Crops', icon: Wheat },
   { label: 'Expenses', icon: ClipboardList },
   { label: 'Income', icon: CircleDollarSign },
   { label: 'Reports', icon: BarChart3 },
+  { label: 'Settings', icon: Settings },
 ];
 
 function App() {
   const [activePage, setActivePage] = useState('Dashboard');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -123,16 +126,28 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={isSidebarCollapsed ? 'app-shell sidebar-collapsed' : 'app-shell'}>
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-mark" aria-hidden="true">
             <Sprout size={24} />
           </div>
-          <div>
+          <div className="brand-copy">
             <strong>Zamindar Plus</strong>
             <span>Farm ledger platform</span>
           </div>
+          <button
+            aria-label={isSidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
+            className="sidebar-toggle"
+            type="button"
+            onClick={() => setIsSidebarCollapsed((isCollapsed) => !isCollapsed)}
+          >
+            {isSidebarCollapsed ? (
+              <PanelLeftOpen size={18} aria-hidden="true" />
+            ) : (
+              <PanelLeftClose size={18} aria-hidden="true" />
+            )}
+          </button>
         </div>
 
         <div className="sidebar-user">
@@ -146,9 +161,7 @@ function App() {
           <span>
             {currentUser.firstName} {currentUser.lastName}
           </span>
-          <small>
-            {currentUser.role === 'ADMIN' ? 'Admin' : currentUser.email}
-          </small>
+          <small>{currentUser.role === 'ADMIN' ? 'Admin' : 'Farmer'}</small>
         </div>
 
         <nav className="nav-list">
@@ -174,7 +187,7 @@ function App() {
 
       <main className="workspace">
         {activePage === 'Dashboard' ? (
-          <DashboardPage currentUser={currentUser} />
+          <DashboardPage currentUser={currentUser} onNavigate={setActivePage} />
         ) : activePage === 'Settings' ? (
           <SettingsPage
             currentUser={currentUser}

@@ -10,7 +10,6 @@ import {
   Palette,
   ShieldCheck,
   Smartphone,
-  Upload,
   UserRound,
 } from 'lucide-react';
 import {
@@ -26,13 +25,94 @@ type SettingsPageProps = {
   onAccountDeleted: () => void;
 };
 
-function makeAvatar(name: string, colors: [string, string, string]) {
+function avatarMotif(motif: string) {
+  if (motif === 'wheat') {
+    return `
+      <path d="M78 126V54" stroke="#fff8d7" stroke-width="8" stroke-linecap="round" />
+      <path d="M78 68c-22-16-34-17-42-4 16 16 29 20 42 16Z" fill="#fff8d7" opacity=".88" />
+      <path d="M82 82c24-13 37-12 42 3-18 14-32 16-42 8Z" fill="#fff8d7" opacity=".82" />
+      <path d="M78 100c-22-13-35-12-42 2 17 14 30 17 42 8Z" fill="#fff8d7" opacity=".78" />
+    `;
+  }
+
+  if (motif === 'tractor') {
+    return `
+      <circle cx="58" cy="108" r="20" fill="#fff8d7" opacity=".92" />
+      <circle cx="112" cy="112" r="13" fill="#fff8d7" opacity=".9" />
+      <path d="M46 92h58l11 20H36l10-20Z" fill="#ffffff" opacity=".7" />
+      <path d="M72 70h30l9 22H70Z" fill="#fff8d7" opacity=".86" />
+    `;
+  }
+
+  if (motif === 'canal') {
+    return `
+      <path d="M18 102c26-22 48-22 70 0s41 23 58 4v28H18Z" fill="#d7fbff" opacity=".82" />
+      <path d="M20 72c22-14 43-14 63 0s37 14 57 0" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity=".84" />
+      <circle cx="116" cy="42" r="18" fill="#fff1b6" opacity=".95" />
+    `;
+  }
+
+  if (motif === 'barn') {
+    return `
+      <path d="M36 78 80 44l44 34v52H36Z" fill="#fff8d7" opacity=".9" />
+      <path d="M58 92h44v38H58Z" fill="#ffffff" opacity=".58" />
+      <path d="M36 78h88" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity=".72" />
+    `;
+  }
+
+  if (motif === 'sunfield') {
+    return `
+      <circle cx="112" cy="48" r="24" fill="#fff1b6" opacity=".92" />
+      <path d="M20 112c28-22 52-24 74-6s36 16 48 3v24H20Z" fill="#ffffff" opacity=".32" />
+      <path d="M26 88h108M32 104h96" stroke="#fff8d7" stroke-width="7" stroke-linecap="round" opacity=".78" />
+    `;
+  }
+
+  if (motif === 'cotton') {
+    return `
+      <path d="M80 128V86" stroke="#fff8d7" stroke-width="8" stroke-linecap="round" />
+      <circle cx="64" cy="76" r="17" fill="#ffffff" opacity=".92" />
+      <circle cx="84" cy="64" r="20" fill="#ffffff" opacity=".95" />
+      <circle cx="104" cy="78" r="17" fill="#ffffff" opacity=".9" />
+      <path d="M46 108c14-16 26-19 36-10-9 15-21 21-36 10Z" fill="#fff8d7" opacity=".72" />
+    `;
+  }
+
+  if (motif === 'rice') {
+    return `
+      <path d="M42 124c28-52 56-70 84-82" fill="none" stroke="#fff8d7" stroke-width="8" stroke-linecap="round" />
+      <path d="M72 92c-18-7-29-4-34 10 15 9 27 8 36-2Z" fill="#ffffff" opacity=".72" />
+      <path d="M94 72c-18-7-29-4-34 10 15 9 27 8 36-2Z" fill="#ffffff" opacity=".78" />
+      <path d="M112 56c-18-7-28-4-34 10 15 9 27 8 36-2Z" fill="#ffffff" opacity=".82" />
+    `;
+  }
+
+  if (motif === 'sugarcane') {
+    return `
+      <path d="M58 126 76 42M88 126l16-76" stroke="#fff8d7" stroke-width="9" stroke-linecap="round" />
+      <path d="M66 78c-22-5-35 2-40 19 20 7 35 2 45-14Z" fill="#ffffff" opacity=".58" />
+      <path d="M92 88c23-6 37 1 42 18-20 8-36 3-46-13Z" fill="#ffffff" opacity=".62" />
+    `;
+  }
+
+  if (motif === 'orchard') {
+    return `
+      <circle cx="78" cy="62" r="31" fill="#ffffff" opacity=".28" />
+      <circle cx="58" cy="76" r="25" fill="#fff8d7" opacity=".7" />
+      <circle cx="100" cy="78" r="27" fill="#ffffff" opacity=".48" />
+      <path d="M80 84v44" stroke="#fff8d7" stroke-width="9" stroke-linecap="round" />
+      <path d="M44 128h74" stroke="#ffffff" stroke-width="8" stroke-linecap="round" opacity=".72" />
+    `;
+  }
+
+  return `
+    <path d="M32 116c18-26 43-40 76-42 12-.8 21 2 28 8-13 24-33 38-60 42-16 2.4-31-.3-44-8Z" fill="#ffffff" opacity="0.42" />
+    <path d="M48 92c20-24 42-34 68-28" stroke="#fff8d7" stroke-width="8" stroke-linecap="round" opacity=".88" />
+  `;
+}
+
+function makeAvatar(colors: [string, string, string], motif: string) {
   const [startColor, endColor, accentColor] = colors;
-  const initials = name
-    .split(' ')
-    .map((word) => word.slice(0, 1))
-    .join('')
-    .slice(0, 2);
 
   return `data:image/svg+xml;utf8,${encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">
@@ -48,8 +128,7 @@ function makeAvatar(name: string, colors: [string, string, string]) {
       <rect width="160" height="160" rx="36" fill="url(#bg)" />
       <circle cx="34" cy="34" r="34" fill="${accentColor}" opacity="0.38" filter="url(#soft)" />
       <circle cx="132" cy="122" r="44" fill="#ffffff" opacity="0.18" filter="url(#soft)" />
-      <path d="M32 116c18-26 43-40 76-42 12-.8 21 2 28 8-13 24-33 38-60 42-16 2.4-31-.3-44-8Z" fill="#ffffff" opacity="0.28" />
-      <text x="80" y="88" text-anchor="middle" fill="#ffffff" font-size="44" font-family="Arial, sans-serif" font-weight="800">${initials}</text>
+      ${avatarMotif(motif)}
     </svg>
   `)}`;
 }
@@ -57,19 +136,43 @@ function makeAvatar(name: string, colors: [string, string, string]) {
 const DEFAULT_AVATAR_IMAGES = [
   {
     name: 'Emerald Field',
-    value: makeAvatar('Emerald Field', ['#0f7a53', '#14a2a9', '#f1b457']),
+    value: makeAvatar(['#0f7a53', '#14a2a9', '#f1b457'], 'field'),
   },
   {
     name: 'Wheat Gold',
-    value: makeAvatar('Wheat Gold', ['#cf8f28', '#2d7a4e', '#ffe3a1']),
+    value: makeAvatar(['#cf8f28', '#2d7a4e', '#ffe3a1'], 'wheat'),
   },
   {
     name: 'Canal Blue',
-    value: makeAvatar('Canal Blue', ['#146c8c', '#20b17a', '#a5f3d1']),
+    value: makeAvatar(['#146c8c', '#20b17a', '#a5f3d1'], 'canal'),
   },
   {
     name: 'Soil Rose',
-    value: makeAvatar('Soil Rose', ['#9f3f4d', '#7a5a22', '#ffd2a1']),
+    value: makeAvatar(['#9f3f4d', '#7a5a22', '#ffd2a1'], 'barn'),
+  },
+  {
+    name: 'Sun Field',
+    value: makeAvatar(['#e2a538', '#13715a', '#fff1b6'], 'sunfield'),
+  },
+  {
+    name: 'Cotton White',
+    value: makeAvatar(['#315b6b', '#7a9f72', '#f7f7ec'], 'cotton'),
+  },
+  {
+    name: 'Rice Green',
+    value: makeAvatar(['#2d8a57', '#9abf3a', '#d6f7a8'], 'rice'),
+  },
+  {
+    name: 'Sugarcane',
+    value: makeAvatar(['#1d6b46', '#b18d32', '#f4dfa0'], 'sugarcane'),
+  },
+  {
+    name: 'Orchard',
+    value: makeAvatar(['#5a7f2c', '#1b8a75', '#ffd36e'], 'orchard'),
+  },
+  {
+    name: 'Farm Tractor',
+    value: makeAvatar(['#7f8f24', '#0f7772', '#f2c45f'], 'tractor'),
   },
 ];
 
@@ -234,9 +337,14 @@ export function SettingsPage({
               className="settings-avatar"
               src={form.profileImageUrl}
             />
-            <span className="settings-avatar-badge" aria-hidden="true">
+            <label className="settings-avatar-badge" aria-label="Upload custom profile image">
               <Camera size={16} />
-            </span>
+              <input
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                type="file"
+                onChange={(event) => void handleImageUpload(event)}
+              />
+            </label>
           </div>
 
           <div>
@@ -245,7 +353,7 @@ export function SettingsPage({
               {currentUser.firstName} {currentUser.lastName}
             </h2>
             <p className="muted">
-              Pick a ready-made profile image or upload a small custom image.
+              Pick a ready-made profile image or press the camera to upload a small custom image.
             </p>
           </div>
 
@@ -268,16 +376,6 @@ export function SettingsPage({
               </button>
             ))}
           </div>
-
-          <label className="upload-button">
-            <Upload size={16} aria-hidden="true" />
-            Upload Image
-            <input
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
-              type="file"
-              onChange={(event) => void handleImageUpload(event)}
-            />
-          </label>
 
           <dl className="detail-list compact-detail-list">
             <div>
