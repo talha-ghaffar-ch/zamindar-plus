@@ -134,10 +134,10 @@ export function IncomePage({ onNotify }: IncomePageProps) {
 
       if (editingIncomeId) {
         await updateIncome(editingIncomeId, payload);
-        onNotify('Record Updated Successfully');
+        onNotify('Record updated successfully');
       } else {
         await createIncome(payload);
-        onNotify('Income Added Successfully');
+        onNotify('Income added successfully');
       }
 
       setForm({
@@ -186,7 +186,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
 
     try {
       await deleteIncome(item.id);
-      onNotify('Record Deleted Successfully');
+      onNotify('Record deleted successfully');
       if (editingIncomeId === item.id) {
         cancelEdit();
       }
@@ -227,7 +227,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
       <section className="page-header">
         <div>
           <p className="eyebrow">Income</p>
-          <h1>Crop Income</h1>
+          <h1>Crop income</h1>
         </div>
       </section>
 
@@ -236,7 +236,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
           <div className="form-heading">
-            <h2>{editingIncomeId ? 'Edit Income' : 'Create Income'}</h2>
+            <h2>{editingIncomeId ? 'Edit income' : 'Create income'}</h2>
             {editingIncomeId ? (
               <button className="text-button" type="button" onClick={cancelEdit}>
                 Cancel
@@ -271,7 +271,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
           </label>
 
           <label>
-            <FieldLabel>Quantity Unit</FieldLabel>
+            <FieldLabel>Quantity unit</FieldLabel>
             <select
               value={form.quantityUnit}
               onChange={(event) => setForm({ ...form, quantityUnit: event.target.value })}
@@ -294,7 +294,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Total Amount</FieldLabel>
+            <FieldLabel required>Total amount</FieldLabel>
             <input
               required
               min="0"
@@ -316,7 +316,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
           </label>
 
           <label>
-            <FieldLabel>Buyer Name</FieldLabel>
+            <FieldLabel>Buyer name</FieldLabel>
             <input
               value={form.buyerName}
               onChange={(event) => setForm({ ...form, buyerName: event.target.value })}
@@ -324,7 +324,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Payment Status</FieldLabel>
+            <FieldLabel required>Payment status</FieldLabel>
             <select
               value={form.paymentStatus}
               onChange={(event) => setForm({ ...form, paymentStatus: event.target.value })}
@@ -338,8 +338,8 @@ export function IncomePage({ onNotify }: IncomePageProps) {
             {isSaving
               ? 'Saving...'
               : editingIncomeId
-                ? 'Update Income'
-                : 'Create Income'}
+                ? 'Update income'
+                : 'Create income'}
           </button>
         </form>
 
@@ -356,7 +356,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
                 value={cropFilter}
                 onChange={(event) => setCropFilter(event.target.value)}
               >
-                <option value="all">All Crops</option>
+                <option value="all">All crops</option>
                 {sortedCrops.map((crop) => (
                   <option key={crop.id} value={crop.id}>
                     {crop.cropName}
@@ -367,9 +367,9 @@ export function IncomePage({ onNotify }: IncomePageProps) {
           </div>
 
           {isLoading ? (
-            <p className="muted">Loading Income...</p>
+            <p className="muted">Loading income...</p>
           ) : groupedIncome.length === 0 ? (
-            <p className="muted">No Income Records Yet.</p>
+            <p className="muted">No income records yet.</p>
           ) : (
             <div className="grouped-records">
               {groupedIncome.map((cropGroup) => (
@@ -406,7 +406,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
                             <article className="record-card" key={item.id}>
                               <div>
                                 <p className="eyebrow">Buyer</p>
-                                <h4>{item.buyerName ?? 'Buyer Not Set'}</h4>
+                                <h4>{item.buyerName ?? 'Buyer not set'}</h4>
                               </div>
                               <div className="transaction-side">
                                 <time className="transaction-date" dateTime={item.incomeDate}>

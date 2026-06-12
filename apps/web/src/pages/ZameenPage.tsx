@@ -108,10 +108,10 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
 
       if (editingZameenId) {
         await updateZameen(editingZameenId, payload);
-        onNotify('Record Updated Successfully');
+        onNotify('Record updated successfully');
       } else {
         await createZameen(payload);
-        onNotify('Zameen Created Successfully');
+        onNotify('Zameen created successfully');
       }
 
       setForm({
@@ -162,7 +162,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
 
     try {
       await deleteZameen(item.id);
-      onNotify('Record Deleted Successfully');
+      onNotify('Record deleted successfully');
       if (editingZameenId === item.id) {
         cancelEdit();
       }
@@ -200,7 +200,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
       <section className="page-header">
         <div>
           <p className="eyebrow">Zameen</p>
-          <h1>Zameen Records</h1>
+          <h1>Zameen records</h1>
         </div>
       </section>
 
@@ -209,7 +209,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
           <div className="form-heading">
-            <h2>{editingZameenId ? 'Edit Zameen' : 'Create Zameen'}</h2>
+            <h2>{editingZameenId ? 'Edit zameen' : 'Create zameen'}</h2>
             {editingZameenId ? (
               <button className="text-button" type="button" onClick={cancelEdit}>
                 Cancel
@@ -233,7 +233,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Zameen Name</FieldLabel>
+            <FieldLabel required>Zameen name</FieldLabel>
             <input
               required
               minLength={2}
@@ -243,7 +243,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </label>
 
           <label>
-            <FieldLabel>Murabba Number</FieldLabel>
+            <FieldLabel>Murabba number</FieldLabel>
             <input
               value={form.murabbaNumber}
               onChange={(event) => setForm({ ...form, murabbaNumber: event.target.value })}
@@ -251,7 +251,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </label>
 
           <label>
-            <FieldLabel>Killa Number</FieldLabel>
+            <FieldLabel>Killa number</FieldLabel>
             <input
               value={form.killaNumber}
               onChange={(event) => setForm({ ...form, killaNumber: event.target.value })}
@@ -259,7 +259,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </label>
 
           <label>
-            <FieldLabel>Khasra Number</FieldLabel>
+            <FieldLabel>Khasra number</FieldLabel>
             <input
               value={form.khasraNumber}
               onChange={(event) => setForm({ ...form, khasraNumber: event.target.value })}
@@ -267,7 +267,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Total Area</FieldLabel>
+            <FieldLabel required>Total area</FieldLabel>
             <input
               required
               min="0.01"
@@ -279,7 +279,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Area Unit</FieldLabel>
+            <FieldLabel required>Area unit</FieldLabel>
             <select
               value={form.totalAreaUnit}
               onChange={(event) => setForm({ ...form, totalAreaUnit: event.target.value })}
@@ -291,16 +291,16 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </label>
 
           <label>
-            <FieldLabel>Ownership Type</FieldLabel>
+            <FieldLabel>Ownership type</FieldLabel>
             <select
               value={form.ownershipType}
               onChange={(event) => setForm({ ...form, ownershipType: event.target.value })}
             >
-              <option>Own Land</option>
-              <option>Thekka Land</option>
-              <option>Batai Land</option>
-              <option>Family Land</option>
-              <option>Managed Land</option>
+              <option value="Own Land">Own land</option>
+              <option value="Thekka Land">Thekka land</option>
+              <option value="Batai Land">Batai land</option>
+              <option value="Family Land">Family land</option>
+              <option value="Managed Land">Managed land</option>
             </select>
           </label>
 
@@ -308,8 +308,8 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
             {isSaving
               ? 'Saving...'
               : editingZameenId
-                ? 'Update Zameen'
-                : 'Create Zameen'}
+                ? 'Update zameen'
+                : 'Create zameen'}
           </button>
         </form>
 
@@ -324,7 +324,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
               value={profileFilter}
               onChange={(event) => setProfileFilter(event.target.value)}
             >
-              <option value="all">All Profiles</option>
+              <option value="all">All profiles</option>
               {sortedProfiles.map((profile) => (
                 <option key={profile.id} value={profile.id}>
                   {profile.profileName}
@@ -334,9 +334,9 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </div>
 
           {isLoading ? (
-            <p className="muted">Loading Zameen...</p>
+            <p className="muted">Loading zameen...</p>
           ) : groupedZameen.length === 0 ? (
-            <p className="muted">No Zameen Records Yet.</p>
+            <p className="muted">No zameen records yet.</p>
           ) : (
             <div className="grouped-records">
               {groupedZameen.map((group) => (
@@ -354,7 +354,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
                       .map((item) => (
                         <article className="record-card" key={item.id}>
                           <div>
-                            <p className="eyebrow">{item.ownershipType ?? 'Ownership Not Set'}</p>
+                            <p className="eyebrow">{item.ownershipType ?? 'Ownership not set'}</p>
                             <h4>{item.zameenName}</h4>
                           </div>
                           <dl className="record-meta">

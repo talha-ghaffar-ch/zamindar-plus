@@ -109,8 +109,8 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
         password: '',
       });
       setMode('login');
-      setSuccess('Account Created Successfully. Please Sign In To Continue.');
-      onNotify('Account Created Successfully');
+      setSuccess('Account created successfully. Please sign in to continue.');
+      onNotify('Account created successfully');
     } catch (signupError) {
       setError(
         signupError instanceof Error ? signupError.message : 'Signup failed.',
@@ -145,8 +145,8 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
 
         <div className="auth-card">
           <div className="auth-card-header">
-            <p className="eyebrow">Secure Access</p>
-            <h2>{mode === 'login' ? 'Sign In' : 'Create Account'}</h2>
+            <p className="eyebrow">Secure access</p>
+            <h2>{mode === 'login' ? 'Sign in' : 'Create account'}</h2>
             <p>
               {mode === 'login'
                 ? 'Open your farm dashboard and continue from your latest records.'
@@ -157,15 +157,15 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
           <div className="auth-status-row">
             <span>
               <ShieldCheck size={14} aria-hidden="true" />
-              Secure Session
+              Secure session
             </span>
             <span>
               <BarChart3 size={14} aria-hidden="true" />
-              Profit Reports
+              Profit reports
             </span>
             <span>
               <BadgeCheck size={14} aria-hidden="true" />
-              Private Data
+              Private data
             </span>
           </div>
 
@@ -177,7 +177,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               onClick={() => switchMode('login')}
             >
               <LogIn size={15} aria-hidden="true" />
-              Sign In
+              Sign in
             </button>
             <button
               className={mode === 'signup' ? 'active' : ''}
@@ -186,7 +186,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               onClick={() => switchMode('signup')}
             >
               <UserPlus size={15} aria-hidden="true" />
-              Create Account
+              Create account
             </button>
           </div>
 
@@ -196,7 +196,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
             onClick={handleGooglePlaceholder}
           >
             <GoogleIcon />
-            {mode === 'login' ? 'Sign In With Google' : 'Sign Up With Google'}
+            {mode === 'login' ? 'Sign in with Google' : 'Sign up with Google'}
           </button>
 
           {error ? <p className="error">{error}</p> : null}
@@ -256,13 +256,13 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                 disabled={isSaving}
                 type="submit"
               >
-                {isSaving ? 'Signing In...' : 'Sign In'}
+                {isSaving ? 'Signing in...' : 'Sign in'}
               </button>
             </form>
           ) : (
             <form className="form-grid auth-form signup-form" onSubmit={handleSignup}>
               <label>
-                <FieldLabel required>First Name</FieldLabel>
+                <FieldLabel required>First name</FieldLabel>
                 <input
                   required
                   minLength={2}
@@ -277,7 +277,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               </label>
 
               <label>
-                <FieldLabel required>Last Name</FieldLabel>
+                <FieldLabel required>Last name</FieldLabel>
                 <input
                   required
                   minLength={2}
@@ -342,7 +342,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               </label>
 
               <label>
-                <FieldLabel>Farmer Type</FieldLabel>
+                <FieldLabel>Farmer type</FieldLabel>
                 <select
                   value={signupForm.farmerType}
                   onChange={(event) =>
@@ -352,11 +352,11 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                     })
                   }
                 >
-                  <option>Land Owner</option>
-                  <option>Thekka Farmer</option>
-                  <option>Batai Farmer</option>
-                  <option>Family Member</option>
-                  <option>Farm Manager</option>
+                  <option value="Land Owner">Land owner</option>
+                  <option value="Thekka Farmer">Thekka farmer</option>
+                  <option value="Batai Farmer">Batai farmer</option>
+                  <option value="Family Member">Family member</option>
+                  <option value="Farm Manager">Farm manager</option>
                 </select>
               </label>
 
@@ -369,7 +369,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                 disabled={isSaving}
                 type="submit"
               >
-                {isSaving ? 'Creating...' : 'Create Account'}
+                {isSaving ? 'Creating...' : 'Create account'}
               </button>
             </form>
           )}

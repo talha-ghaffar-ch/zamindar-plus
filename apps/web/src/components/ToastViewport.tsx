@@ -21,8 +21,8 @@ function ToastItem({
   const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
-    const leaveTimer = window.setTimeout(() => setIsLeaving(true), 3700);
-    const closeTimer = window.setTimeout(() => onClose(toast.id), 4000);
+    const leaveTimer = window.setTimeout(() => setIsLeaving(true), 2700);
+    const closeTimer = window.setTimeout(() => onClose(toast.id), 3000);
 
     return () => {
       window.clearTimeout(leaveTimer);
@@ -38,7 +38,7 @@ function ToastItem({
   return (
     <article className={isLeaving ? 'toast-message toast-leaving' : 'toast-message'}>
       <span>{toast.message}</span>
-      <button aria-label="Close Notification" type="button" onClick={closeToast}>
+      <button aria-label="Close notification" type="button" onClick={closeToast}>
         <X size={15} aria-hidden="true" />
       </button>
     </article>

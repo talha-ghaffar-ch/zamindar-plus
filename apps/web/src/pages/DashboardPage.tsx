@@ -170,13 +170,13 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
     {
       label: 'Income',
       value: summary ? formatCurrency(summary.totalIncome) : 'Loading...',
-      hint: 'Received And Recorded',
+      hint: 'Received and recorded',
       tone: 'income',
       icon: BanknoteArrowUp,
       rawValue: summary?.totalIncome ?? 0,
     },
     {
-      label: 'Net Profit',
+      label: 'Net profit',
       value: summary ? formatCurrency(summary.netProfit) : 'Loading...',
       hint: `${profitMargin}% margin`,
       tone: 'profit',
@@ -186,7 +186,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
     {
       label: 'Zameen',
       value: summary ? summary.zameenCount.toLocaleString() : 'Loading...',
-      hint: 'Managed Records',
+      hint: 'Managed records',
       tone: 'land',
       icon: LandPlot,
       rawValue: summary?.zameenCount ?? 0,
@@ -194,7 +194,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
     {
       label: 'Crops',
       value: summary ? summary.cropCount.toLocaleString() : 'Loading...',
-      hint: 'Crop Cycles',
+      hint: 'Crop cycles',
       tone: 'crop',
       icon: Wheat,
       rawValue: summary?.cropCount ?? 0,
@@ -211,57 +211,57 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
 
   const quickActions = [
     {
-      label: 'Add Profile',
+      label: 'Add profile',
       page: 'Profiles',
       icon: PlusCircle,
-      hint: 'Farm Owner Or Farm Book',
+      hint: 'Farm owner or farm book',
     },
     {
-      label: 'Add Zameen',
+      label: 'Add zameen',
       page: 'Zameen',
       icon: LandPlot,
-      hint: 'Land And Ownership',
+      hint: 'Land and ownership',
     },
     {
-      label: 'Add Crop',
+      label: 'Add crop',
       page: 'Crops',
       icon: Wheat,
-      hint: 'Area And Season',
+      hint: 'Area and season',
     },
     {
-      label: 'Add Expense',
+      label: 'Add expense',
       page: 'Expenses',
       icon: ReceiptText,
-      hint: 'Kharcha Entry',
+      hint: 'Kharcha entry',
     },
     {
-      label: 'Add Income',
+      label: 'Add income',
       page: 'Income',
       icon: CircleDollarSign,
-      hint: 'Sale Or Payment',
+      hint: 'Sale or payment',
     },
     {
-      label: 'Open Reports',
+      label: 'Open reports',
       page: 'Reports',
       icon: BarChart3,
-      hint: 'Profit Details',
+      hint: 'Profit details',
     },
   ];
 
   const nextSteps = [
     {
-      label: 'Land Records',
-      value: summary?.zameenCount ? 'Ready' : 'Add First Zameen',
+      label: 'Land records',
+      value: summary?.zameenCount ? 'Ready' : 'Add first zameen',
       page: 'Zameen',
     },
     {
-      label: 'Crop Cycles',
-      value: summary?.cropCount ? 'Tracked' : 'Create Crop Allocation',
+      label: 'Crop cycles',
+      value: summary?.cropCount ? 'Tracked' : 'Create crop allocation',
       page: 'Crops',
     },
     {
-      label: 'Money Flow',
-      value: transactionCount ? 'Active' : 'Record Expense Or Income',
+      label: 'Money flow',
+      value: transactionCount ? 'Active' : 'Record expense or income',
       page: transactionCount ? 'Reports' : 'Expenses',
     },
   ];
@@ -271,7 +271,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
       <div className="dashboard-titlebar">
         <div>
           <p className="eyebrow">Dashboard</p>
-          <h1>Farm Command Center</h1>
+          <h1>Farm command center</h1>
         </div>
         <div className="dashboard-user-chip">
           <Sprout size={16} aria-hidden="true" />
@@ -286,7 +286,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
         <section className="panel dashboard-profit-panel">
           <div className="panel-header compact-panel-header">
             <div>
-              <p className="eyebrow">Financial Pulse</p>
+              <p className="eyebrow">Financial pulse</p>
               <h2>{summary ? formatCurrency(summary.netProfit) : 'Loading...'}</h2>
             </div>
             <Gauge size={22} aria-hidden="true" />
@@ -294,7 +294,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
 
           <div className="profit-ring" style={ringStyle(profitMargin)}>
             <strong>{summary ? `${profitMargin}%` : '--'}</strong>
-            <span>Profit Margin</span>
+            <span>Profit margin</span>
           </div>
 
           <div className="cash-mini-list">
@@ -336,8 +336,8 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
         <section className="panel quick-actions-panel">
           <div className="panel-header compact-panel-header">
             <div>
-              <p className="eyebrow">Fast Work</p>
-              <h2>Direct Actions</h2>
+              <p className="eyebrow">Fast work</p>
+              <h2>Direct actions</h2>
             </div>
             <Route size={20} aria-hidden="true" />
           </div>
@@ -360,15 +360,15 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
         <section className="panel dashboard-chart-panel">
           <div className="panel-header compact-panel-header">
             <div>
-              <p className="eyebrow">Monthly Movement</p>
-              <h2>{recentMonths.length ? `${recentMonths.length} Month Trend` : 'No Monthly Data'}</h2>
+              <p className="eyebrow">Monthly movement</p>
+              <h2>{recentMonths.length ? `${recentMonths.length} month trend` : 'No monthly data'}</h2>
             </div>
             <LineChart size={20} aria-hidden="true" />
           </div>
 
           <div className="monthly-chart" aria-label="Monthly income, expense, and profit chart">
             {recentMonths.length === 0 ? (
-              <p className="muted">Monthly Reports Will Appear When Income And Expenses Are Recorded.</p>
+              <p className="muted">Monthly reports will appear when income and expenses are recorded.</p>
             ) : (
               recentMonths.map((report) => (
                 <div className="monthly-column" key={`${report.year}-${report.month}`}>
@@ -396,8 +396,8 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
         <section className="panel dashboard-health-panel">
           <div className="panel-header compact-panel-header">
             <div>
-              <p className="eyebrow">Record Health</p>
-              <h2>{recordCount.toLocaleString()} Records</h2>
+              <p className="eyebrow">Record health</p>
+              <h2>{recordCount.toLocaleString()} records</h2>
             </div>
             <TrendingUp size={20} aria-hidden="true" />
           </div>
@@ -413,11 +413,11 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
 
           <div className="top-crop-card">
             <CalendarDays size={18} aria-hidden="true" />
-            <span>Best Crop</span>
+            <span>Best crop</span>
             <strong>
               {topCrop
                 ? `${topCrop.cropName} - ${formatCurrency(topCrop.netProfit)}`
-                : 'Waiting For Crop Income'}
+                : 'Waiting for crop income'}
             </strong>
           </div>
         </section>

@@ -137,11 +137,11 @@ function makeAvatar(colors: [string, string, string], motif: string) {
 
 const DEFAULT_AVATAR_IMAGES = [
   {
-    name: 'Wheat Gold',
+    name: 'Wheat gold',
     value: makeAvatar(['#cf8f28', '#2d7a4e', '#ffe3a1'], 'wheat'),
   },
   {
-    name: 'Rice Green',
+    name: 'Rice green',
     value: makeAvatar(['#2d8a57', '#9abf3a', '#d6f7a8'], 'rice'),
   },
   {
@@ -153,7 +153,7 @@ const DEFAULT_AVATAR_IMAGES = [
     value: makeAvatar(['#5a7f2c', '#1b8a75', '#ffd36e'], 'orchard'),
   },
   {
-    name: 'Farm Tractor',
+    name: 'Farm tractor',
     value: makeAvatar(['#7f8f24', '#0f7772', '#f2c45f'], 'tractor'),
   },
 ];
@@ -263,8 +263,8 @@ export function SettingsPage({
       const updatedUser = await updateUser(currentUser.id, payload);
       onUserUpdated(updatedUser);
       setForm(buildForm(updatedUser));
-      setSuccess('Settings Saved.');
-      onNotify('Settings Saved Successfully');
+      setSuccess('Settings saved.');
+      onNotify('Settings saved successfully');
     } catch (saveError) {
       setError(
         saveError instanceof Error ? saveError.message : 'Failed to save settings.',
@@ -306,7 +306,7 @@ export function SettingsPage({
       <section className="page-header">
         <div>
           <p className="eyebrow">Settings</p>
-          <h1>Account Settings</h1>
+          <h1>Account settings</h1>
         </div>
       </section>
 
@@ -332,12 +332,12 @@ export function SettingsPage({
           </div>
 
           <div>
-            <p className="eyebrow">Profile Photo</p>
+            <p className="eyebrow">Profile photo</p>
             <h2>
               {currentUser.firstName} {currentUser.lastName}
             </h2>
             <p className="muted">
-              Pick A Ready-Made Profile Image Or Press The Camera To Upload A Small Custom Image.
+              Pick a ready-made profile image or press the camera to upload a small custom image.
             </p>
           </div>
 
@@ -367,7 +367,7 @@ export function SettingsPage({
               <dd>{currentUser.role}</dd>
             </div>
             <div>
-              <dt>Account Email</dt>
+              <dt>Account email</dt>
               <dd>{currentUser.email}</dd>
             </div>
           </dl>
@@ -378,13 +378,13 @@ export function SettingsPage({
             <UserRound size={18} aria-hidden="true" />
             <div>
               <p className="eyebrow">Account</p>
-              <h2>Personal Information</h2>
+              <h2>Personal information</h2>
             </div>
           </div>
 
           <div className="settings-two-column">
             <label>
-              <FieldLabel required>First Name</FieldLabel>
+              <FieldLabel required>First name</FieldLabel>
               <input
                 required
                 minLength={2}
@@ -396,7 +396,7 @@ export function SettingsPage({
             </label>
 
             <label>
-              <FieldLabel required>Last Name</FieldLabel>
+              <FieldLabel required>Last name</FieldLabel>
               <input
                 required
                 minLength={2}
@@ -430,18 +430,18 @@ export function SettingsPage({
             </label>
 
             <label>
-              <FieldLabel>Farmer Type</FieldLabel>
+              <FieldLabel>Farmer type</FieldLabel>
               <select
                 value={form.farmerType}
                 onChange={(event) =>
                   setForm({ ...form, farmerType: event.target.value })
                 }
               >
-                <option>Land Owner</option>
-                <option>Thekka Farmer</option>
-                <option>Batai Farmer</option>
-                <option>Family Member</option>
-                <option>Farm Manager</option>
+                <option value="Land Owner">Land owner</option>
+                <option value="Thekka Farmer">Thekka farmer</option>
+                <option value="Batai Farmer">Batai farmer</option>
+                <option value="Family Member">Family member</option>
+                <option value="Farm Manager">Farm manager</option>
               </select>
             </label>
           </div>
@@ -452,13 +452,13 @@ export function SettingsPage({
             <Palette size={18} aria-hidden="true" />
             <div>
               <p className="eyebrow">Preferences</p>
-              <h2>Workspace Defaults</h2>
+              <h2>Workspace defaults</h2>
             </div>
           </div>
 
           <div className="settings-two-column">
             <label>
-              <FieldLabel required>Preferred Area Unit</FieldLabel>
+              <FieldLabel required>Preferred area unit</FieldLabel>
               <select
                 value={form.preferredAreaUnit}
                 onChange={(event) =>
@@ -501,7 +501,7 @@ export function SettingsPage({
             </label>
 
             <label>
-              <FieldLabel required>Date Format</FieldLabel>
+              <FieldLabel required>Date format</FieldLabel>
               <select
                 value={form.dateFormat}
                 onChange={(event) =>
@@ -521,7 +521,7 @@ export function SettingsPage({
             <Bell size={18} aria-hidden="true" />
             <div>
               <p className="eyebrow">Notifications</p>
-              <h2>Farm Reminders</h2>
+              <h2>Farm reminders</h2>
             </div>
           </div>
 
@@ -529,7 +529,7 @@ export function SettingsPage({
             <label className="settings-toggle-row">
               <span>
                 <Mail size={16} aria-hidden="true" />
-                Email Notifications
+                Email notifications
               </span>
               <input
                 checked={form.emailNotifications}
@@ -563,7 +563,7 @@ export function SettingsPage({
             <label className="settings-toggle-row">
               <span>
                 <Image size={16} aria-hidden="true" />
-                Weekly Report
+                Weekly report
               </span>
               <input
                 checked={form.weeklyReport}
@@ -586,7 +586,7 @@ export function SettingsPage({
           </div>
 
           <label>
-            <FieldLabel>New Password</FieldLabel>
+            <FieldLabel>New password</FieldLabel>
             <span className="password-field">
               <input
                 minLength={8}
@@ -615,7 +615,7 @@ export function SettingsPage({
 
           <div className="settings-actions">
             <button className="primary-button" disabled={isSaving} type="submit">
-              {isSaving ? 'Saving...' : 'Save Settings'}
+              {isSaving ? 'Saving...' : 'Save settings'}
             </button>
           </div>
         </section>
@@ -624,13 +624,13 @@ export function SettingsPage({
           <div className="settings-section-heading">
             <ShieldCheck size={18} aria-hidden="true" />
             <div>
-              <p className="eyebrow">Account Safety</p>
-              <h2>Danger Zone</h2>
+              <p className="eyebrow">Account safety</p>
+              <h2>Danger zone</h2>
             </div>
           </div>
           <p className="muted">
-            Deleting Your Account Also Removes Your Profiles, Zameen, Crops,
-            Expenses, Income, And Reports.
+            Deleting your account also removes your profiles, zameen, crops,
+            expenses, income, and reports.
           </p>
           <button
             className="danger-button"
@@ -638,7 +638,7 @@ export function SettingsPage({
             type="button"
             onClick={handleDelete}
           >
-            {isDeleting ? 'Deleting...' : 'Delete Account'}
+            {isDeleting ? 'Deleting...' : 'Delete account'}
           </button>
         </section>
       </form>

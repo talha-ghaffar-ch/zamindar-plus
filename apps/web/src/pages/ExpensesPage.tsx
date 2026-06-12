@@ -23,7 +23,7 @@ type ExpensesPageProps = {
 };
 
 const categories = [
-  'Land Preparation',
+  'Land preparation',
   'Seed / Sowing',
   'Fertilizer',
   'Spray / Pesticide',
@@ -32,7 +32,7 @@ const categories = [
   'Machinery / Diesel',
   'Rent / Thekka',
   'Transport',
-  'Other Expense',
+  'Other expense',
 ];
 
 const initialForm = {
@@ -120,10 +120,10 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
 
       if (editingExpenseId) {
         await updateExpense(editingExpenseId, payload);
-        onNotify('Record Updated Successfully');
+        onNotify('Record updated successfully');
       } else {
         await createExpense(payload);
-        onNotify('Expense Added Successfully');
+        onNotify('Expense added successfully');
       }
 
       setForm({
@@ -172,7 +172,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
 
     try {
       await deleteExpense(expense.id);
-      onNotify('Record Deleted Successfully');
+      onNotify('Record deleted successfully');
       if (editingExpenseId === expense.id) {
         cancelEdit();
       }
@@ -215,7 +215,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
       <section className="page-header">
         <div>
           <p className="eyebrow">Expenses</p>
-          <h1>Crop Expenses</h1>
+          <h1>Crop expenses</h1>
         </div>
       </section>
 
@@ -224,7 +224,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
           <div className="form-heading">
-            <h2>{editingExpenseId ? 'Edit Expense' : 'Create Expense'}</h2>
+            <h2>{editingExpenseId ? 'Edit expense' : 'Create expense'}</h2>
             {editingExpenseId ? (
               <button className="text-button" type="button" onClick={cancelEdit}>
                 Cancel
@@ -292,7 +292,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Payment Status</FieldLabel>
+            <FieldLabel required>Payment status</FieldLabel>
             <select
               value={form.paymentStatus}
               onChange={(event) => setForm({ ...form, paymentStatus: event.target.value })}
@@ -306,8 +306,8 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
             {isSaving
               ? 'Saving...'
               : editingExpenseId
-                ? 'Update Expense'
-                : 'Create Expense'}
+                ? 'Update expense'
+                : 'Create expense'}
           </button>
         </form>
 
@@ -324,7 +324,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
                 value={cropFilter}
                 onChange={(event) => setCropFilter(event.target.value)}
               >
-                <option value="all">All Crops</option>
+                <option value="all">All crops</option>
                 {sortedCrops.map((crop) => (
                   <option key={crop.id} value={crop.id}>
                     {crop.cropName}
@@ -335,9 +335,9 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
           </div>
 
           {isLoading ? (
-            <p className="muted">Loading Expenses...</p>
+            <p className="muted">Loading expenses...</p>
           ) : groupedExpenses.length === 0 ? (
-            <p className="muted">No Expense Records Yet.</p>
+            <p className="muted">No expense records yet.</p>
           ) : (
             <div className="grouped-records">
               {groupedExpenses.map((cropGroup) => (

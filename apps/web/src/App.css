@@ -922,11 +922,6 @@ tbody tr:hover {
   align-items: center;
 }
 
-.required-mark {
-  color: #c73344;
-  font-weight: 950;
-}
-
 .optional-mark {
   border-radius: 999px;
   padding: 2px 6px;

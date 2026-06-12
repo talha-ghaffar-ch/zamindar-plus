@@ -117,21 +117,21 @@ function App() {
     setAuthToken(authResponse.accessToken);
     setCurrentUser(authResponse.user);
     setActivePage('Dashboard');
-    showToast('Account Login Successful');
+    showToast('Account login successful');
   }
 
   function handleLogout() {
     clearAuthToken();
     setCurrentUser(null);
     setActivePage('Dashboard');
-    showToast('Signed Out Successfully');
+    showToast('Signed out successfully');
   }
 
   function handleAccountDeleted() {
     clearAuthToken();
     setCurrentUser(null);
     setActivePage('Dashboard');
-    showToast('Account Deleted Successfully');
+    showToast('Account deleted successfully');
   }
 
   const toastViewport = <ToastViewport toasts={toasts} onClose={closeToast} />;
@@ -145,7 +145,7 @@ function App() {
               <Sprout size={28} />
             </div>
             <p className="eyebrow">Zamindar Plus</p>
-            <h1>Opening Workspace...</h1>
+            <h1>Opening workspace...</h1>
           </section>
         </main>
         {toastViewport}
@@ -171,7 +171,7 @@ function App() {
           </div>
           <div className="brand-copy">
             <strong>Zamindar Plus</strong>
-            <span>Farm Ledger Platform</span>
+            <span>Farm ledger platform</span>
           </div>
           <button
             aria-label={isSidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
@@ -217,7 +217,7 @@ function App() {
 
         <button className="logout-button" type="button" onClick={handleLogout}>
           <LogOut size={18} aria-hidden="true" />
-          <span>Sign Out</span>
+          <span>Sign out</span>
         </button>
       </aside>
 

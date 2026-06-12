@@ -74,10 +74,10 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
 
       if (editingProfileId) {
         await updateProfile(editingProfileId, payload);
-        onNotify('Record Updated Successfully');
+        onNotify('Record updated successfully');
       } else {
         await createProfile(payload);
-        onNotify('Profile Created Successfully');
+        onNotify('Profile created successfully');
       }
 
       setForm(initialForm);
@@ -118,7 +118,7 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
 
     try {
       await deleteProfile(profile.id);
-      onNotify('Record Deleted Successfully');
+      onNotify('Record deleted successfully');
       if (editingProfileId === profile.id) {
         cancelEdit();
       }
@@ -143,7 +143,7 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
       <section className="page-header">
         <div>
           <p className="eyebrow">Profiles</p>
-          <h1>Kheti Profiles</h1>
+          <h1>Kheti profiles</h1>
         </div>
       </section>
 
@@ -152,7 +152,7 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
           <div className="form-heading">
-            <h2>{editingProfileId ? 'Edit Profile' : 'Create Profile'}</h2>
+            <h2>{editingProfileId ? 'Edit profile' : 'Create profile'}</h2>
             {editingProfileId ? (
               <button className="text-button" type="button" onClick={cancelEdit}>
                 Cancel
@@ -161,7 +161,7 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
           </div>
 
           <label>
-            <FieldLabel required>Profile Name</FieldLabel>
+            <FieldLabel required>Profile name</FieldLabel>
             <input
               required
               minLength={2}
@@ -198,8 +198,8 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
             {isSaving
               ? 'Saving...'
               : editingProfileId
-                ? 'Update Profile'
-                : 'Create Profile'}
+                ? 'Update profile'
+                : 'Create profile'}
           </button>
         </form>
 
@@ -226,11 +226,11 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6}>Loading Profiles...</td>
+                    <td colSpan={6}>Loading profiles...</td>
                   </tr>
                 ) : sortedProfiles.length === 0 ? (
                   <tr>
-                    <td colSpan={6}>No Profiles Yet.</td>
+                    <td colSpan={6}>No profiles yet.</td>
                   </tr>
                 ) : (
                   sortedProfiles.map((profile, index) => (

@@ -136,10 +136,10 @@ export function CropsPage({ onNotify }: CropsPageProps) {
 
       if (editingCropId) {
         await updateCrop(editingCropId, payload);
-        onNotify('Record Updated Successfully');
+        onNotify('Record updated successfully');
       } else {
         await createCrop(payload);
-        onNotify('Crop Added Successfully');
+        onNotify('Crop added successfully');
       }
 
       setForm({
@@ -186,7 +186,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
 
     try {
       await deleteCrop(crop.id);
-      onNotify('Record Deleted Successfully');
+      onNotify('Record deleted successfully');
       if (editingCropId === crop.id) {
         cancelEdit();
       }
@@ -222,7 +222,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
       <section className="page-header">
         <div>
           <p className="eyebrow">Crops</p>
-          <h1>Crop Allocations</h1>
+          <h1>Crop allocations</h1>
         </div>
       </section>
 
@@ -231,7 +231,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
           <div className="form-heading">
-            <h2>{editingCropId ? 'Edit Crop' : 'Create Crop'}</h2>
+            <h2>{editingCropId ? 'Edit crop' : 'Create crop'}</h2>
             {editingCropId ? (
               <button className="text-button" type="button" onClick={cancelEdit}>
                 Cancel
@@ -255,7 +255,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Crop Name</FieldLabel>
+            <FieldLabel required>Crop name</FieldLabel>
             <select
               value={form.cropName}
               onChange={(event) => setForm({ ...form, cropName: event.target.value })}
@@ -267,7 +267,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Crop Area</FieldLabel>
+            <FieldLabel required>Crop area</FieldLabel>
             <input
               required
               min="0.01"
@@ -279,7 +279,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Area Unit</FieldLabel>
+            <FieldLabel required>Area unit</FieldLabel>
             <select
               value={form.cropAreaUnit}
               onChange={(event) => setForm({ ...form, cropAreaUnit: event.target.value })}
@@ -291,7 +291,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Start Period</FieldLabel>
+            <FieldLabel required>Start period</FieldLabel>
             <input
               required
               type="month"
@@ -316,8 +316,8 @@ export function CropsPage({ onNotify }: CropsPageProps) {
             {isSaving
               ? 'Saving...'
               : editingCropId
-                ? 'Update Crop'
-                : 'Create Crop'}
+                ? 'Update crop'
+                : 'Create crop'}
           </button>
         </form>
 
@@ -332,7 +332,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
               value={zameenFilter}
               onChange={(event) => setZameenFilter(event.target.value)}
             >
-              <option value="all">All Zameen</option>
+              <option value="all">All zameen</option>
               {sortedZameen.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.zameenName}
@@ -342,9 +342,9 @@ export function CropsPage({ onNotify }: CropsPageProps) {
           </div>
 
           {isLoading ? (
-            <p className="muted">Loading Crops...</p>
+            <p className="muted">Loading crops...</p>
           ) : groupedCrops.length === 0 ? (
-            <p className="muted">No Crop Records Yet.</p>
+            <p className="muted">No crop records yet.</p>
           ) : (
             <div className="grouped-records">
               {groupedCrops.map((group) => (
