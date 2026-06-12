@@ -8,6 +8,7 @@ import {
   type Crop,
   type Income,
 } from '../lib/api';
+import { FieldLabel } from '../components/FieldLabel';
 import {
   dateInputValue,
   dateParts,
@@ -16,6 +17,10 @@ import {
   groupByParent,
   sortByDateAscending,
 } from '../lib/recordGrouping';
+
+type IncomePageProps = {
+  onNotify: (message: string) => void;
+};
 
 const quantityUnits = [
   'Maund',
@@ -40,7 +45,7 @@ const initialForm = {
   buyerName: '',
 };
 
-export function IncomePage() {
+export function IncomePage({ onNotify }: IncomePageProps) {
   const [crops, setCrops] = useState<Crop[]>([]);
   const [income, setIncome] = useState<Income[]>([]);
   const [form, setForm] = useState(initialForm);
@@ -129,8 +134,10 @@ export function IncomePage() {
 
       if (editingIncomeId) {
         await updateIncome(editingIncomeId, payload);
+        onNotify('Record Updated Successfully');
       } else {
         await createIncome(payload);
+        onNotify('Income Added Successfully');
       }
 
       setForm({
@@ -179,6 +186,7 @@ export function IncomePage() {
 
     try {
       await deleteIncome(item.id);
+      onNotify('Record Deleted Successfully');
       if (editingIncomeId === item.id) {
         cancelEdit();
       }
@@ -219,7 +227,7 @@ export function IncomePage() {
       <section className="page-header">
         <div>
           <p className="eyebrow">Income</p>
-          <h1>Crop income</h1>
+          <h1>Crop Income</h1>
         </div>
       </section>
 
@@ -237,7 +245,7 @@ export function IncomePage() {
           </div>
 
           <label>
-            Crop
+            <FieldLabel required>Crop</FieldLabel>
             <select
               required
               value={form.cropId}
@@ -252,7 +260,7 @@ export function IncomePage() {
           </label>
 
           <label>
-            Quantity
+            <FieldLabel>Quantity</FieldLabel>
             <input
               min="0"
               step="0.01"
@@ -263,7 +271,7 @@ export function IncomePage() {
           </label>
 
           <label>
-            Quantity Unit
+            <FieldLabel>Quantity Unit</FieldLabel>
             <select
               value={form.quantityUnit}
               onChange={(event) => setForm({ ...form, quantityUnit: event.target.value })}
@@ -275,7 +283,7 @@ export function IncomePage() {
           </label>
 
           <label>
-            Rate
+            <FieldLabel>Rate</FieldLabel>
             <input
               min="0"
               step="0.01"
@@ -286,7 +294,7 @@ export function IncomePage() {
           </label>
 
           <label>
-            Total Amount
+            <FieldLabel required>Total Amount</FieldLabel>
             <input
               required
               min="0"
@@ -298,7 +306,7 @@ export function IncomePage() {
           </label>
 
           <label>
-            Date
+            <FieldLabel required>Date</FieldLabel>
             <input
               required
               type="date"
@@ -308,7 +316,7 @@ export function IncomePage() {
           </label>
 
           <label>
-            Buyer Name
+            <FieldLabel>Buyer Name</FieldLabel>
             <input
               value={form.buyerName}
               onChange={(event) => setForm({ ...form, buyerName: event.target.value })}
@@ -316,7 +324,7 @@ export function IncomePage() {
           </label>
 
           <label>
-            Payment Status
+            <FieldLabel required>Payment Status</FieldLabel>
             <select
               value={form.paymentStatus}
               onChange={(event) => setForm({ ...form, paymentStatus: event.target.value })}
@@ -339,7 +347,7 @@ export function IncomePage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Income</p>
-              <h2>{visibleIncome.length} total</h2>
+              <h2>{visibleIncome.length} Total</h2>
             </div>
             <div className="panel-actions">
               <strong>Rs {filteredIncomeTotal.toLocaleString()}</strong>
@@ -348,7 +356,7 @@ export function IncomePage() {
                 value={cropFilter}
                 onChange={(event) => setCropFilter(event.target.value)}
               >
-                <option value="all">All crops</option>
+                <option value="all">All Crops</option>
                 {sortedCrops.map((crop) => (
                   <option key={crop.id} value={crop.id}>
                     {crop.cropName}
@@ -359,9 +367,9 @@ export function IncomePage() {
           </div>
 
           {isLoading ? (
-            <p className="muted">Loading income...</p>
+            <p className="muted">Loading Income...</p>
           ) : groupedIncome.length === 0 ? (
-            <p className="muted">No income records yet.</p>
+            <p className="muted">No Income Records Yet.</p>
           ) : (
             <div className="grouped-records">
               {groupedIncome.map((cropGroup) => (
@@ -397,18 +405,23 @@ export function IncomePage() {
                           (item) => (
                             <article className="record-card" key={item.id}>
                               <div>
-                                <p className="eyebrow">{formatDate(item.incomeDate)}</p>
-                                <h4>{item.buyerName ?? 'Buyer not set'}</h4>
+                                <p className="eyebrow">Buyer</p>
+                                <h4>{item.buyerName ?? 'Buyer Not Set'}</h4>
                               </div>
-                              <span
-                                className={
-                                  item.paymentStatus === 'Pending'
-                                    ? 'status-pill status-unpaid'
-                                    : 'status-pill status-paid'
-                                }
-                              >
-                                {item.paymentStatus === 'Pending' ? 'Pending' : 'Received'}
-                              </span>
+                              <div className="transaction-side">
+                                <time className="transaction-date" dateTime={item.incomeDate}>
+                                  {formatDate(item.incomeDate)}
+                                </time>
+                                <span
+                                  className={
+                                    item.paymentStatus === 'Pending'
+                                      ? 'status-pill status-unpaid'
+                                      : 'status-pill status-paid'
+                                  }
+                                >
+                                  {item.paymentStatus === 'Pending' ? 'Pending' : 'Received'}
+                                </span>
+                              </div>
                               <dl className="record-meta">
                                 <div>
                                   <dt>Quantity</dt>

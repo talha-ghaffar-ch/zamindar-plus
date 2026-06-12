@@ -10,7 +10,12 @@ import {
   type Profile,
   type Zameen,
 } from '../lib/api';
+import { FieldLabel } from '../components/FieldLabel';
 import { groupByParent } from '../lib/recordGrouping';
+
+type ZameenPageProps = {
+  onNotify: (message: string) => void;
+};
 
 const initialForm = {
   profileId: '',
@@ -20,10 +25,10 @@ const initialForm = {
   khasraNumber: '',
   totalAreaValue: '',
   totalAreaUnit: 'Acre',
-  ownershipType: 'Own land',
+  ownershipType: 'Own Land',
 };
 
-export function ZameenPage() {
+export function ZameenPage({ onNotify }: ZameenPageProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [zameen, setZameen] = useState<Zameen[]>([]);
   const [form, setForm] = useState(initialForm);
@@ -103,8 +108,10 @@ export function ZameenPage() {
 
       if (editingZameenId) {
         await updateZameen(editingZameenId, payload);
+        onNotify('Record Updated Successfully');
       } else {
         await createZameen(payload);
+        onNotify('Zameen Created Successfully');
       }
 
       setForm({
@@ -132,7 +139,7 @@ export function ZameenPage() {
       khasraNumber: item.khasraNumber ?? '',
       totalAreaValue: String(item.totalAreaValue),
       totalAreaUnit: item.totalAreaUnit,
-      ownershipType: item.ownershipType ?? 'Own land',
+      ownershipType: item.ownershipType ?? 'Own Land',
     });
   }
 
@@ -155,6 +162,7 @@ export function ZameenPage() {
 
     try {
       await deleteZameen(item.id);
+      onNotify('Record Deleted Successfully');
       if (editingZameenId === item.id) {
         cancelEdit();
       }
@@ -183,7 +191,7 @@ export function ZameenPage() {
     visibleProfiles,
     visibleZameen,
     (profile) => profile.id,
-    (profile, index) => `Profile ${index + 1}: ${profile.profileName}`,
+    (profile, index) => `${index + 1}: ${profile.profileName}`,
     (item) => item.profileId,
   );
 
@@ -192,7 +200,7 @@ export function ZameenPage() {
       <section className="page-header">
         <div>
           <p className="eyebrow">Zameen</p>
-          <h1>Zameen records</h1>
+          <h1>Zameen Records</h1>
         </div>
       </section>
 
@@ -210,7 +218,7 @@ export function ZameenPage() {
           </div>
 
           <label>
-            Profile
+            <FieldLabel required>Profile</FieldLabel>
             <select
               required
               value={form.profileId}
@@ -225,7 +233,7 @@ export function ZameenPage() {
           </label>
 
           <label>
-            Zameen Name
+            <FieldLabel required>Zameen Name</FieldLabel>
             <input
               required
               minLength={2}
@@ -235,7 +243,7 @@ export function ZameenPage() {
           </label>
 
           <label>
-            Murabba Number
+            <FieldLabel>Murabba Number</FieldLabel>
             <input
               value={form.murabbaNumber}
               onChange={(event) => setForm({ ...form, murabbaNumber: event.target.value })}
@@ -243,7 +251,7 @@ export function ZameenPage() {
           </label>
 
           <label>
-            Killa Number
+            <FieldLabel>Killa Number</FieldLabel>
             <input
               value={form.killaNumber}
               onChange={(event) => setForm({ ...form, killaNumber: event.target.value })}
@@ -251,7 +259,7 @@ export function ZameenPage() {
           </label>
 
           <label>
-            Khasra Number
+            <FieldLabel>Khasra Number</FieldLabel>
             <input
               value={form.khasraNumber}
               onChange={(event) => setForm({ ...form, khasraNumber: event.target.value })}
@@ -259,7 +267,7 @@ export function ZameenPage() {
           </label>
 
           <label>
-            Total Area
+            <FieldLabel required>Total Area</FieldLabel>
             <input
               required
               min="0.01"
@@ -271,7 +279,7 @@ export function ZameenPage() {
           </label>
 
           <label>
-            Area Unit
+            <FieldLabel required>Area Unit</FieldLabel>
             <select
               value={form.totalAreaUnit}
               onChange={(event) => setForm({ ...form, totalAreaUnit: event.target.value })}
@@ -283,16 +291,16 @@ export function ZameenPage() {
           </label>
 
           <label>
-            Ownership Type
+            <FieldLabel>Ownership Type</FieldLabel>
             <select
               value={form.ownershipType}
               onChange={(event) => setForm({ ...form, ownershipType: event.target.value })}
             >
-              <option>Own land</option>
-              <option>Thekka land</option>
-              <option>Batai land</option>
-              <option>Family land</option>
-              <option>Managed land</option>
+              <option>Own Land</option>
+              <option>Thekka Land</option>
+              <option>Batai Land</option>
+              <option>Family Land</option>
+              <option>Managed Land</option>
             </select>
           </label>
 
@@ -309,14 +317,14 @@ export function ZameenPage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Zameen</p>
-              <h2>{visibleZameen.length} total</h2>
+              <h2>{visibleZameen.length} Total</h2>
             </div>
             <select
               className="inline-filter"
               value={profileFilter}
               onChange={(event) => setProfileFilter(event.target.value)}
             >
-              <option value="all">All profiles</option>
+              <option value="all">All Profiles</option>
               {sortedProfiles.map((profile) => (
                 <option key={profile.id} value={profile.id}>
                   {profile.profileName}
@@ -326,16 +334,16 @@ export function ZameenPage() {
           </div>
 
           {isLoading ? (
-            <p className="muted">Loading zameen...</p>
+            <p className="muted">Loading Zameen...</p>
           ) : groupedZameen.length === 0 ? (
-            <p className="muted">No zameen records yet.</p>
+            <p className="muted">No Zameen Records Yet.</p>
           ) : (
             <div className="grouped-records">
               {groupedZameen.map((group) => (
                 <article className="record-group" key={group.key}>
                   <div className="record-group-header">
                     <h3>{group.label}</h3>
-                    <span>{group.items.length} zameen</span>
+                    <span>{group.items.length} Zameen</span>
                   </div>
 
                   <div className="record-list">
@@ -346,7 +354,7 @@ export function ZameenPage() {
                       .map((item) => (
                         <article className="record-card" key={item.id}>
                           <div>
-                            <p className="eyebrow">{item.ownershipType ?? 'Ownership not set'}</p>
+                            <p className="eyebrow">{item.ownershipType ?? 'Ownership Not Set'}</p>
                             <h4>{item.zameenName}</h4>
                           </div>
                           <dl className="record-meta">

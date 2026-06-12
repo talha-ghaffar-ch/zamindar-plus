@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   UserPlus,
 } from 'lucide-react';
+import { FieldLabel } from '../components/FieldLabel';
 import {
   login,
   signup,
@@ -18,6 +19,7 @@ import {
 
 type AuthPageProps = {
   onAuthenticated: (authResponse: AuthResponse) => void;
+  onNotify: (message: string) => void;
 };
 
 const initialSignupForm: CreateUserPayload = {
@@ -57,11 +59,12 @@ function GoogleIcon() {
   );
 }
 
-export function AuthPage({ onAuthenticated }: AuthPageProps) {
+export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [loginForm, setLoginForm] = useState(initialLoginForm);
   const [signupForm, setSignupForm] = useState(initialSignupForm);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoginPasswordVisible, setIsLoginPasswordVisible] = useState(false);
   const [isSignupPasswordVisible, setIsSignupPasswordVisible] = useState(false);
@@ -76,6 +79,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
+    setSuccess('');
     setIsSaving(true);
 
     try {
@@ -90,16 +94,23 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
   async function handleSignup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
+    setSuccess('');
     setIsSaving(true);
 
     try {
-      onAuthenticated(
-        await signup({
-          ...signupForm,
-          phone: signupForm.phone || undefined,
-          farmerType: signupForm.farmerType || undefined,
-        }),
-      );
+      await signup({
+        ...signupForm,
+        phone: signupForm.phone || undefined,
+        farmerType: signupForm.farmerType || undefined,
+      });
+      setSignupForm(initialSignupForm);
+      setLoginForm({
+        email: signupForm.email,
+        password: '',
+      });
+      setMode('login');
+      setSuccess('Account Created Successfully. Please Sign In To Continue.');
+      onNotify('Account Created Successfully');
     } catch (signupError) {
       setError(
         signupError instanceof Error ? signupError.message : 'Signup failed.',
@@ -110,7 +121,14 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
   }
 
   function handleGooglePlaceholder() {
+    setSuccess('');
     setError('Google sign-in will be connected after the Google Client ID is configured.');
+  }
+
+  function switchMode(nextMode: 'login' | 'signup') {
+    setMode(nextMode);
+    setError('');
+    setSuccess('');
   }
 
   return (
@@ -156,7 +174,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
               className={mode === 'login' ? 'active' : ''}
               aria-pressed={mode === 'login'}
               type="button"
-              onClick={() => setMode('login')}
+              onClick={() => switchMode('login')}
             >
               <LogIn size={15} aria-hidden="true" />
               Sign In
@@ -165,7 +183,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
               className={mode === 'signup' ? 'active' : ''}
               aria-pressed={mode === 'signup'}
               type="button"
-              onClick={() => setMode('signup')}
+              onClick={() => switchMode('signup')}
             >
               <UserPlus size={15} aria-hidden="true" />
               Create Account
@@ -178,15 +196,16 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
             onClick={handleGooglePlaceholder}
           >
             <GoogleIcon />
-            {mode === 'login' ? 'Sign In with Google' : 'Sign Up with Google'}
+            {mode === 'login' ? 'Sign In With Google' : 'Sign Up With Google'}
           </button>
 
           {error ? <p className="error">{error}</p> : null}
+          {success ? <p className="success">{success}</p> : null}
 
           {mode === 'login' ? (
             <form className="form-grid auth-form" onSubmit={handleLogin}>
               <label>
-                Email
+                <FieldLabel required>Email</FieldLabel>
                 <input
                   required
                   type="email"
@@ -198,7 +217,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
               </label>
 
               <label>
-                Password
+                <FieldLabel required>Password</FieldLabel>
                 <span className="password-field">
                   <input
                     required
@@ -243,7 +262,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
           ) : (
             <form className="form-grid auth-form signup-form" onSubmit={handleSignup}>
               <label>
-                First Name
+                <FieldLabel required>First Name</FieldLabel>
                 <input
                   required
                   minLength={2}
@@ -258,7 +277,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
               </label>
 
               <label>
-                Last Name
+                <FieldLabel required>Last Name</FieldLabel>
                 <input
                   required
                   minLength={2}
@@ -270,7 +289,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
               </label>
 
               <label>
-                Email
+                <FieldLabel required>Email</FieldLabel>
                 <input
                   required
                   type="email"
@@ -282,7 +301,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
               </label>
 
               <label>
-                Phone
+                <FieldLabel>Phone</FieldLabel>
                 <input
                   value={signupForm.phone}
                   onChange={(event) =>
@@ -292,7 +311,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
               </label>
 
               <label>
-                Password
+                <FieldLabel required>Password</FieldLabel>
                 <span className="password-field">
                   <input
                     required
@@ -323,7 +342,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
               </label>
 
               <label>
-                Farmer Type
+                <FieldLabel>Farmer Type</FieldLabel>
                 <select
                   value={signupForm.farmerType}
                   onChange={(event) =>

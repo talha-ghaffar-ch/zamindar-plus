@@ -22,6 +22,10 @@ import {
 
 type ReportMode = 'overview' | 'crops' | 'monthly';
 
+type ReportsPageProps = {
+  onNotify: (message: string) => void;
+};
+
 const monthNames = [
   'Jan',
   'Feb',
@@ -75,7 +79,7 @@ function exportCsv(filename: string, rows: Array<Array<string | number>>) {
   URL.revokeObjectURL(url);
 }
 
-export function ReportsPage() {
+export function ReportsPage({ onNotify }: ReportsPageProps) {
   const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [cropReports, setCropReports] = useState<CropProfitabilityReport[]>([]);
   const [monthlyReports, setMonthlyReports] = useState<MonthlySummaryReport[]>([]);
@@ -166,6 +170,7 @@ export function ReportsPage() {
       ['Expense Entries', summary?.expenseCount ?? 0],
       ['Income Entries', summary?.incomeCount ?? 0],
     ]);
+    onNotify('Summary Exported Successfully');
   }
 
   function handleExportCrops() {
@@ -182,6 +187,7 @@ export function ReportsPage() {
         report.incomeCount,
       ]),
     ]);
+    onNotify('Crop Report Exported Successfully');
   }
 
   function handleExportMonthly() {
@@ -196,6 +202,7 @@ export function ReportsPage() {
         report.incomeCount,
       ]),
     ]);
+    onNotify('Monthly Report Exported Successfully');
   }
 
   return (
@@ -203,7 +210,7 @@ export function ReportsPage() {
       <section className="page-header report-page-header">
         <div>
           <p className="eyebrow">Reports</p>
-          <h1>Profit intelligence</h1>
+          <h1>Profit Intelligence</h1>
         </div>
         <div className="report-actions">
           <select
@@ -211,7 +218,7 @@ export function ReportsPage() {
             value={selectedYear}
             onChange={(event) => setSelectedYear(event.target.value)}
           >
-            <option value="all">All years</option>
+            <option value="all">All Years</option>
             {availableYears.map((year) => (
               <option key={year} value={year}>
                 {year}
@@ -281,7 +288,7 @@ export function ReportsPage() {
         <div className="report-control-grid">
           <section className="report-visual-card">
             <p className="eyebrow">Cash Comparison</p>
-            <h2>Income, expense, and profit</h2>
+            <h2>Income, Expense, And Profit</h2>
             <div className="report-balance-bars">
               <span>
                 <b>Income</b>
@@ -303,11 +310,11 @@ export function ReportsPage() {
 
           <section className="report-visual-card report-image-card">
             <p className="eyebrow">Best Performer</p>
-            <h2>{bestCrop ? bestCrop.cropName : 'No crop report yet'}</h2>
+            <h2>{bestCrop ? bestCrop.cropName : 'No Crop Report Yet'}</h2>
             <strong>
-              {bestCrop ? formatCurrency(bestCrop.netProfit) : 'Add crop income to unlock'}
+              {bestCrop ? formatCurrency(bestCrop.netProfit) : 'Add Crop Income To Unlock'}
             </strong>
-            <span>{transactionCount.toLocaleString()} money entries recorded</span>
+            <span>{transactionCount.toLocaleString()} Money Entries Recorded</span>
           </section>
         </div>
       </section>
@@ -318,14 +325,14 @@ export function ReportsPage() {
             <div className="panel-header compact-panel-header">
               <div>
                 <p className="eyebrow">Monthly Trend</p>
-                <h2>{filteredMonthlyReports.length} months</h2>
+                <h2>{filteredMonthlyReports.length} Months</h2>
               </div>
             </div>
             <div className="monthly-chart report-monthly-chart">
               {isLoading ? (
-                <p className="muted">Loading monthly reports...</p>
+                <p className="muted">Loading Monthly Reports...</p>
               ) : filteredMonthlyReports.length === 0 ? (
-                <p className="muted">No monthly report data yet.</p>
+                <p className="muted">No Monthly Report Data Yet.</p>
               ) : (
                 filteredMonthlyReports.map((report) => (
                   <div className="monthly-column" key={`${report.year}-${report.month}`}>
@@ -354,21 +361,21 @@ export function ReportsPage() {
             <div className="panel-header compact-panel-header">
               <div>
                 <p className="eyebrow">Report Health</p>
-                <h2>Coverage snapshot</h2>
+                <h2>Coverage Snapshot</h2>
               </div>
             </div>
             <div className="report-health-list">
               <div>
-                <span>Zameen coverage</span>
-                <strong>{summary?.zameenCount ?? 0} records</strong>
+                <span>Zameen Coverage</span>
+                <strong>{summary?.zameenCount ?? 0} Records</strong>
               </div>
               <div>
-                <span>Crop coverage</span>
-                <strong>{summary?.cropCount ?? 0} cycles</strong>
+                <span>Crop Coverage</span>
+                <strong>{summary?.cropCount ?? 0} Cycles</strong>
               </div>
               <div>
-                <span>Financial entries</span>
-                <strong>{transactionCount} entries</strong>
+                <span>Financial Entries</span>
+                <strong>{transactionCount} Entries</strong>
               </div>
             </div>
           </section>
@@ -380,7 +387,7 @@ export function ReportsPage() {
           <div className="panel-header compact-panel-header">
             <div>
               <p className="eyebrow">Crop Profitability</p>
-              <h2>{sortedCropReports.length} crops</h2>
+              <h2>{sortedCropReports.length} Crops</h2>
             </div>
           </div>
 
@@ -400,11 +407,11 @@ export function ReportsPage() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7}>Loading crop reports...</td>
+                    <td colSpan={7}>Loading Crop Reports...</td>
                   </tr>
                 ) : sortedCropReports.length === 0 ? (
                   <tr>
-                    <td colSpan={7}>No crop report data yet.</td>
+                    <td colSpan={7}>No Crop Report Data Yet.</td>
                   </tr>
                 ) : (
                   sortedCropReports.map((report) => (
@@ -430,7 +437,7 @@ export function ReportsPage() {
           <div className="panel-header compact-panel-header">
             <div>
               <p className="eyebrow">Monthly Summary</p>
-              <h2>{filteredMonthlyReports.length} months</h2>
+              <h2>{filteredMonthlyReports.length} Months</h2>
             </div>
           </div>
 
@@ -448,11 +455,11 @@ export function ReportsPage() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={5}>Loading monthly reports...</td>
+                    <td colSpan={5}>Loading Monthly Reports...</td>
                   </tr>
                 ) : filteredMonthlyReports.length === 0 ? (
                   <tr>
-                    <td colSpan={5}>No monthly report data yet.</td>
+                    <td colSpan={5}>No Monthly Report Data Yet.</td>
                   </tr>
                 ) : (
                   filteredMonthlyReports.map((report) => (

@@ -6,6 +6,11 @@ import {
   updateProfile,
   type Profile,
 } from '../lib/api';
+import { FieldLabel } from '../components/FieldLabel';
+
+type ProfilesPageProps = {
+  onNotify: (message: string) => void;
+};
 
 const initialForm = {
   profileName: '',
@@ -14,7 +19,7 @@ const initialForm = {
   villageName: '',
 };
 
-export function ProfilesPage() {
+export function ProfilesPage({ onNotify }: ProfilesPageProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
@@ -69,8 +74,10 @@ export function ProfilesPage() {
 
       if (editingProfileId) {
         await updateProfile(editingProfileId, payload);
+        onNotify('Record Updated Successfully');
       } else {
         await createProfile(payload);
+        onNotify('Profile Created Successfully');
       }
 
       setForm(initialForm);
@@ -111,6 +118,7 @@ export function ProfilesPage() {
 
     try {
       await deleteProfile(profile.id);
+      onNotify('Record Deleted Successfully');
       if (editingProfileId === profile.id) {
         cancelEdit();
       }
@@ -135,7 +143,7 @@ export function ProfilesPage() {
       <section className="page-header">
         <div>
           <p className="eyebrow">Profiles</p>
-          <h1>Kheti profiles</h1>
+          <h1>Kheti Profiles</h1>
         </div>
       </section>
 
@@ -153,7 +161,7 @@ export function ProfilesPage() {
           </div>
 
           <label>
-            Profile Name
+            <FieldLabel required>Profile Name</FieldLabel>
             <input
               required
               minLength={2}
@@ -163,7 +171,7 @@ export function ProfilesPage() {
           </label>
 
           <label>
-            City
+            <FieldLabel>City</FieldLabel>
             <input
               value={form.city}
               onChange={(event) => setForm({ ...form, city: event.target.value })}
@@ -171,7 +179,7 @@ export function ProfilesPage() {
           </label>
 
           <label>
-            Area
+            <FieldLabel>Area</FieldLabel>
             <input
               value={form.chakAreaName}
               onChange={(event) => setForm({ ...form, chakAreaName: event.target.value })}
@@ -179,7 +187,7 @@ export function ProfilesPage() {
           </label>
 
           <label>
-            Village
+            <FieldLabel>Village</FieldLabel>
             <input
               value={form.villageName}
               onChange={(event) => setForm({ ...form, villageName: event.target.value })}
@@ -199,7 +207,7 @@ export function ProfilesPage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Profiles</p>
-              <h2>{profiles.length} total</h2>
+              <h2>{profiles.length} Total</h2>
             </div>
           </div>
 
@@ -218,16 +226,18 @@ export function ProfilesPage() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6}>Loading profiles...</td>
+                    <td colSpan={6}>Loading Profiles...</td>
                   </tr>
                 ) : sortedProfiles.length === 0 ? (
                   <tr>
-                    <td colSpan={6}>No profiles yet.</td>
+                    <td colSpan={6}>No Profiles Yet.</td>
                   </tr>
                 ) : (
                   sortedProfiles.map((profile, index) => (
                     <tr key={profile.id}>
-                      <td>Profile {index + 1}</td>
+                      <td>
+                        <strong className="record-number">{index + 1}</strong>
+                      </td>
                       <td>{profile.profileName}</td>
                       <td>{profile.city ?? '-'}</td>
                       <td>{profile.chakAreaName ?? '-'}</td>

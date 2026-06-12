@@ -10,7 +10,12 @@ import {
   type Crop,
   type Zameen,
 } from '../lib/api';
+import { FieldLabel } from '../components/FieldLabel';
 import { groupByParent } from '../lib/recordGrouping';
+
+type CropsPageProps = {
+  onNotify: (message: string) => void;
+};
 
 const cropNames = ['Wheat', 'Rice', 'Sugarcane', 'Cotton', 'Maize', 'Fodder'];
 const cropStatuses = ['Active', 'Completed'];
@@ -52,7 +57,7 @@ function splitStartPeriod(startPeriod: string) {
   };
 }
 
-export function CropsPage() {
+export function CropsPage({ onNotify }: CropsPageProps) {
   const [zameen, setZameen] = useState<Zameen[]>([]);
   const [crops, setCrops] = useState<Crop[]>([]);
   const [form, setForm] = useState(initialForm);
@@ -131,8 +136,10 @@ export function CropsPage() {
 
       if (editingCropId) {
         await updateCrop(editingCropId, payload);
+        onNotify('Record Updated Successfully');
       } else {
         await createCrop(payload);
+        onNotify('Crop Added Successfully');
       }
 
       setForm({
@@ -179,6 +186,7 @@ export function CropsPage() {
 
     try {
       await deleteCrop(crop.id);
+      onNotify('Record Deleted Successfully');
       if (editingCropId === crop.id) {
         cancelEdit();
       }
@@ -214,7 +222,7 @@ export function CropsPage() {
       <section className="page-header">
         <div>
           <p className="eyebrow">Crops</p>
-          <h1>Crop allocations</h1>
+          <h1>Crop Allocations</h1>
         </div>
       </section>
 
@@ -232,7 +240,7 @@ export function CropsPage() {
           </div>
 
           <label>
-            Zameen
+            <FieldLabel required>Zameen</FieldLabel>
             <select
               required
               value={form.zameenId}
@@ -247,7 +255,7 @@ export function CropsPage() {
           </label>
 
           <label>
-            Crop Name
+            <FieldLabel required>Crop Name</FieldLabel>
             <select
               value={form.cropName}
               onChange={(event) => setForm({ ...form, cropName: event.target.value })}
@@ -259,7 +267,7 @@ export function CropsPage() {
           </label>
 
           <label>
-            Crop Area
+            <FieldLabel required>Crop Area</FieldLabel>
             <input
               required
               min="0.01"
@@ -271,7 +279,7 @@ export function CropsPage() {
           </label>
 
           <label>
-            Area Unit
+            <FieldLabel required>Area Unit</FieldLabel>
             <select
               value={form.cropAreaUnit}
               onChange={(event) => setForm({ ...form, cropAreaUnit: event.target.value })}
@@ -283,7 +291,7 @@ export function CropsPage() {
           </label>
 
           <label>
-            Start Period
+            <FieldLabel required>Start Period</FieldLabel>
             <input
               required
               type="month"
@@ -293,7 +301,7 @@ export function CropsPage() {
           </label>
 
           <label>
-            Status
+            <FieldLabel required>Status</FieldLabel>
             <select
               value={form.status}
               onChange={(event) => setForm({ ...form, status: event.target.value })}
@@ -317,14 +325,14 @@ export function CropsPage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Crops</p>
-              <h2>{visibleCrops.length} total</h2>
+              <h2>{visibleCrops.length} Total</h2>
             </div>
             <select
               className="inline-filter"
               value={zameenFilter}
               onChange={(event) => setZameenFilter(event.target.value)}
             >
-              <option value="all">All zameen</option>
+              <option value="all">All Zameen</option>
               {sortedZameen.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.zameenName}
@@ -334,16 +342,16 @@ export function CropsPage() {
           </div>
 
           {isLoading ? (
-            <p className="muted">Loading crops...</p>
+            <p className="muted">Loading Crops...</p>
           ) : groupedCrops.length === 0 ? (
-            <p className="muted">No crop records yet.</p>
+            <p className="muted">No Crop Records Yet.</p>
           ) : (
             <div className="grouped-records">
               {groupedCrops.map((group) => (
                 <article className="record-group" key={group.key}>
                   <div className="record-group-header">
                     <h3>{group.label}</h3>
-                    <span>{group.items.length} crops</span>
+                    <span>{group.items.length} Crops</span>
                   </div>
 
                   <div className="record-list">

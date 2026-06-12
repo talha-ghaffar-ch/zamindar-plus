@@ -12,6 +12,7 @@ import {
   Smartphone,
   UserRound,
 } from 'lucide-react';
+import { FieldLabel } from '../components/FieldLabel';
 import {
   deleteUser,
   updateUser,
@@ -23,6 +24,7 @@ type SettingsPageProps = {
   currentUser: User;
   onUserUpdated: (user: User) => void;
   onAccountDeleted: () => void;
+  onNotify: (message: string) => void;
 };
 
 function avatarMotif(motif: string) {
@@ -135,28 +137,8 @@ function makeAvatar(colors: [string, string, string], motif: string) {
 
 const DEFAULT_AVATAR_IMAGES = [
   {
-    name: 'Emerald Field',
-    value: makeAvatar(['#0f7a53', '#14a2a9', '#f1b457'], 'field'),
-  },
-  {
     name: 'Wheat Gold',
     value: makeAvatar(['#cf8f28', '#2d7a4e', '#ffe3a1'], 'wheat'),
-  },
-  {
-    name: 'Rice Valley',
-    value: makeAvatar(['#166534', '#22a06b', '#c7f7b8'], 'rice'),
-  },
-  {
-    name: 'Soil Rose',
-    value: makeAvatar(['#9f3f4d', '#7a5a22', '#ffd2a1'], 'barn'),
-  },
-  {
-    name: 'Golden Harvest',
-    value: makeAvatar(['#b7791f', '#176c4d', '#ffe29a'], 'wheat'),
-  },
-  {
-    name: 'Cotton White',
-    value: makeAvatar(['#315b6b', '#7a9f72', '#f7f7ec'], 'cotton'),
   },
   {
     name: 'Rice Green',
@@ -208,6 +190,7 @@ export function SettingsPage({
   currentUser,
   onUserUpdated,
   onAccountDeleted,
+  onNotify,
 }: SettingsPageProps) {
   const [form, setForm] = useState(buildForm(currentUser));
   const [error, setError] = useState('');
@@ -280,7 +263,8 @@ export function SettingsPage({
       const updatedUser = await updateUser(currentUser.id, payload);
       onUserUpdated(updatedUser);
       setForm(buildForm(updatedUser));
-      setSuccess('Settings saved.');
+      setSuccess('Settings Saved.');
+      onNotify('Settings Saved Successfully');
     } catch (saveError) {
       setError(
         saveError instanceof Error ? saveError.message : 'Failed to save settings.',
@@ -322,7 +306,7 @@ export function SettingsPage({
       <section className="page-header">
         <div>
           <p className="eyebrow">Settings</p>
-          <h1>Account settings</h1>
+          <h1>Account Settings</h1>
         </div>
       </section>
 
@@ -353,7 +337,7 @@ export function SettingsPage({
               {currentUser.firstName} {currentUser.lastName}
             </h2>
             <p className="muted">
-              Pick a ready-made profile image or press the camera to upload a small custom image.
+              Pick A Ready-Made Profile Image Or Press The Camera To Upload A Small Custom Image.
             </p>
           </div>
 
@@ -394,13 +378,13 @@ export function SettingsPage({
             <UserRound size={18} aria-hidden="true" />
             <div>
               <p className="eyebrow">Account</p>
-              <h2>Personal information</h2>
+              <h2>Personal Information</h2>
             </div>
           </div>
 
           <div className="settings-two-column">
             <label>
-              First Name
+              <FieldLabel required>First Name</FieldLabel>
               <input
                 required
                 minLength={2}
@@ -412,7 +396,7 @@ export function SettingsPage({
             </label>
 
             <label>
-              Last Name
+              <FieldLabel required>Last Name</FieldLabel>
               <input
                 required
                 minLength={2}
@@ -424,7 +408,7 @@ export function SettingsPage({
             </label>
 
             <label>
-              Email
+              <FieldLabel required>Email</FieldLabel>
               <input
                 required
                 type="email"
@@ -436,7 +420,7 @@ export function SettingsPage({
             </label>
 
             <label>
-              Phone
+              <FieldLabel>Phone</FieldLabel>
               <input
                 value={form.phone}
                 onChange={(event) =>
@@ -446,7 +430,7 @@ export function SettingsPage({
             </label>
 
             <label>
-              Farmer Type
+              <FieldLabel>Farmer Type</FieldLabel>
               <select
                 value={form.farmerType}
                 onChange={(event) =>
@@ -468,13 +452,13 @@ export function SettingsPage({
             <Palette size={18} aria-hidden="true" />
             <div>
               <p className="eyebrow">Preferences</p>
-              <h2>Workspace defaults</h2>
+              <h2>Workspace Defaults</h2>
             </div>
           </div>
 
           <div className="settings-two-column">
             <label>
-              Preferred Area Unit
+              <FieldLabel required>Preferred Area Unit</FieldLabel>
               <select
                 value={form.preferredAreaUnit}
                 onChange={(event) =>
@@ -488,7 +472,7 @@ export function SettingsPage({
             </label>
 
             <label>
-              Currency
+              <FieldLabel required>Currency</FieldLabel>
               <select
                 value={form.preferredCurrency}
                 onChange={(event) =>
@@ -503,7 +487,7 @@ export function SettingsPage({
             </label>
 
             <label>
-              Language
+              <FieldLabel required>Language</FieldLabel>
               <select
                 value={form.preferredLanguage}
                 onChange={(event) =>
@@ -517,7 +501,7 @@ export function SettingsPage({
             </label>
 
             <label>
-              Date Format
+              <FieldLabel required>Date Format</FieldLabel>
               <select
                 value={form.dateFormat}
                 onChange={(event) =>
@@ -537,7 +521,7 @@ export function SettingsPage({
             <Bell size={18} aria-hidden="true" />
             <div>
               <p className="eyebrow">Notifications</p>
-              <h2>Farm reminders</h2>
+              <h2>Farm Reminders</h2>
             </div>
           </div>
 
@@ -602,7 +586,7 @@ export function SettingsPage({
           </div>
 
           <label>
-            New Password
+            <FieldLabel>New Password</FieldLabel>
             <span className="password-field">
               <input
                 minLength={8}
@@ -641,12 +625,12 @@ export function SettingsPage({
             <ShieldCheck size={18} aria-hidden="true" />
             <div>
               <p className="eyebrow">Account Safety</p>
-              <h2>Danger zone</h2>
+              <h2>Danger Zone</h2>
             </div>
           </div>
           <p className="muted">
-            Deleting your account also removes your profiles, zameen, crops,
-            expenses, income, and reports.
+            Deleting Your Account Also Removes Your Profiles, Zameen, Crops,
+            Expenses, Income, And Reports.
           </p>
           <button
             className="danger-button"

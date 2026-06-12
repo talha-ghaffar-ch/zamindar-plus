@@ -170,7 +170,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
     {
       label: 'Income',
       value: summary ? formatCurrency(summary.totalIncome) : 'Loading...',
-      hint: 'received and recorded',
+      hint: 'Received And Recorded',
       tone: 'income',
       icon: BanknoteArrowUp,
       rawValue: summary?.totalIncome ?? 0,
@@ -186,7 +186,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
     {
       label: 'Zameen',
       value: summary ? summary.zameenCount.toLocaleString() : 'Loading...',
-      hint: 'managed records',
+      hint: 'Managed Records',
       tone: 'land',
       icon: LandPlot,
       rawValue: summary?.zameenCount ?? 0,
@@ -194,7 +194,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
     {
       label: 'Crops',
       value: summary ? summary.cropCount.toLocaleString() : 'Loading...',
-      hint: 'crop cycles',
+      hint: 'Crop Cycles',
       tone: 'crop',
       icon: Wheat,
       rawValue: summary?.cropCount ?? 0,
@@ -202,7 +202,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
     {
       label: 'Entries',
       value: summary ? transactionCount.toLocaleString() : 'Loading...',
-      hint: 'expense + income',
+      hint: 'Expense + Income',
       tone: 'activity',
       icon: ClipboardList,
       rawValue: transactionCount,
@@ -214,54 +214,54 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
       label: 'Add Profile',
       page: 'Profiles',
       icon: PlusCircle,
-      hint: 'farm owner or farm book',
+      hint: 'Farm Owner Or Farm Book',
     },
     {
       label: 'Add Zameen',
       page: 'Zameen',
       icon: LandPlot,
-      hint: 'land and ownership',
+      hint: 'Land And Ownership',
     },
     {
       label: 'Add Crop',
       page: 'Crops',
       icon: Wheat,
-      hint: 'area and season',
+      hint: 'Area And Season',
     },
     {
       label: 'Add Expense',
       page: 'Expenses',
       icon: ReceiptText,
-      hint: 'kharcha entry',
+      hint: 'Kharcha Entry',
     },
     {
       label: 'Add Income',
       page: 'Income',
       icon: CircleDollarSign,
-      hint: 'sale or payment',
+      hint: 'Sale Or Payment',
     },
     {
       label: 'Open Reports',
       page: 'Reports',
       icon: BarChart3,
-      hint: 'profit details',
+      hint: 'Profit Details',
     },
   ];
 
   const nextSteps = [
     {
-      label: 'Land records',
-      value: summary?.zameenCount ? 'Ready' : 'Add first zameen',
+      label: 'Land Records',
+      value: summary?.zameenCount ? 'Ready' : 'Add First Zameen',
       page: 'Zameen',
     },
     {
-      label: 'Crop cycles',
-      value: summary?.cropCount ? 'Tracked' : 'Create crop allocation',
+      label: 'Crop Cycles',
+      value: summary?.cropCount ? 'Tracked' : 'Create Crop Allocation',
       page: 'Crops',
     },
     {
-      label: 'Money flow',
-      value: transactionCount ? 'Active' : 'Record expense or income',
+      label: 'Money Flow',
+      value: transactionCount ? 'Active' : 'Record Expense Or Income',
       page: transactionCount ? 'Reports' : 'Expenses',
     },
   ];
@@ -271,7 +271,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
       <div className="dashboard-titlebar">
         <div>
           <p className="eyebrow">Dashboard</p>
-          <h1>Farm command center</h1>
+          <h1>Farm Command Center</h1>
         </div>
         <div className="dashboard-user-chip">
           <Sprout size={16} aria-hidden="true" />
@@ -294,7 +294,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
 
           <div className="profit-ring" style={ringStyle(profitMargin)}>
             <strong>{summary ? `${profitMargin}%` : '--'}</strong>
-            <span>profit margin</span>
+            <span>Profit Margin</span>
           </div>
 
           <div className="cash-mini-list">
@@ -337,7 +337,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
           <div className="panel-header compact-panel-header">
             <div>
               <p className="eyebrow">Fast Work</p>
-              <h2>Direct actions</h2>
+              <h2>Direct Actions</h2>
             </div>
             <Route size={20} aria-hidden="true" />
           </div>
@@ -361,14 +361,14 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
           <div className="panel-header compact-panel-header">
             <div>
               <p className="eyebrow">Monthly Movement</p>
-              <h2>{recentMonths.length ? `${recentMonths.length} month trend` : 'No monthly data'}</h2>
+              <h2>{recentMonths.length ? `${recentMonths.length} Month Trend` : 'No Monthly Data'}</h2>
             </div>
             <LineChart size={20} aria-hidden="true" />
           </div>
 
           <div className="monthly-chart" aria-label="Monthly income, expense, and profit chart">
             {recentMonths.length === 0 ? (
-              <p className="muted">Monthly reports will appear when income and expenses are recorded.</p>
+              <p className="muted">Monthly Reports Will Appear When Income And Expenses Are Recorded.</p>
             ) : (
               recentMonths.map((report) => (
                 <div className="monthly-column" key={`${report.year}-${report.month}`}>
@@ -397,7 +397,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
           <div className="panel-header compact-panel-header">
             <div>
               <p className="eyebrow">Record Health</p>
-              <h2>{recordCount.toLocaleString()} records</h2>
+              <h2>{recordCount.toLocaleString()} Records</h2>
             </div>
             <TrendingUp size={20} aria-hidden="true" />
           </div>
@@ -413,11 +413,11 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
 
           <div className="top-crop-card">
             <CalendarDays size={18} aria-hidden="true" />
-            <span>Best crop</span>
+            <span>Best Crop</span>
             <strong>
               {topCrop
                 ? `${topCrop.cropName} - ${formatCurrency(topCrop.netProfit)}`
-                : 'Waiting for crop income'}
+                : 'Waiting For Crop Income'}
             </strong>
           </div>
         </section>

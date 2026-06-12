@@ -8,6 +8,7 @@ import {
   type Crop,
   type Expense,
 } from '../lib/api';
+import { FieldLabel } from '../components/FieldLabel';
 import {
   dateInputValue,
   dateParts,
@@ -16,6 +17,10 @@ import {
   groupByParent,
   sortByDateAscending,
 } from '../lib/recordGrouping';
+
+type ExpensesPageProps = {
+  onNotify: (message: string) => void;
+};
 
 const categories = [
   'Land Preparation',
@@ -39,7 +44,7 @@ const initialForm = {
   paymentStatus: 'Paid',
 };
 
-export function ExpensesPage() {
+export function ExpensesPage({ onNotify }: ExpensesPageProps) {
   const [crops, setCrops] = useState<Crop[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [form, setForm] = useState(initialForm);
@@ -115,8 +120,10 @@ export function ExpensesPage() {
 
       if (editingExpenseId) {
         await updateExpense(editingExpenseId, payload);
+        onNotify('Record Updated Successfully');
       } else {
         await createExpense(payload);
+        onNotify('Expense Added Successfully');
       }
 
       setForm({
@@ -165,6 +172,7 @@ export function ExpensesPage() {
 
     try {
       await deleteExpense(expense.id);
+      onNotify('Record Deleted Successfully');
       if (editingExpenseId === expense.id) {
         cancelEdit();
       }
@@ -207,7 +215,7 @@ export function ExpensesPage() {
       <section className="page-header">
         <div>
           <p className="eyebrow">Expenses</p>
-          <h1>Crop expenses</h1>
+          <h1>Crop Expenses</h1>
         </div>
       </section>
 
@@ -225,7 +233,7 @@ export function ExpensesPage() {
           </div>
 
           <label>
-            Crop
+            <FieldLabel required>Crop</FieldLabel>
             <select
               required
               value={form.cropId}
@@ -240,7 +248,7 @@ export function ExpensesPage() {
           </label>
 
           <label>
-            Category
+            <FieldLabel required>Category</FieldLabel>
             <select
               value={form.expenseCategory}
               onChange={(event) => setForm({ ...form, expenseCategory: event.target.value })}
@@ -252,7 +260,7 @@ export function ExpensesPage() {
           </label>
 
           <label>
-            Description
+            <FieldLabel required>Description</FieldLabel>
             <input
               required
               minLength={2}
@@ -262,7 +270,7 @@ export function ExpensesPage() {
           </label>
 
           <label>
-            Amount
+            <FieldLabel required>Amount</FieldLabel>
             <input
               required
               min="0"
@@ -274,7 +282,7 @@ export function ExpensesPage() {
           </label>
 
           <label>
-            Date
+            <FieldLabel required>Date</FieldLabel>
             <input
               required
               type="date"
@@ -284,7 +292,7 @@ export function ExpensesPage() {
           </label>
 
           <label>
-            Payment Status
+            <FieldLabel required>Payment Status</FieldLabel>
             <select
               value={form.paymentStatus}
               onChange={(event) => setForm({ ...form, paymentStatus: event.target.value })}
@@ -307,7 +315,7 @@ export function ExpensesPage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Expenses</p>
-              <h2>{visibleExpenses.length} total</h2>
+              <h2>{visibleExpenses.length} Total</h2>
             </div>
             <div className="panel-actions">
               <strong>Rs {filteredExpenseTotal.toLocaleString()}</strong>
@@ -316,7 +324,7 @@ export function ExpensesPage() {
                 value={cropFilter}
                 onChange={(event) => setCropFilter(event.target.value)}
               >
-                <option value="all">All crops</option>
+                <option value="all">All Crops</option>
                 {sortedCrops.map((crop) => (
                   <option key={crop.id} value={crop.id}>
                     {crop.cropName}
@@ -327,9 +335,9 @@ export function ExpensesPage() {
           </div>
 
           {isLoading ? (
-            <p className="muted">Loading expenses...</p>
+            <p className="muted">Loading Expenses...</p>
           ) : groupedExpenses.length === 0 ? (
-            <p className="muted">No expense records yet.</p>
+            <p className="muted">No Expense Records Yet.</p>
           ) : (
             <div className="grouped-records">
               {groupedExpenses.map((cropGroup) => (
@@ -365,18 +373,23 @@ export function ExpensesPage() {
                           (expense) => (
                             <article className="record-card" key={expense.id}>
                               <div>
-                                <p className="eyebrow">{formatDate(expense.expenseDate)}</p>
+                                <p className="eyebrow">{expense.expenseCategory}</p>
                                 <h4>{expense.description}</h4>
                               </div>
-                              <span
-                                className={
-                                  expense.paymentStatus === 'Unpaid'
-                                    ? 'status-pill status-unpaid'
-                                    : 'status-pill status-paid'
-                                }
-                              >
-                                {expense.paymentStatus === 'Unpaid' ? 'Unpaid' : 'Paid'}
-                              </span>
+                              <div className="transaction-side">
+                                <time className="transaction-date" dateTime={expense.expenseDate}>
+                                  {formatDate(expense.expenseDate)}
+                                </time>
+                                <span
+                                  className={
+                                    expense.paymentStatus === 'Unpaid'
+                                      ? 'status-pill status-unpaid'
+                                      : 'status-pill status-paid'
+                                  }
+                                >
+                                  {expense.paymentStatus === 'Unpaid' ? 'Unpaid' : 'Paid'}
+                                </span>
+                              </div>
                               <dl className="record-meta">
                                 <div>
                                   <dt>Category</dt>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   BarChart3,
   CircleDollarSign,
@@ -24,6 +24,7 @@ import {
   type AuthResponse,
   type User,
 } from './lib/api';
+import { ToastViewport, type ToastMessage } from './components/ToastViewport';
 import { AuthPage } from './pages/AuthPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProfilesPage } from './pages/ProfilesPage';
@@ -50,6 +51,23 @@ function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const showToast = useCallback((message: string) => {
+    setToasts((currentToasts) => [
+      ...currentToasts,
+      {
+        id: Date.now() + Math.random(),
+        message,
+      },
+    ]);
+  }, []);
+
+  const closeToast = useCallback((id: number) => {
+    setToasts((currentToasts) =>
+      currentToasts.filter((toast) => toast.id !== id),
+    );
+  }, []);
 
   useEffect(() => {
     let isActive = true;
@@ -99,30 +117,49 @@ function App() {
     setAuthToken(authResponse.accessToken);
     setCurrentUser(authResponse.user);
     setActivePage('Dashboard');
+    showToast('Account Login Successful');
   }
 
   function handleLogout() {
     clearAuthToken();
     setCurrentUser(null);
     setActivePage('Dashboard');
+    showToast('Signed Out Successfully');
   }
+
+  function handleAccountDeleted() {
+    clearAuthToken();
+    setCurrentUser(null);
+    setActivePage('Dashboard');
+    showToast('Account Deleted Successfully');
+  }
+
+  const toastViewport = <ToastViewport toasts={toasts} onClose={closeToast} />;
 
   if (isCheckingSession) {
     return (
-      <main className="auth-screen">
-        <section className="auth-panel">
-          <div className="loading-mark" aria-hidden="true">
-            <Sprout size={28} />
-          </div>
-          <p className="eyebrow">Zamindar Plus</p>
-          <h1>Opening workspace...</h1>
-        </section>
-      </main>
+      <>
+        <main className="auth-screen">
+          <section className="auth-panel">
+            <div className="loading-mark" aria-hidden="true">
+              <Sprout size={28} />
+            </div>
+            <p className="eyebrow">Zamindar Plus</p>
+            <h1>Opening Workspace...</h1>
+          </section>
+        </main>
+        {toastViewport}
+      </>
     );
   }
 
   if (!currentUser) {
-    return <AuthPage onAuthenticated={handleAuthenticated} />;
+    return (
+      <>
+        <AuthPage onAuthenticated={handleAuthenticated} onNotify={showToast} />
+        {toastViewport}
+      </>
+    );
   }
 
   return (
@@ -134,7 +171,7 @@ function App() {
           </div>
           <div className="brand-copy">
             <strong>Zamindar Plus</strong>
-            <span>Farm ledger platform</span>
+            <span>Farm Ledger Platform</span>
           </div>
           <button
             aria-label={isSidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
@@ -190,21 +227,22 @@ function App() {
         ) : activePage === 'Settings' ? (
           <SettingsPage
             currentUser={currentUser}
-            onAccountDeleted={handleLogout}
+            onAccountDeleted={handleAccountDeleted}
+            onNotify={showToast}
             onUserUpdated={setCurrentUser}
           />
         ) : activePage === 'Profiles' ? (
-          <ProfilesPage />
+          <ProfilesPage onNotify={showToast} />
         ) : activePage === 'Zameen' ? (
-          <ZameenPage />
+          <ZameenPage onNotify={showToast} />
         ) : activePage === 'Crops' ? (
-          <CropsPage />
+          <CropsPage onNotify={showToast} />
         ) : activePage === 'Expenses' ? (
-          <ExpensesPage />
+          <ExpensesPage onNotify={showToast} />
         ) : activePage === 'Income' ? (
-          <IncomePage />
+          <IncomePage onNotify={showToast} />
         ) : activePage === 'Reports' ? (
-          <ReportsPage />
+          <ReportsPage onNotify={showToast} />
         ) : (
           <section className="page-header">
             <div>
@@ -215,6 +253,7 @@ function App() {
           </section>
         )}
       </main>
+      {toastViewport}
     </div>
   );
 }
