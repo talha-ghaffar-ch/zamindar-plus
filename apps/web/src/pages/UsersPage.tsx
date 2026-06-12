@@ -196,6 +196,10 @@ export function UsersPage({
               <dt>Farmer Type</dt>
               <dd>{currentUser.farmerType ?? '-'}</dd>
             </div>
+            <div>
+              <dt>Role</dt>
+              <dd>{currentUser.role}</dd>
+            </div>
           </dl>
 
           <button

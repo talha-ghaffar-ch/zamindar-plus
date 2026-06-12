@@ -16,6 +16,7 @@ const safeUserSelect = {
   email: true,
   phone: true,
   farmerType: true,
+  role: true,
   createdAt: true,
   updatedAt: true,
 };
@@ -53,11 +54,18 @@ export class UsersService {
     });
   }
 
-  findAll(userId: string) {
-    return this.prisma.user.findMany({
+  async findAll(userId: string) {
+    const currentUser = await this.prisma.user.findUnique({
       where: {
         id: userId,
       },
+      select: {
+        role: true,
+      },
+    });
+
+    return this.prisma.user.findMany({
+      where: currentUser?.role === 'ADMIN' ? undefined : { id: userId },
       select: safeUserSelect,
       orderBy: {
         createdAt: 'desc',

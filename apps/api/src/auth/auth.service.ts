@@ -16,6 +16,7 @@ const safeUserSelect = {
   email: true,
   phone: true,
   farmerType: true,
+  role: true,
   createdAt: true,
   updatedAt: true,
 };
@@ -84,6 +85,7 @@ export class AuthService {
       email: user.email,
       phone: user.phone,
       farmerType: user.farmerType,
+      role: user.role,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });
@@ -111,6 +113,7 @@ export class AuthService {
     email: string;
     phone: string | null;
     farmerType: string | null;
+    role: string;
     createdAt: Date;
     updatedAt: Date;
   }) {

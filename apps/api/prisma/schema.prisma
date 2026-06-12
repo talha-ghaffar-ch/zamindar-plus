@@ -16,6 +16,7 @@ model User {
   phone        String?
   passwordHash String
   farmerType   String?
+  role         String    @default("USER")
   profiles     Profile[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt

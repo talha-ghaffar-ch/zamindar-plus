@@ -142,7 +142,9 @@ function App() {
           <span>
             {currentUser.firstName} {currentUser.lastName}
           </span>
-          <small>{currentUser.email}</small>
+          <small>
+            {currentUser.role === 'ADMIN' ? 'Admin' : currentUser.email}
+          </small>
         </div>
 
         <nav className="nav-list">
@@ -168,7 +170,7 @@ function App() {
 
       <main className="workspace">
         {activePage === 'Dashboard' ? (
-          <DashboardPage />
+          <DashboardPage currentUser={currentUser} />
         ) : activePage === 'Users' ? (
           <UsersPage
             currentUser={currentUser}
