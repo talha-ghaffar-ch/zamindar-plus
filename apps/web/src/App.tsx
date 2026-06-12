@@ -161,7 +161,6 @@ function App() {
           <span>
             {currentUser.firstName} {currentUser.lastName}
           </span>
-          <small>{currentUser.role === 'ADMIN' ? 'Admin' : 'Farmer'}</small>
         </div>
 
         <nav className="nav-list">

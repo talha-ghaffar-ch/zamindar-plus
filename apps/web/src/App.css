@@ -177,8 +177,7 @@
   object-fit: cover;
 }
 
-.sidebar-user span,
-.sidebar-user small {
+.sidebar-user span {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -187,12 +186,6 @@
 
 .sidebar-user span {
   font-weight: 850;
-}
-
-.sidebar-user small {
-  grid-column: 2;
-  color: #b9cac4;
-  font-size: 12px;
 }
 
 .nav-list {
@@ -284,7 +277,6 @@
 
 .sidebar-collapsed .brand-copy,
 .sidebar-collapsed .sidebar-user span,
-.sidebar-collapsed .sidebar-user small,
 .sidebar-collapsed .nav-button span,
 .sidebar-collapsed .logout-button span {
   display: none;
