@@ -1,5 +1,8 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+const API_URL =
+  import.meta.env.VITE_API_URL ??
+  `${window.location.protocol}//${window.location.hostname}:3000`;
 const AUTH_TOKEN_STORAGE_KEY = 'zamindar-plus-auth-token';
+export const AUTH_EXPIRED_EVENT = 'zamindar-plus-auth-expired';
 
 export type ReportSummary = {
   totalExpense: number;
@@ -232,6 +235,11 @@ async function requestJson<T>(path: string, options?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearAuthToken();
+      window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+    }
+
     throw new Error(await getErrorMessage(response));
   }
 

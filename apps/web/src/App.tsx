@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import {
+  AUTH_EXPIRED_EVENT,
   clearAuthToken,
   getAuthToken,
   getMe,
@@ -62,6 +63,19 @@ function App() {
 
     return () => {
       isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    function handleAuthExpired() {
+      setCurrentUser(null);
+      setActivePage('Dashboard');
+    }
+
+    window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+
+    return () => {
+      window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
     };
   }, []);
 

@@ -32,6 +32,7 @@ export function ReportsPage() {
   const [cropReports, setCropReports] = useState<CropProfitabilityReport[]>([]);
   const [monthlyReports, setMonthlyReports] = useState<MonthlySummaryReport[]>([]);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isActive = true;
@@ -51,6 +52,11 @@ export function ReportsPage() {
       .catch((loadError) => {
         if (isActive) {
           setError(loadError instanceof Error ? loadError.message : 'Failed to load reports.');
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoading(false);
         }
       });
 
@@ -107,7 +113,16 @@ export function ReportsPage() {
                 </tr>
               </thead>
               <tbody>
-                {cropReports.map((report) => (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6}>Loading crop reports...</td>
+                  </tr>
+                ) : cropReports.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>No crop report data yet.</td>
+                  </tr>
+                ) : (
+                  cropReports.map((report) => (
                   <tr key={report.cropId}>
                     <td>{report.cropName}</td>
                     <td>{report.zameenName}</td>
@@ -116,7 +131,8 @@ export function ReportsPage() {
                     <td>Rs {report.totalIncome.toLocaleString()}</td>
                     <td>Rs {report.netProfit.toLocaleString()}</td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -142,7 +158,16 @@ export function ReportsPage() {
                 </tr>
               </thead>
               <tbody>
-                {monthlyReports.map((report) => (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={5}>Loading monthly reports...</td>
+                  </tr>
+                ) : monthlyReports.length === 0 ? (
+                  <tr>
+                    <td colSpan={5}>No monthly report data yet.</td>
+                  </tr>
+                ) : (
+                  monthlyReports.map((report) => (
                   <tr key={`${report.year}-${report.month}`}>
                     <td>{formatMonth(report)}</td>
                     <td>Rs {report.totalExpense.toLocaleString()}</td>
@@ -150,7 +175,8 @@ export function ReportsPage() {
                     <td>Rs {report.netProfit.toLocaleString()}</td>
                     <td>{report.expenseCount + report.incomeCount}</td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>

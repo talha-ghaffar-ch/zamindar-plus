@@ -29,6 +29,7 @@ export function ZameenPage() {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingZameenId, setEditingZameenId] = useState<string | null>(null);
   const [profileFilter, setProfileFilter] = useState('all');
 
@@ -66,6 +67,11 @@ export function ZameenPage() {
       .catch((loadError) => {
         if (isActive) {
           setError(loadError instanceof Error ? loadError.message : 'Failed to load zameen.');
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoading(false);
         }
       });
 
@@ -316,7 +322,16 @@ export function ZameenPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredZameen.map((item) => (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6}>Loading zameen...</td>
+                  </tr>
+                ) : filteredZameen.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>No zameen records yet.</td>
+                  </tr>
+                ) : (
+                  filteredZameen.map((item) => (
                   <tr key={item.id}>
                     <td>{item.zameenName}</td>
                     <td>{profileName(item.profileId)}</td>
@@ -340,7 +355,8 @@ export function ZameenPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>

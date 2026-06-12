@@ -42,6 +42,7 @@ export function IncomePage() {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null);
   const [cropFilter, setCropFilter] = useState('all');
 
@@ -88,6 +89,11 @@ export function IncomePage() {
       .catch((loadError) => {
         if (isActive) {
           setError(loadError instanceof Error ? loadError.message : 'Failed to load income.');
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoading(false);
         }
       });
 
@@ -372,7 +378,16 @@ export function IncomePage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredIncome.map((item) => (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6}>Loading income...</td>
+                  </tr>
+                ) : filteredIncome.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>No income records yet.</td>
+                  </tr>
+                ) : (
+                  filteredIncome.map((item) => (
                   <tr key={item.id}>
                     <td>{item.incomeType}</td>
                     <td>{cropName(item.cropId)}</td>
@@ -396,7 +411,8 @@ export function IncomePage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>

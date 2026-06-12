@@ -5,6 +5,7 @@ export function DashboardPage() {
   const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadDashboard() {
@@ -18,6 +19,8 @@ export function DashboardPage() {
         setUsers(usersData);
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : 'Failed to load dashboard.');
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -86,7 +89,16 @@ export function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={4}>Loading account...</td>
+                </tr>
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={4}>No account data found.</td>
+                </tr>
+              ) : (
+                users.map((user) => (
                 <tr key={user.id}>
                   <td>
                     {user.firstName} {user.lastName}
@@ -95,7 +107,8 @@ export function DashboardPage() {
                   <td>{user.phone ?? '-'}</td>
                   <td>{user.farmerType ?? '-'}</td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>

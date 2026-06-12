@@ -51,6 +51,7 @@ export function ExpensesPage() {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [cropFilter, setCropFilter] = useState('all');
 
@@ -86,6 +87,11 @@ export function ExpensesPage() {
       .catch((loadError) => {
         if (isActive) {
           setError(loadError instanceof Error ? loadError.message : 'Failed to load expenses.');
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoading(false);
         }
       });
 
@@ -350,7 +356,16 @@ export function ExpensesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredExpenses.map((expense) => (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6}>Loading expenses...</td>
+                  </tr>
+                ) : filteredExpenses.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>No expense records yet.</td>
+                  </tr>
+                ) : (
+                  filteredExpenses.map((expense) => (
                   <tr key={expense.id}>
                     <td>{expense.description}</td>
                     <td>{cropName(expense.cropId)}</td>
@@ -372,7 +387,8 @@ export function ExpensesPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>

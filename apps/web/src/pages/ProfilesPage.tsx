@@ -20,6 +20,7 @@ export function ProfilesPage() {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
 
   async function loadData() {
@@ -41,6 +42,11 @@ export function ProfilesPage() {
       .catch((loadError) => {
         if (isActive) {
           setError(loadError instanceof Error ? loadError.message : 'Failed to load profiles.');
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoading(false);
         }
       });
 
@@ -214,7 +220,16 @@ export function ProfilesPage() {
                 </tr>
               </thead>
               <tbody>
-                {profiles.map((profile) => (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={5}>Loading profiles...</td>
+                  </tr>
+                ) : profiles.length === 0 ? (
+                  <tr>
+                    <td colSpan={5}>No profiles yet.</td>
+                  </tr>
+                ) : (
+                  profiles.map((profile) => (
                   <tr key={profile.id}>
                     <td>{profile.profileName}</td>
                     <td>{profile.city ?? '-'}</td>
@@ -235,7 +250,8 @@ export function ProfilesPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>

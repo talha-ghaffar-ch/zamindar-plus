@@ -30,6 +30,7 @@ export function CropsPage() {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingCropId, setEditingCropId] = useState<string | null>(null);
   const [zameenFilter, setZameenFilter] = useState('all');
 
@@ -67,6 +68,11 @@ export function CropsPage() {
       .catch((loadError) => {
         if (isActive) {
           setError(loadError instanceof Error ? loadError.message : 'Failed to load crops.');
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoading(false);
         }
       });
 
@@ -323,7 +329,16 @@ export function CropsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredCrops.map((crop) => (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6}>Loading crops...</td>
+                  </tr>
+                ) : filteredCrops.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>No crop records yet.</td>
+                  </tr>
+                ) : (
+                  filteredCrops.map((crop) => (
                   <tr key={crop.id}>
                     <td>{crop.cropName}</td>
                     <td>{zameenName(crop.zameenId)}</td>
@@ -349,7 +364,8 @@ export function CropsPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>

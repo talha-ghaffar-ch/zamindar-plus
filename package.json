@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Farm ledger platform for managing zameen, crops, expenses, income, reports, and farm records.",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run test:api",
+    "test:api": "docker compose up -d && npm run test -w apps/api",
     "dev:web": "npm run dev -w apps/web",
     "build:web": "npm run build -w apps/web",
     "lint:web": "npm run lint -w apps/web",
@@ -12,7 +13,7 @@
     "lint:api": "npm run lint -w apps/api",
     "build": "npm run build:web && npm run build:api",
     "lint": "npm run lint:web && npm run lint:api",
-    "check": "npm run build && npm run lint"
+    "check": "npm run build && npm run lint && npm run test"
   },
   "repository": {
     "type": "git",

@@ -125,6 +125,7 @@
 
 .summary-grid article,
 .panel {
+  min-width: 0;
   border: 1px solid #ded8ca;
   border-radius: 8px;
   background: #fffdf8;
@@ -190,6 +191,7 @@
 }
 
 .table-wrap {
+  max-width: 100%;
   overflow-x: auto;
 }
 
@@ -353,6 +355,7 @@ th {
 .report-grid {
   display: grid;
   gap: 16px;
+  min-width: 0;
 }
 
 .auth-screen {
