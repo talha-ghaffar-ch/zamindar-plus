@@ -14,10 +14,6 @@ export class UpdateIncomeDto {
   cropId?: string;
 
   @IsOptional()
-  @IsString()
-  incomeType?: string;
-
-  @IsOptional()
   @IsNumber()
   @Min(0)
   quantity?: number;
@@ -58,8 +54,4 @@ export class UpdateIncomeDto {
   @IsOptional()
   @IsString()
   buyerName?: string;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
 }

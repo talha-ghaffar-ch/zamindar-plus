@@ -63,7 +63,6 @@ export class ProfilesService {
         city: updateProfileDto.city,
         chakAreaName: updateProfileDto.chakAreaName,
         villageName: updateProfileDto.villageName,
-        notes: updateProfileDto.notes,
       },
     });
   }

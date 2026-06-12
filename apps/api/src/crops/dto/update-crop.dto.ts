@@ -54,8 +54,4 @@ export class UpdateCropDto {
   @IsOptional()
   @IsString()
   status?: string;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
 }

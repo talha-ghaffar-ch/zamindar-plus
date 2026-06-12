@@ -12,9 +12,6 @@ export class CreateIncomeDto {
   @IsString()
   cropId: string;
 
-  @IsString()
-  incomeType: string;
-
   @IsOptional()
   @IsNumber()
   @Min(0)
@@ -52,8 +49,4 @@ export class CreateIncomeDto {
   @IsOptional()
   @IsString()
   buyerName?: string;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
 }

@@ -49,14 +49,6 @@ export class UpdateExpenseDto {
 
   @IsOptional()
   @IsString()
-  paymentMethod?: string;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
-
-  @IsOptional()
-  @IsString()
   receiptImageUrl?: string;
 
   @IsOptional()

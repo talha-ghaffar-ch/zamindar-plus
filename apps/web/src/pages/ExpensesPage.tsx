@@ -8,6 +8,14 @@ import {
   type Crop,
   type Expense,
 } from '../lib/api';
+import {
+  dateInputValue,
+  dateParts,
+  formatDate,
+  groupByMonth,
+  groupByParent,
+  sortByDateAscending,
+} from '../lib/recordGrouping';
 
 const categories = [
   'Land Preparation',
@@ -29,21 +37,7 @@ const initialForm = {
   amount: '',
   expenseDate: '',
   paymentStatus: 'Paid',
-  paymentMethod: 'Cash',
-  notes: '',
 };
-
-function dateParts(dateValue: string) {
-  const date = new Date(dateValue);
-  return {
-    month: date.getMonth() + 1,
-    year: date.getFullYear(),
-  };
-}
-
-function dateInputValue(dateValue: string) {
-  return dateValue.slice(0, 10);
-}
 
 export function ExpensesPage() {
   const [crops, setCrops] = useState<Crop[]>([]);
@@ -116,9 +110,7 @@ export function ExpensesPage() {
         expenseDate: form.expenseDate,
         expenseMonth: parts.month,
         expenseYear: parts.year,
-        paymentStatus: form.paymentStatus || undefined,
-        paymentMethod: form.paymentMethod || undefined,
-        notes: form.notes || undefined,
+        paymentStatus: form.paymentStatus,
       };
 
       if (editingExpenseId) {
@@ -150,9 +142,7 @@ export function ExpensesPage() {
       description: expense.description,
       amount: String(expense.amount),
       expenseDate: dateInputValue(expense.expenseDate),
-      paymentStatus: expense.paymentStatus ?? 'Paid',
-      paymentMethod: expense.paymentMethod ?? 'Cash',
-      notes: expense.notes ?? '',
+      paymentStatus: expense.paymentStatus === 'Unpaid' ? 'Unpaid' : 'Paid',
     });
   }
 
@@ -188,16 +178,26 @@ export function ExpensesPage() {
     }
   }
 
-  function cropName(cropId: string) {
-    return crops.find((crop) => crop.id === cropId)?.cropName ?? cropId;
-  }
-
-  const filteredExpenses =
+  const sortedCrops = [...crops].sort((firstCrop, secondCrop) =>
+    firstCrop.cropName.localeCompare(secondCrop.cropName),
+  );
+  const visibleCrops =
+    cropFilter === 'all'
+      ? sortedCrops
+      : sortedCrops.filter((crop) => crop.id === cropFilter);
+  const visibleExpenses =
     cropFilter === 'all'
       ? expenses
       : expenses.filter((expense) => expense.cropId === cropFilter);
-
-  const filteredExpenseTotal = filteredExpenses.reduce(
+  const sortedExpenses = sortByDateAscending(visibleExpenses, (expense) => expense.expenseDate);
+  const groupedExpenses = groupByParent(
+    visibleCrops,
+    sortedExpenses,
+    (crop) => crop.id,
+    (crop) => crop.cropName,
+    (expense) => expense.cropId,
+  );
+  const filteredExpenseTotal = visibleExpenses.reduce(
     (total, expense) => total + expense.amount,
     0,
   );
@@ -291,24 +291,7 @@ export function ExpensesPage() {
             >
               <option>Paid</option>
               <option>Unpaid</option>
-              <option>Partial</option>
             </select>
-          </label>
-
-          <label>
-            Payment Method
-            <input
-              value={form.paymentMethod}
-              onChange={(event) => setForm({ ...form, paymentMethod: event.target.value })}
-            />
-          </label>
-
-          <label>
-            Notes
-            <textarea
-              value={form.notes}
-              onChange={(event) => setForm({ ...form, notes: event.target.value })}
-            />
           </label>
 
           <button className="primary-button" disabled={isSaving || crops.length === 0} type="submit">
@@ -324,7 +307,7 @@ export function ExpensesPage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Expenses</p>
-              <h2>{filteredExpenses.length} total</h2>
+              <h2>{visibleExpenses.length} total</h2>
             </div>
             <div className="panel-actions">
               <strong>Rs {filteredExpenseTotal.toLocaleString()}</strong>
@@ -334,7 +317,7 @@ export function ExpensesPage() {
                 onChange={(event) => setCropFilter(event.target.value)}
               >
                 <option value="all">All crops</option>
-                {crops.map((crop) => (
+                {sortedCrops.map((crop) => (
                   <option key={crop.id} value={crop.id}>
                     {crop.cropName}
                   </option>
@@ -343,55 +326,89 @@ export function ExpensesPage() {
             </div>
           </div>
 
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th>Crop</th>
-                  <th>Category</th>
-                  <th>Amount</th>
-                  <th>Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6}>Loading expenses...</td>
-                  </tr>
-                ) : filteredExpenses.length === 0 ? (
-                  <tr>
-                    <td colSpan={6}>No expense records yet.</td>
-                  </tr>
-                ) : (
-                  filteredExpenses.map((expense) => (
-                  <tr key={expense.id}>
-                    <td>{expense.description}</td>
-                    <td>{cropName(expense.cropId)}</td>
-                    <td>{expense.expenseCategory}</td>
-                    <td>Rs {expense.amount.toLocaleString()}</td>
-                    <td>{new Date(expense.expenseDate).toLocaleDateString()}</td>
-                    <td>
-                      <div className="action-row">
-                        <button type="button" onClick={() => startEdit(expense)}>
-                          Edit
-                        </button>
-                        <button
-                          className="danger-text-button"
-                          type="button"
-                          onClick={() => void handleDelete(expense)}
-                        >
-                          Delete
-                        </button>
+          {isLoading ? (
+            <p className="muted">Loading expenses...</p>
+          ) : groupedExpenses.length === 0 ? (
+            <p className="muted">No expense records yet.</p>
+          ) : (
+            <div className="grouped-records">
+              {groupedExpenses.map((cropGroup) => (
+                <article className="record-group" key={cropGroup.key}>
+                  <div className="record-group-header">
+                    <h3>{cropGroup.label}</h3>
+                    <span>
+                      Rs{' '}
+                      {cropGroup.items
+                        .reduce((total, expense) => total + expense.amount, 0)
+                        .toLocaleString()}
+                    </span>
+                  </div>
+
+                  {groupByMonth(
+                    cropGroup.items,
+                    (expense) => expense.expenseYear,
+                    (expense) => expense.expenseMonth,
+                  ).map((monthGroup) => (
+                    <section className="month-group" key={monthGroup.key}>
+                      <div className="month-group-header">
+                        <h4>{monthGroup.label}</h4>
+                        <span>
+                          Rs{' '}
+                          {monthGroup.items
+                            .reduce((total, expense) => total + expense.amount, 0)
+                            .toLocaleString()}
+                        </span>
                       </div>
-                    </td>
-                  </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+
+                      <div className="record-list">
+                        {sortByDateAscending(monthGroup.items, (expense) => expense.expenseDate).map(
+                          (expense) => (
+                            <article className="record-card" key={expense.id}>
+                              <div>
+                                <p className="eyebrow">{formatDate(expense.expenseDate)}</p>
+                                <h4>{expense.description}</h4>
+                              </div>
+                              <span
+                                className={
+                                  expense.paymentStatus === 'Unpaid'
+                                    ? 'status-pill status-unpaid'
+                                    : 'status-pill status-paid'
+                                }
+                              >
+                                {expense.paymentStatus === 'Unpaid' ? 'Unpaid' : 'Paid'}
+                              </span>
+                              <dl className="record-meta">
+                                <div>
+                                  <dt>Category</dt>
+                                  <dd>{expense.expenseCategory}</dd>
+                                </div>
+                                <div>
+                                  <dt>Amount</dt>
+                                  <dd>Rs {expense.amount.toLocaleString()}</dd>
+                                </div>
+                              </dl>
+                              <div className="action-row">
+                                <button type="button" onClick={() => startEdit(expense)}>
+                                  Edit
+                                </button>
+                                <button
+                                  className="danger-text-button"
+                                  type="button"
+                                  onClick={() => void handleDelete(expense)}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </article>
+                          ),
+                        )}
+                      </div>
+                    </section>
+                  ))}
+                </article>
+              ))}
+            </div>
+          )}
         </section>
       </section>
     </>

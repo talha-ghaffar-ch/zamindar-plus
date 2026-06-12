@@ -63,7 +63,6 @@ export type Profile = {
   city: string | null;
   chakAreaName: string | null;
   villageName: string | null;
-  notes: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -73,7 +72,6 @@ export type CreateProfilePayload = {
   city?: string;
   chakAreaName?: string;
   villageName?: string;
-  notes?: string;
 };
 
 export type UpdateProfilePayload = Partial<CreateProfilePayload>;
@@ -119,7 +117,6 @@ export type Zameen = {
   totalAreaUnit: string;
   totalAreaSqft: number;
   ownershipType: string | null;
-  notes: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -134,7 +131,6 @@ export type CreateZameenPayload = {
   totalAreaUnit: string;
   totalAreaSqft: number;
   ownershipType?: string;
-  notes?: string;
 };
 
 export type UpdateZameenPayload = Partial<CreateZameenPayload>;
@@ -151,7 +147,6 @@ export type Crop = {
   expectedEndMonth: number | null;
   expectedEndYear: number | null;
   status: string;
-  notes: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -167,7 +162,6 @@ export type CreateCropPayload = {
   expectedEndMonth?: number;
   expectedEndYear?: number;
   status?: string;
-  notes?: string;
 };
 
 export type UpdateCropPayload = Partial<CreateCropPayload>;
@@ -182,8 +176,6 @@ export type Expense = {
   expenseMonth: number;
   expenseYear: number;
   paymentStatus: string | null;
-  paymentMethod: string | null;
-  notes: string | null;
   receiptImageUrl: string | null;
   sharedGroupId: string | null;
   createdAt: string;
@@ -199,8 +191,6 @@ export type CreateExpensePayload = {
   expenseMonth: number;
   expenseYear: number;
   paymentStatus?: string;
-  paymentMethod?: string;
-  notes?: string;
 };
 
 export type UpdateExpensePayload = Partial<CreateExpensePayload>;
@@ -208,7 +198,6 @@ export type UpdateExpensePayload = Partial<CreateExpensePayload>;
 export type Income = {
   id: string;
   cropId: string;
-  incomeType: string;
   quantity: number | null;
   quantityUnit: string | null;
   rate: number | null;
@@ -218,14 +207,12 @@ export type Income = {
   incomeYear: number;
   paymentStatus: string | null;
   buyerName: string | null;
-  notes: string | null;
   createdAt: string;
   updatedAt: string;
 };
 
 export type CreateIncomePayload = {
   cropId: string;
-  incomeType: string;
   quantity?: number;
   quantityUnit?: string;
   rate?: number;
@@ -235,7 +222,6 @@ export type CreateIncomePayload = {
   incomeYear: number;
   paymentStatus?: string;
   buyerName?: string;
-  notes?: string;
 };
 
 export type UpdateIncomePayload = Partial<CreateIncomePayload>;

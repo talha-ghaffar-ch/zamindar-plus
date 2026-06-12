@@ -21,8 +21,4 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   villageName?: string;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
 }

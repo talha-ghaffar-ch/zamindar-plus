@@ -45,8 +45,4 @@ export class UpdateZameenDto {
   @IsOptional()
   @IsString()
   ownershipType?: string;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
 }

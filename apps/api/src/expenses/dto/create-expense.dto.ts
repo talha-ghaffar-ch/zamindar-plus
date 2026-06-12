@@ -42,14 +42,6 @@ export class CreateExpenseDto {
 
   @IsOptional()
   @IsString()
-  paymentMethod?: string;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
-
-  @IsOptional()
-  @IsString()
   receiptImageUrl?: string;
 
   @IsOptional()

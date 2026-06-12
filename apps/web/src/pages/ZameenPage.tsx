@@ -10,6 +10,7 @@ import {
   type Profile,
   type Zameen,
 } from '../lib/api';
+import { groupByParent } from '../lib/recordGrouping';
 
 const initialForm = {
   profileId: '',
@@ -20,7 +21,6 @@ const initialForm = {
   totalAreaValue: '',
   totalAreaUnit: 'Acre',
   ownershipType: 'Own land',
-  notes: '',
 };
 
 export function ZameenPage() {
@@ -99,7 +99,6 @@ export function ZameenPage() {
         totalAreaUnit: form.totalAreaUnit,
         totalAreaSqft,
         ownershipType: form.ownershipType || undefined,
-        notes: form.notes || undefined,
       };
 
       if (editingZameenId) {
@@ -134,7 +133,6 @@ export function ZameenPage() {
       totalAreaValue: String(item.totalAreaValue),
       totalAreaUnit: item.totalAreaUnit,
       ownershipType: item.ownershipType ?? 'Own land',
-      notes: item.notes ?? '',
     });
   }
 
@@ -170,14 +168,24 @@ export function ZameenPage() {
     }
   }
 
-  function profileName(profileId: string) {
-    return profiles.find((profile) => profile.id === profileId)?.profileName ?? profileId;
-  }
-
-  const filteredZameen =
+  const sortedProfiles = [...profiles].sort((firstProfile, secondProfile) =>
+    firstProfile.profileName.localeCompare(secondProfile.profileName),
+  );
+  const visibleProfiles =
+    profileFilter === 'all'
+      ? sortedProfiles
+      : sortedProfiles.filter((profile) => profile.id === profileFilter);
+  const visibleZameen =
     profileFilter === 'all'
       ? zameen
       : zameen.filter((item) => item.profileId === profileFilter);
+  const groupedZameen = groupByParent(
+    visibleProfiles,
+    visibleZameen,
+    (profile) => profile.id,
+    (profile, index) => `Profile ${index + 1}: ${profile.profileName}`,
+    (item) => item.profileId,
+  );
 
   return (
     <>
@@ -235,6 +243,22 @@ export function ZameenPage() {
           </label>
 
           <label>
+            Killa Number
+            <input
+              value={form.killaNumber}
+              onChange={(event) => setForm({ ...form, killaNumber: event.target.value })}
+            />
+          </label>
+
+          <label>
+            Khasra Number
+            <input
+              value={form.khasraNumber}
+              onChange={(event) => setForm({ ...form, khasraNumber: event.target.value })}
+            />
+          </label>
+
+          <label>
             Total Area
             <input
               required
@@ -272,14 +296,6 @@ export function ZameenPage() {
             </select>
           </label>
 
-          <label>
-            Notes
-            <textarea
-              value={form.notes}
-              onChange={(event) => setForm({ ...form, notes: event.target.value })}
-            />
-          </label>
-
           <button className="primary-button" disabled={isSaving || profiles.length === 0} type="submit">
             {isSaving
               ? 'Saving...'
@@ -293,7 +309,7 @@ export function ZameenPage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Zameen</p>
-              <h2>{filteredZameen.length} total</h2>
+              <h2>{visibleZameen.length} total</h2>
             </div>
             <select
               className="inline-filter"
@@ -301,7 +317,7 @@ export function ZameenPage() {
               onChange={(event) => setProfileFilter(event.target.value)}
             >
               <option value="all">All profiles</option>
-              {profiles.map((profile) => (
+              {sortedProfiles.map((profile) => (
                 <option key={profile.id} value={profile.id}>
                   {profile.profileName}
                 </option>
@@ -309,57 +325,69 @@ export function ZameenPage() {
             </select>
           </div>
 
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Profile</th>
-                  <th>Murabba</th>
-                  <th>Area</th>
-                  <th>Ownership</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6}>Loading zameen...</td>
-                  </tr>
-                ) : filteredZameen.length === 0 ? (
-                  <tr>
-                    <td colSpan={6}>No zameen records yet.</td>
-                  </tr>
-                ) : (
-                  filteredZameen.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.zameenName}</td>
-                    <td>{profileName(item.profileId)}</td>
-                    <td>{item.murabbaNumber ?? '-'}</td>
-                    <td>
-                      {item.totalAreaValue} {item.totalAreaUnit}
-                    </td>
-                    <td>{item.ownershipType ?? '-'}</td>
-                    <td>
-                      <div className="action-row">
-                        <button type="button" onClick={() => startEdit(item)}>
-                          Edit
-                        </button>
-                        <button
-                          className="danger-text-button"
-                          type="button"
-                          onClick={() => void handleDelete(item)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          {isLoading ? (
+            <p className="muted">Loading zameen...</p>
+          ) : groupedZameen.length === 0 ? (
+            <p className="muted">No zameen records yet.</p>
+          ) : (
+            <div className="grouped-records">
+              {groupedZameen.map((group) => (
+                <article className="record-group" key={group.key}>
+                  <div className="record-group-header">
+                    <h3>{group.label}</h3>
+                    <span>{group.items.length} zameen</span>
+                  </div>
+
+                  <div className="record-list">
+                    {group.items
+                      .sort((firstItem, secondItem) =>
+                        firstItem.zameenName.localeCompare(secondItem.zameenName),
+                      )
+                      .map((item) => (
+                        <article className="record-card" key={item.id}>
+                          <div>
+                            <p className="eyebrow">{item.ownershipType ?? 'Ownership not set'}</p>
+                            <h4>{item.zameenName}</h4>
+                          </div>
+                          <dl className="record-meta">
+                            <div>
+                              <dt>Area</dt>
+                              <dd>
+                                {item.totalAreaValue} {item.totalAreaUnit}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>Murabba</dt>
+                              <dd>{item.murabbaNumber ?? '-'}</dd>
+                            </div>
+                            <div>
+                              <dt>Killa</dt>
+                              <dd>{item.killaNumber ?? '-'}</dd>
+                            </div>
+                            <div>
+                              <dt>Khasra</dt>
+                              <dd>{item.khasraNumber ?? '-'}</dd>
+                            </div>
+                          </dl>
+                          <div className="action-row">
+                            <button type="button" onClick={() => startEdit(item)}>
+                              Edit
+                            </button>
+                            <button
+                              className="danger-text-button"
+                              type="button"
+                              onClick={() => void handleDelete(item)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
       </section>
     </>

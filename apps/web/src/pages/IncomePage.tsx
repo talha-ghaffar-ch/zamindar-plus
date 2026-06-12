@@ -8,33 +8,37 @@ import {
   type Crop,
   type Income,
 } from '../lib/api';
+import {
+  dateInputValue,
+  dateParts,
+  formatDate,
+  groupByMonth,
+  groupByParent,
+  sortByDateAscending,
+} from '../lib/recordGrouping';
 
-const incomeTypes = ['Crop sale', 'Advance received', 'Partial payment', 'Other income'];
+const quantityUnits = [
+  'Maund',
+  'Kg',
+  'Ton',
+  'Quintal',
+  'Bag / Bori',
+  'Crate',
+  'Bale',
+  'Trolley',
+  'Liter',
+];
 
 const initialForm = {
   cropId: '',
-  incomeType: 'Crop sale',
   quantity: '',
-  quantityUnit: 'maund',
+  quantityUnit: 'Maund',
   rate: '',
   totalAmount: '',
   incomeDate: '',
   paymentStatus: 'Received',
   buyerName: '',
-  notes: '',
 };
-
-function dateParts(dateValue: string) {
-  const date = new Date(dateValue);
-  return {
-    month: date.getMonth() + 1,
-    year: date.getFullYear(),
-  };
-}
-
-function dateInputValue(dateValue: string) {
-  return dateValue.slice(0, 10);
-}
 
 export function IncomePage() {
   const [crops, setCrops] = useState<Crop[]>([]);
@@ -112,7 +116,6 @@ export function IncomePage() {
     try {
       const payload = {
         cropId: form.cropId,
-        incomeType: form.incomeType,
         quantity: form.quantity ? Number(form.quantity) : undefined,
         quantityUnit: form.quantityUnit || undefined,
         rate: form.rate ? Number(form.rate) : undefined,
@@ -120,9 +123,8 @@ export function IncomePage() {
         incomeDate: form.incomeDate,
         incomeMonth: parts.month,
         incomeYear: parts.year,
-        paymentStatus: form.paymentStatus || undefined,
+        paymentStatus: form.paymentStatus,
         buyerName: form.buyerName || undefined,
-        notes: form.notes || undefined,
       };
 
       if (editingIncomeId) {
@@ -148,15 +150,13 @@ export function IncomePage() {
     setEditingIncomeId(item.id);
     setForm({
       cropId: item.cropId,
-      incomeType: item.incomeType,
       quantity: item.quantity ? String(item.quantity) : '',
-      quantityUnit: item.quantityUnit ?? 'maund',
+      quantityUnit: item.quantityUnit ?? 'Maund',
       rate: item.rate ? String(item.rate) : '',
       totalAmount: String(item.totalAmount),
       incomeDate: dateInputValue(item.incomeDate),
-      paymentStatus: item.paymentStatus ?? 'Received',
+      paymentStatus: item.paymentStatus === 'Pending' ? 'Pending' : 'Received',
       buyerName: item.buyerName ?? '',
-      notes: item.notes ?? '',
     });
   }
 
@@ -169,7 +169,7 @@ export function IncomePage() {
   }
 
   async function handleDelete(item: Income) {
-    const confirmed = window.confirm(`Delete income "${item.incomeType}"?`);
+    const confirmed = window.confirm(`Delete income record from ${formatDate(item.incomeDate)}?`);
 
     if (!confirmed) {
       return;
@@ -190,16 +190,26 @@ export function IncomePage() {
     }
   }
 
-  function cropName(cropId: string) {
-    return crops.find((crop) => crop.id === cropId)?.cropName ?? cropId;
-  }
-
-  const filteredIncome =
+  const sortedCrops = [...crops].sort((firstCrop, secondCrop) =>
+    firstCrop.cropName.localeCompare(secondCrop.cropName),
+  );
+  const visibleCrops =
+    cropFilter === 'all'
+      ? sortedCrops
+      : sortedCrops.filter((crop) => crop.id === cropFilter);
+  const visibleIncome =
     cropFilter === 'all'
       ? income
       : income.filter((item) => item.cropId === cropFilter);
-
-  const filteredIncomeTotal = filteredIncome.reduce(
+  const sortedIncome = sortByDateAscending(visibleIncome, (item) => item.incomeDate);
+  const groupedIncome = groupByParent(
+    visibleCrops,
+    sortedIncome,
+    (crop) => crop.id,
+    (crop) => crop.cropName,
+    (item) => item.cropId,
+  );
+  const filteredIncomeTotal = visibleIncome.reduce(
     (total, item) => total + item.totalAmount,
     0,
   );
@@ -242,18 +252,6 @@ export function IncomePage() {
           </label>
 
           <label>
-            Income Type
-            <select
-              value={form.incomeType}
-              onChange={(event) => setForm({ ...form, incomeType: event.target.value })}
-            >
-              {incomeTypes.map((incomeType) => (
-                <option key={incomeType}>{incomeType}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
             Quantity
             <input
               min="0"
@@ -266,10 +264,14 @@ export function IncomePage() {
 
           <label>
             Quantity Unit
-            <input
+            <select
               value={form.quantityUnit}
               onChange={(event) => setForm({ ...form, quantityUnit: event.target.value })}
-            />
+            >
+              {quantityUnits.map((unit) => (
+                <option key={unit}>{unit}</option>
+              ))}
+            </select>
           </label>
 
           <label>
@@ -321,16 +323,7 @@ export function IncomePage() {
             >
               <option>Received</option>
               <option>Pending</option>
-              <option>Partial</option>
             </select>
-          </label>
-
-          <label>
-            Notes
-            <textarea
-              value={form.notes}
-              onChange={(event) => setForm({ ...form, notes: event.target.value })}
-            />
           </label>
 
           <button className="primary-button" disabled={isSaving || crops.length === 0} type="submit">
@@ -346,7 +339,7 @@ export function IncomePage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Income</p>
-              <h2>{filteredIncome.length} total</h2>
+              <h2>{visibleIncome.length} total</h2>
             </div>
             <div className="panel-actions">
               <strong>Rs {filteredIncomeTotal.toLocaleString()}</strong>
@@ -356,7 +349,7 @@ export function IncomePage() {
                 onChange={(event) => setCropFilter(event.target.value)}
               >
                 <option value="all">All crops</option>
-                {crops.map((crop) => (
+                {sortedCrops.map((crop) => (
                   <option key={crop.id} value={crop.id}>
                     {crop.cropName}
                   </option>
@@ -365,57 +358,95 @@ export function IncomePage() {
             </div>
           </div>
 
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Crop</th>
-                  <th>Quantity</th>
-                  <th>Amount</th>
-                  <th>Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6}>Loading income...</td>
-                  </tr>
-                ) : filteredIncome.length === 0 ? (
-                  <tr>
-                    <td colSpan={6}>No income records yet.</td>
-                  </tr>
-                ) : (
-                  filteredIncome.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.incomeType}</td>
-                    <td>{cropName(item.cropId)}</td>
-                    <td>
-                      {item.quantity ?? '-'} {item.quantityUnit ?? ''}
-                    </td>
-                    <td>Rs {item.totalAmount.toLocaleString()}</td>
-                    <td>{new Date(item.incomeDate).toLocaleDateString()}</td>
-                    <td>
-                      <div className="action-row">
-                        <button type="button" onClick={() => startEdit(item)}>
-                          Edit
-                        </button>
-                        <button
-                          className="danger-text-button"
-                          type="button"
-                          onClick={() => void handleDelete(item)}
-                        >
-                          Delete
-                        </button>
+          {isLoading ? (
+            <p className="muted">Loading income...</p>
+          ) : groupedIncome.length === 0 ? (
+            <p className="muted">No income records yet.</p>
+          ) : (
+            <div className="grouped-records">
+              {groupedIncome.map((cropGroup) => (
+                <article className="record-group" key={cropGroup.key}>
+                  <div className="record-group-header">
+                    <h3>{cropGroup.label}</h3>
+                    <span>
+                      Rs{' '}
+                      {cropGroup.items
+                        .reduce((total, item) => total + item.totalAmount, 0)
+                        .toLocaleString()}
+                    </span>
+                  </div>
+
+                  {groupByMonth(
+                    cropGroup.items,
+                    (item) => item.incomeYear,
+                    (item) => item.incomeMonth,
+                  ).map((monthGroup) => (
+                    <section className="month-group" key={monthGroup.key}>
+                      <div className="month-group-header">
+                        <h4>{monthGroup.label}</h4>
+                        <span>
+                          Rs{' '}
+                          {monthGroup.items
+                            .reduce((total, item) => total + item.totalAmount, 0)
+                            .toLocaleString()}
+                        </span>
                       </div>
-                    </td>
-                  </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+
+                      <div className="record-list">
+                        {sortByDateAscending(monthGroup.items, (item) => item.incomeDate).map(
+                          (item) => (
+                            <article className="record-card" key={item.id}>
+                              <div>
+                                <p className="eyebrow">{formatDate(item.incomeDate)}</p>
+                                <h4>{item.buyerName ?? 'Buyer not set'}</h4>
+                              </div>
+                              <span
+                                className={
+                                  item.paymentStatus === 'Pending'
+                                    ? 'status-pill status-unpaid'
+                                    : 'status-pill status-paid'
+                                }
+                              >
+                                {item.paymentStatus === 'Pending' ? 'Pending' : 'Received'}
+                              </span>
+                              <dl className="record-meta">
+                                <div>
+                                  <dt>Quantity</dt>
+                                  <dd>
+                                    {item.quantity ?? '-'} {item.quantityUnit ?? ''}
+                                  </dd>
+                                </div>
+                                <div>
+                                  <dt>Rate</dt>
+                                  <dd>{item.rate ? `Rs ${item.rate.toLocaleString()}` : '-'}</dd>
+                                </div>
+                                <div>
+                                  <dt>Total</dt>
+                                  <dd>Rs {item.totalAmount.toLocaleString()}</dd>
+                                </div>
+                              </dl>
+                              <div className="action-row">
+                                <button type="button" onClick={() => startEdit(item)}>
+                                  Edit
+                                </button>
+                                <button
+                                  className="danger-text-button"
+                                  type="button"
+                                  onClick={() => void handleDelete(item)}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </article>
+                          ),
+                        )}
+                      </div>
+                    </section>
+                  ))}
+                </article>
+              ))}
+            </div>
+          )}
         </section>
       </section>
     </>

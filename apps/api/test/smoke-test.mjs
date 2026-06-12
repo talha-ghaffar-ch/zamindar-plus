@@ -264,7 +264,6 @@ try {
       expenseMonth: 6,
       expenseYear: 2026,
       paymentStatus: 'Paid',
-      paymentMethod: 'Cash',
     },
   });
 
@@ -276,9 +275,8 @@ try {
     token: ownerAuth.accessToken,
     body: {
       cropId: crop.id,
-      incomeType: 'Crop sale',
       quantity: 10,
-      quantityUnit: 'maund',
+      quantityUnit: 'Maund',
       rate: 200,
       totalAmount: 2000,
       incomeDate: '2026-06-08',

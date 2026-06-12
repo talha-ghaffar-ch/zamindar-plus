@@ -12,7 +12,6 @@ const initialForm = {
   city: '',
   chakAreaName: '',
   villageName: '',
-  notes: '',
 };
 
 export function ProfilesPage() {
@@ -66,7 +65,6 @@ export function ProfilesPage() {
         city: form.city || undefined,
         chakAreaName: form.chakAreaName || undefined,
         villageName: form.villageName || undefined,
-        notes: form.notes || undefined,
       };
 
       if (editingProfileId) {
@@ -94,7 +92,6 @@ export function ProfilesPage() {
       city: profile.city ?? '',
       chakAreaName: profile.chakAreaName ?? '',
       villageName: profile.villageName ?? '',
-      notes: profile.notes ?? '',
     });
   }
 
@@ -126,6 +123,12 @@ export function ProfilesPage() {
       );
     }
   }
+
+  const sortedProfiles = [...profiles].sort(
+    (firstProfile, secondProfile) =>
+      new Date(firstProfile.createdAt).getTime() -
+      new Date(secondProfile.createdAt).getTime(),
+  );
 
   return (
     <>
@@ -168,7 +171,7 @@ export function ProfilesPage() {
           </label>
 
           <label>
-            Chak / Area Name
+            Area
             <input
               value={form.chakAreaName}
               onChange={(event) => setForm({ ...form, chakAreaName: event.target.value })}
@@ -176,18 +179,10 @@ export function ProfilesPage() {
           </label>
 
           <label>
-            Village Name
+            Village
             <input
               value={form.villageName}
               onChange={(event) => setForm({ ...form, villageName: event.target.value })}
-            />
-          </label>
-
-          <label>
-            Notes
-            <textarea
-              value={form.notes}
-              onChange={(event) => setForm({ ...form, notes: event.target.value })}
             />
           </label>
 
@@ -212,9 +207,10 @@ export function ProfilesPage() {
             <table>
               <thead>
                 <tr>
+                  <th>No.</th>
                   <th>Profile</th>
                   <th>City</th>
-                  <th>Chak / Area</th>
+                  <th>Area</th>
                   <th>Village</th>
                   <th>Actions</th>
                 </tr>
@@ -222,34 +218,35 @@ export function ProfilesPage() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={5}>Loading profiles...</td>
+                    <td colSpan={6}>Loading profiles...</td>
                   </tr>
-                ) : profiles.length === 0 ? (
+                ) : sortedProfiles.length === 0 ? (
                   <tr>
-                    <td colSpan={5}>No profiles yet.</td>
+                    <td colSpan={6}>No profiles yet.</td>
                   </tr>
                 ) : (
-                  profiles.map((profile) => (
-                  <tr key={profile.id}>
-                    <td>{profile.profileName}</td>
-                    <td>{profile.city ?? '-'}</td>
-                    <td>{profile.chakAreaName ?? '-'}</td>
-                    <td>{profile.villageName ?? '-'}</td>
-                    <td>
-                      <div className="action-row">
-                        <button type="button" onClick={() => startEdit(profile)}>
-                          Edit
-                        </button>
-                        <button
-                          className="danger-text-button"
-                          type="button"
-                          onClick={() => void handleDelete(profile)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                  sortedProfiles.map((profile, index) => (
+                    <tr key={profile.id}>
+                      <td>Profile {index + 1}</td>
+                      <td>{profile.profileName}</td>
+                      <td>{profile.city ?? '-'}</td>
+                      <td>{profile.chakAreaName ?? '-'}</td>
+                      <td>{profile.villageName ?? '-'}</td>
+                      <td>
+                        <div className="action-row">
+                          <button type="button" onClick={() => startEdit(profile)}>
+                            Edit
+                          </button>
+                          <button
+                            className="danger-text-button"
+                            type="button"
+                            onClick={() => void handleDelete(profile)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                   ))
                 )}
               </tbody>

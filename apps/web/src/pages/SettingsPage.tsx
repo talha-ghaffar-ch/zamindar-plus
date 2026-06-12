@@ -143,16 +143,16 @@ const DEFAULT_AVATAR_IMAGES = [
     value: makeAvatar(['#cf8f28', '#2d7a4e', '#ffe3a1'], 'wheat'),
   },
   {
-    name: 'Canal Blue',
-    value: makeAvatar(['#146c8c', '#20b17a', '#a5f3d1'], 'canal'),
+    name: 'Rice Valley',
+    value: makeAvatar(['#166534', '#22a06b', '#c7f7b8'], 'rice'),
   },
   {
     name: 'Soil Rose',
     value: makeAvatar(['#9f3f4d', '#7a5a22', '#ffd2a1'], 'barn'),
   },
   {
-    name: 'Sun Field',
-    value: makeAvatar(['#e2a538', '#13715a', '#fff1b6'], 'sunfield'),
+    name: 'Golden Harvest',
+    value: makeAvatar(['#b7791f', '#176c4d', '#ffe29a'], 'wheat'),
   },
   {
     name: 'Cotton White',

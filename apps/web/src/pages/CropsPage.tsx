@@ -10,19 +10,47 @@ import {
   type Crop,
   type Zameen,
 } from '../lib/api';
+import { groupByParent } from '../lib/recordGrouping';
 
 const cropNames = ['Wheat', 'Rice', 'Sugarcane', 'Cotton', 'Maize', 'Fodder'];
+const cropStatuses = ['Active', 'Completed'];
 
 const initialForm = {
   zameenId: '',
   cropName: 'Wheat',
   cropAreaValue: '',
   cropAreaUnit: 'Acre',
-  startMonth: '1',
-  startYear: '2026',
+  startPeriod: '2026-01',
   status: 'Active',
-  notes: '',
 };
+
+function cropStartPeriod(crop: Crop) {
+  if (!crop.startYear || !crop.startMonth) {
+    return '';
+  }
+
+  return `${crop.startYear}-${String(crop.startMonth).padStart(2, '0')}`;
+}
+
+function startPeriodLabel(crop: Crop) {
+  if (!crop.startYear || !crop.startMonth) {
+    return '-';
+  }
+
+  return new Date(crop.startYear, crop.startMonth - 1).toLocaleDateString('en-GB', {
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+function splitStartPeriod(startPeriod: string) {
+  const [yearValue, monthValue] = startPeriod.split('-').map(Number);
+
+  return {
+    startMonth: monthValue || undefined,
+    startYear: yearValue || undefined,
+  };
+}
 
 export function CropsPage() {
   const [zameen, setZameen] = useState<Zameen[]>([]);
@@ -88,6 +116,8 @@ export function CropsPage() {
 
     const areaValue = Number(form.cropAreaValue);
     const cropAreaSqft = toSquareFeet(areaValue, form.cropAreaUnit as AreaUnit);
+    const startPeriod = splitStartPeriod(form.startPeriod);
+
     try {
       const payload = {
         zameenId: form.zameenId,
@@ -95,10 +125,8 @@ export function CropsPage() {
         cropAreaValue: areaValue,
         cropAreaUnit: form.cropAreaUnit,
         cropAreaSqft,
-        startMonth: Number(form.startMonth),
-        startYear: Number(form.startYear),
+        ...startPeriod,
         status: form.status,
-        notes: form.notes || undefined,
       };
 
       if (editingCropId) {
@@ -127,10 +155,8 @@ export function CropsPage() {
       cropName: crop.cropName,
       cropAreaValue: String(crop.cropAreaValue),
       cropAreaUnit: crop.cropAreaUnit,
-      startMonth: String(crop.startMonth ?? 1),
-      startYear: String(crop.startYear ?? 2026),
-      status: crop.status,
-      notes: crop.notes ?? '',
+      startPeriod: cropStartPeriod(crop),
+      status: cropStatuses.includes(crop.status) ? crop.status : 'Active',
     });
   }
 
@@ -164,14 +190,24 @@ export function CropsPage() {
     }
   }
 
-  function zameenName(zameenId: string) {
-    return zameen.find((item) => item.id === zameenId)?.zameenName ?? zameenId;
-  }
-
-  const filteredCrops =
+  const sortedZameen = [...zameen].sort((firstItem, secondItem) =>
+    firstItem.zameenName.localeCompare(secondItem.zameenName),
+  );
+  const visibleZameen =
+    zameenFilter === 'all'
+      ? sortedZameen
+      : sortedZameen.filter((item) => item.id === zameenFilter);
+  const visibleCrops =
     zameenFilter === 'all'
       ? crops
       : crops.filter((crop) => crop.zameenId === zameenFilter);
+  const groupedCrops = groupByParent(
+    visibleZameen,
+    visibleCrops,
+    (item) => item.id,
+    (item) => item.zameenName,
+    (crop) => crop.zameenId,
+  );
 
   return (
     <>
@@ -247,23 +283,12 @@ export function CropsPage() {
           </label>
 
           <label>
-            Start Month
+            Start Period
             <input
-              min="1"
-              max="12"
-              type="number"
-              value={form.startMonth}
-              onChange={(event) => setForm({ ...form, startMonth: event.target.value })}
-            />
-          </label>
-
-          <label>
-            Start Year
-            <input
-              min="1900"
-              type="number"
-              value={form.startYear}
-              onChange={(event) => setForm({ ...form, startYear: event.target.value })}
+              required
+              type="month"
+              value={form.startPeriod}
+              onChange={(event) => setForm({ ...form, startPeriod: event.target.value })}
             />
           </label>
 
@@ -273,18 +298,10 @@ export function CropsPage() {
               value={form.status}
               onChange={(event) => setForm({ ...form, status: event.target.value })}
             >
-              <option>Active</option>
-              <option>Completed</option>
-              <option>Archived</option>
+              {cropStatuses.map((status) => (
+                <option key={status}>{status}</option>
+              ))}
             </select>
-          </label>
-
-          <label>
-            Notes
-            <textarea
-              value={form.notes}
-              onChange={(event) => setForm({ ...form, notes: event.target.value })}
-            />
           </label>
 
           <button className="primary-button" disabled={isSaving || zameen.length === 0} type="submit">
@@ -300,7 +317,7 @@ export function CropsPage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Crops</p>
-              <h2>{filteredCrops.length} total</h2>
+              <h2>{visibleCrops.length} total</h2>
             </div>
             <select
               className="inline-filter"
@@ -308,7 +325,7 @@ export function CropsPage() {
               onChange={(event) => setZameenFilter(event.target.value)}
             >
               <option value="all">All zameen</option>
-              {zameen.map((item) => (
+              {sortedZameen.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.zameenName}
                 </option>
@@ -316,59 +333,70 @@ export function CropsPage() {
             </select>
           </div>
 
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Crop</th>
-                  <th>Zameen</th>
-                  <th>Area</th>
-                  <th>Start</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6}>Loading crops...</td>
-                  </tr>
-                ) : filteredCrops.length === 0 ? (
-                  <tr>
-                    <td colSpan={6}>No crop records yet.</td>
-                  </tr>
-                ) : (
-                  filteredCrops.map((crop) => (
-                  <tr key={crop.id}>
-                    <td>{crop.cropName}</td>
-                    <td>{zameenName(crop.zameenId)}</td>
-                    <td>
-                      {crop.cropAreaValue} {crop.cropAreaUnit}
-                    </td>
-                    <td>
-                      {crop.startMonth ?? '-'} / {crop.startYear ?? '-'}
-                    </td>
-                    <td>{crop.status}</td>
-                    <td>
-                      <div className="action-row">
-                        <button type="button" onClick={() => startEdit(crop)}>
-                          Edit
-                        </button>
-                        <button
-                          className="danger-text-button"
-                          type="button"
-                          onClick={() => void handleDelete(crop)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          {isLoading ? (
+            <p className="muted">Loading crops...</p>
+          ) : groupedCrops.length === 0 ? (
+            <p className="muted">No crop records yet.</p>
+          ) : (
+            <div className="grouped-records">
+              {groupedCrops.map((group) => (
+                <article className="record-group" key={group.key}>
+                  <div className="record-group-header">
+                    <h3>{group.label}</h3>
+                    <span>{group.items.length} crops</span>
+                  </div>
+
+                  <div className="record-list">
+                    {group.items
+                      .sort((firstCrop, secondCrop) =>
+                        firstCrop.cropName.localeCompare(secondCrop.cropName),
+                      )
+                      .map((crop) => (
+                        <article className="record-card" key={crop.id}>
+                          <div>
+                            <p className="eyebrow">Crop</p>
+                            <h4>{crop.cropName}</h4>
+                          </div>
+                          <span
+                            className={
+                              crop.status === 'Completed'
+                                ? 'status-pill status-paid'
+                                : 'status-pill status-active'
+                            }
+                          >
+                            {crop.status === 'Completed' ? 'Completed' : 'Active'}
+                          </span>
+                          <dl className="record-meta">
+                            <div>
+                              <dt>Area</dt>
+                              <dd>
+                                {crop.cropAreaValue} {crop.cropAreaUnit}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>Start</dt>
+                              <dd>{startPeriodLabel(crop)}</dd>
+                            </div>
+                          </dl>
+                          <div className="action-row">
+                            <button type="button" onClick={() => startEdit(crop)}>
+                              Edit
+                            </button>
+                            <button
+                              className="danger-text-button"
+                              type="button"
+                              onClick={() => void handleDelete(crop)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
       </section>
     </>

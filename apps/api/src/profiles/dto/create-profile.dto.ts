@@ -20,8 +20,4 @@ export class CreateProfileDto {
   @IsOptional()
   @IsString()
   villageName?: string;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
 }

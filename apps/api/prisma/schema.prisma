@@ -37,7 +37,6 @@ model Profile {
   city         String?
   chakAreaName String?
   villageName  String?
-  notes        String?
   zameen       Zameen[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -58,7 +57,6 @@ model Zameen {
   totalAreaUnit  String
   totalAreaSqft  Float
   ownershipType  String?
-  notes          String?
   crops          Crop[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -80,7 +78,6 @@ model Crop {
   expectedEndMonth Int?
   expectedEndYear  Int?
   status           String    @default("Active")
-  notes            String?
   expenses         Expense[]
   incomes          Income[]
   createdAt        DateTime  @default(now())
@@ -101,8 +98,6 @@ model Expense {
   expenseMonth    Int
   expenseYear     Int
   paymentStatus   String?
-  paymentMethod   String?
-  notes           String?
   receiptImageUrl String?
   sharedGroupId   String?
   createdAt       DateTime @default(now())
@@ -117,7 +112,6 @@ model Expense {
 model Income {
   id            String   @id @default(cuid())
   cropId        String
-  incomeType    String
   quantity      Float?
   quantityUnit  String?
   rate          Float?
@@ -127,7 +121,6 @@ model Income {
   incomeYear    Int
   paymentStatus String?
   buyerName     String?
-  notes         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

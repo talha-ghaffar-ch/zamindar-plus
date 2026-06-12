@@ -49,8 +49,4 @@ export class CreateCropDto {
   @IsOptional()
   @IsString()
   status?: string;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
 }
