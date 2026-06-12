@@ -4,7 +4,6 @@ import {
   BarChart3,
   LogIn,
   ShieldCheck,
-  Wheat,
   UserPlus,
 } from 'lucide-react';
 import {
@@ -88,29 +87,17 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
       <section className="auth-panel">
         <div className="auth-hero">
           <div className="auth-hero-copy">
-            <p className="auth-kicker">Punjab crop ledger</p>
-            <h1>Zamindar Plus</h1>
-            <p>
-              Manage gandum, chawal, sugarcane, zameen, kharcha, aamdani, and
-              munafa from one beautiful farm workspace.
-            </p>
-
-            <div className="auth-crop-list" aria-label="Supported crops">
-              <span>
-                <Wheat size={15} aria-hidden="true" />
-                Gandum
-              </span>
-              <span>Chawal</span>
-              <span>Sugarcane</span>
-              <span>Kapas</span>
-            </div>
+            <h1 className="auth-logo" aria-label="Zamindar Plus">
+              <span>Zamindar</span>
+              <span>Plus</span>
+            </h1>
           </div>
         </div>
 
         <div className="auth-card">
           <div className="auth-card-header">
             <p className="eyebrow">Secure access</p>
-            <h2>{mode === 'login' ? 'Sign in' : 'Create account'}</h2>
+            <h2>{mode === 'login' ? 'Sign In' : 'Create Account'}</h2>
             <p>
               {mode === 'login'
                 ? 'Open your farm dashboard and continue from your latest records.'
@@ -192,7 +179,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
                 disabled={isSaving}
                 type="submit"
               >
-                {isSaving ? 'Signing in...' : 'Sign In'}
+                {isSaving ? 'Signing In...' : 'Sign In'}
               </button>
             </form>
           ) : (
