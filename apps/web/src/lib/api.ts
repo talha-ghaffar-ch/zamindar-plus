@@ -101,6 +101,10 @@ export type LoginPayload = {
   password: string;
 };
 
+export type GoogleLoginPayload = {
+  credential: string;
+};
+
 export type AuthResponse = {
   accessToken: string;
   user: User;
@@ -295,6 +299,13 @@ export function signup(payload: CreateUserPayload) {
 
 export function login(payload: LoginPayload) {
   return requestJson<AuthResponse>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function googleLogin(payload: GoogleLoginPayload) {
+  return requestJson<AuthResponse>('/auth/google', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

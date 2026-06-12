@@ -4,8 +4,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { randomUUID } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
+import { OAuth2Client, type TokenPayload } from 'google-auth-library';
 import { PrismaService } from '../prisma/prisma.service';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
 
@@ -31,6 +34,8 @@ const safeUserSelect = {
 
 @Injectable()
 export class AuthService {
+  private readonly googleClient = new OAuth2Client();
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
@@ -107,6 +112,86 @@ export class AuthService {
     });
   }
 
+  async googleLogin(googleLoginDto: GoogleLoginDto) {
+    const googleProfile = await this.verifyGoogleCredential(
+      googleLoginDto.credential,
+    );
+    const email = googleProfile.email?.toLowerCase();
+
+    if (!email || !googleProfile.sub) {
+      throw new UnauthorizedException('Google account details are incomplete.');
+    }
+
+    const existingUser = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          {
+            googleId: googleProfile.sub,
+          },
+          {
+            email,
+          },
+        ],
+      },
+      select: {
+        ...safeUserSelect,
+        googleId: true,
+      },
+    });
+
+    if (existingUser) {
+      if (
+        existingUser.googleId &&
+        existingUser.googleId !== googleProfile.sub
+      ) {
+        throw new ConflictException(
+          'This email is already linked to another Google account.',
+        );
+      }
+
+      const user = existingUser.googleId
+        ? existingUser
+        : await this.prisma.user.update({
+            where: {
+              id: existingUser.id,
+            },
+            data: {
+              googleId: googleProfile.sub,
+              authProvider: 'GOOGLE',
+              profileImageUrl:
+                existingUser.profileImageUrl ?? googleProfile.picture,
+            },
+            select: {
+              ...safeUserSelect,
+              googleId: true,
+            },
+          });
+
+      return this.buildAuthResponse(user);
+    }
+
+    const nameParts = this.getGoogleNameParts(googleProfile);
+    const passwordHash = await bcrypt.hash(
+      `google:${googleProfile.sub}:${randomUUID()}`,
+      12,
+    );
+    const user = await this.prisma.user.create({
+      data: {
+        firstName: nameParts.firstName,
+        lastName: nameParts.lastName,
+        email,
+        passwordHash,
+        googleId: googleProfile.sub,
+        authProvider: 'GOOGLE',
+        profileImageUrl: googleProfile.picture,
+        farmerType: 'Land Owner',
+      },
+      select: safeUserSelect,
+    });
+
+    return this.buildAuthResponse(user);
+  }
+
   async me(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: {
@@ -149,6 +234,39 @@ export class AuthService {
     return {
       accessToken,
       user,
+    };
+  }
+
+  private async verifyGoogleCredential(credential: string) {
+    const googleClientId = process.env.GOOGLE_CLIENT_ID;
+
+    if (!googleClientId) {
+      throw new UnauthorizedException('Google sign-in is not configured.');
+    }
+
+    const ticket = await this.googleClient.verifyIdToken({
+      idToken: credential,
+      audience: googleClientId,
+    });
+    const payload = ticket.getPayload();
+
+    if (!payload?.email_verified) {
+      throw new UnauthorizedException('Google email must be verified.');
+    }
+
+    return payload;
+  }
+
+  private getGoogleNameParts(profile: TokenPayload) {
+    const fallbackName = profile.name?.trim() || 'Google User';
+    const fallbackParts = fallbackName.split(/\s+/);
+
+    return {
+      firstName: profile.given_name?.trim() || fallbackParts[0] || 'Google',
+      lastName:
+        profile.family_name?.trim() ||
+        fallbackParts.slice(1).join(' ') ||
+        'User',
     };
   }
 }

@@ -1536,6 +1536,19 @@ tbody tr:hover {
   box-shadow: 0 12px 24px rgba(22, 33, 29, 0.09);
 }
 
+.google-auth-render {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 13px;
+}
+
+.google-auth-render > div {
+  width: 100% !important;
+}
+
 .auth-form {
   gap: 11px;
 }

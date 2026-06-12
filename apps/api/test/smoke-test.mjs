@@ -137,6 +137,18 @@ try {
   ownerAuth = await signup(ownerEmail);
   otherAuth = await signup(otherEmail);
 
+  await requestJson('/users', {
+    method: 'POST',
+    expectedStatus: 403,
+    token: ownerAuth.accessToken,
+    body: {
+      firstName: 'Blocked',
+      lastName: 'User',
+      email: `blocked-${testRunId}@example.com`,
+      password,
+    },
+  });
+
   const loginResponse = await requestJson('/auth/login', {
     method: 'POST',
     body: {

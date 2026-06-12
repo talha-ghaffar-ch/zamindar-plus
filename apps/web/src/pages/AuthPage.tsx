@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import {
   BadgeCheck,
   BarChart3,
@@ -10,12 +10,45 @@ import {
 } from 'lucide-react';
 import { FieldLabel } from '../components/FieldLabel';
 import {
+  googleLogin,
   login,
   signup,
   type AuthResponse,
   type CreateUserPayload,
   type LoginPayload,
 } from '../lib/api';
+
+type GoogleCredentialResponse = {
+  credential?: string;
+};
+
+type GoogleButtonText = 'signin_with' | 'signup_with';
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: GoogleCredentialResponse) => void;
+          }) => void;
+          renderButton: (
+            parent: HTMLElement,
+            options: {
+              theme: 'outline';
+              size: 'large';
+              type: 'standard';
+              shape: 'pill';
+              text: GoogleButtonText;
+              width: number;
+            },
+          ) => void;
+        };
+      };
+    };
+  }
+}
 
 type AuthPageProps = {
   onAuthenticated: (authResponse: AuthResponse) => void;
@@ -35,6 +68,37 @@ const initialLoginForm: LoginPayload = {
   email: '',
   password: '',
 };
+const GOOGLE_SCRIPT_ID = 'google-identity-services-script';
+
+function loadGoogleIdentityScript() {
+  return new Promise<void>((resolve, reject) => {
+    if (window.google?.accounts.id) {
+      resolve();
+      return;
+    }
+
+    const existingScript = document.getElementById(
+      GOOGLE_SCRIPT_ID,
+    ) as HTMLScriptElement | null;
+
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve(), { once: true });
+      existingScript.addEventListener('error', () => reject(new Error()), {
+        once: true,
+      });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = GOOGLE_SCRIPT_ID;
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.addEventListener('load', () => resolve(), { once: true });
+    script.addEventListener('error', () => reject(new Error()), { once: true });
+    document.head.append(script);
+  });
+}
 
 function GoogleIcon() {
   return (
@@ -61,6 +125,8 @@ function GoogleIcon() {
 
 export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
   const [loginForm, setLoginForm] = useState(initialLoginForm);
   const [signupForm, setSignupForm] = useState(initialSignupForm);
   const [error, setError] = useState('');
@@ -75,6 +141,74 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     signupForm.lastName.trim().length >= 2 &&
     signupForm.email.trim().length > 0 &&
     signupForm.password.length >= 8;
+
+  const handleGoogleCredential = useCallback(
+    async (response: GoogleCredentialResponse) => {
+      setError('');
+      setSuccess('');
+
+      if (!response.credential) {
+        setError('Google did not return a valid sign-in credential.');
+        return;
+      }
+
+      setIsSaving(true);
+
+      try {
+        onAuthenticated(await googleLogin({ credential: response.credential }));
+      } catch (googleError) {
+        setError(
+          googleError instanceof Error
+            ? googleError.message
+            : 'Google sign-in failed.',
+        );
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [onAuthenticated],
+  );
+
+  useEffect(() => {
+    if (!googleClientId || !googleButtonRef.current) {
+      return;
+    }
+
+    let isCancelled = false;
+    const buttonElement = googleButtonRef.current;
+    buttonElement.replaceChildren();
+
+    void loadGoogleIdentityScript()
+      .then(() => {
+        if (isCancelled || !window.google?.accounts.id) {
+          return;
+        }
+
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleGoogleCredential,
+        });
+        buttonElement.replaceChildren();
+        window.google.accounts.id.renderButton(buttonElement, {
+          theme: 'outline',
+          size: 'large',
+          type: 'standard',
+          shape: 'pill',
+          text: mode === 'login' ? 'signin_with' : 'signup_with',
+          width: Math.min(buttonElement.clientWidth || 360, 400),
+        });
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setError('Google sign-in could not load. Check your internet connection.');
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+      buttonElement.replaceChildren();
+    };
+  }, [googleClientId, handleGoogleCredential, mode]);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -122,7 +256,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
 
   function handleGooglePlaceholder() {
     setSuccess('');
-    setError('Google sign-in will be connected after the Google Client ID is configured.');
+    setError('Google sign-in is not configured for this environment.');
   }
 
   function switchMode(nextMode: 'login' | 'signup') {
@@ -190,14 +324,18 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
             </button>
           </div>
 
-          <button
-            className="google-auth-button"
-            type="button"
-            onClick={handleGooglePlaceholder}
-          >
-            <GoogleIcon />
-            {mode === 'login' ? 'Sign in with Google' : 'Sign up with Google'}
-          </button>
+          {googleClientId ? (
+            <div className="google-auth-render" ref={googleButtonRef} />
+          ) : (
+            <button
+              className="google-auth-button"
+              type="button"
+              onClick={handleGooglePlaceholder}
+            >
+              <GoogleIcon />
+              {mode === 'login' ? 'Sign in with Google' : 'Sign up with Google'}
+            </button>
+          )}
 
           {error ? <p className="error">{error}</p> : null}
           {success ? <p className="success">{success}</p> : null}

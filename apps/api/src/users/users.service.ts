@@ -33,7 +33,9 @@ const safeUserSelect = {
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async create(currentUserId: string, createUserDto: CreateUserDto) {
+    await this.ensureAdmin(currentUserId);
+
     const existingUser = await this.prisma.user.findUnique({
       where: {
         email: createUserDto.email,
@@ -174,5 +176,20 @@ export class UsersService {
       deleted: true,
       id,
     };
+  }
+
+  private async ensureAdmin(userId: string) {
+    const currentUser = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        role: true,
+      },
+    });
+
+    if (currentUser?.role !== 'ADMIN') {
+      throw new ForbiddenException('Only admins can create user accounts.');
+    }
   }
 }

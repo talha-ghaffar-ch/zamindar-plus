@@ -13,6 +13,9 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/src/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "seed:users": "ts-node src/scripts/seed-users.ts",
     "test": "npm run build && node test/smoke-test.mjs",
     "test:watch": "npm run test",
     "test:cov": "npm run test",
@@ -30,6 +33,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "dotenv": "^17.4.2",
+    "google-auth-library": "^10.7.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
