@@ -24,11 +24,9 @@
 }
 
 .app-shell {
-  height: 100vh;
   min-height: 100vh;
   display: grid;
   grid-template-columns: 286px minmax(0, 1fr);
-  overflow: hidden;
   background:
     linear-gradient(90deg, rgba(18, 113, 94, 0.05) 1px, transparent 1px),
     linear-gradient(180deg, rgba(22, 139, 160, 0.05) 1px, transparent 1px),
@@ -306,9 +304,7 @@
 
 .workspace {
   min-width: 0;
-  height: 100vh;
-  overflow: auto;
-  padding: 20px 24px;
+  padding: 28px;
   animation: page-rise 360ms ease both;
 }
 
@@ -900,18 +896,8 @@ tbody tr:hover {
 .content-grid {
   display: grid;
   grid-template-columns: minmax(280px, 0.78fr) minmax(360px, 1.22fr);
-  gap: 14px;
-  align-items: stretch;
-  height: calc(100vh - 96px);
-  min-height: 0;
-  overflow: hidden;
-}
-
-.content-grid > .panel,
-.settings-layout > .panel,
-.report-table-panel {
-  max-height: 100%;
-  overflow: auto;
+  gap: 18px;
+  align-items: start;
 }
 
 .form-grid {
@@ -1438,11 +1424,8 @@ tbody tr:hover {
 .settings-layout {
   display: grid;
   grid-template-columns: minmax(260px, 0.42fr) minmax(0, 1fr);
-  gap: 14px;
-  align-items: stretch;
-  height: calc(100vh - 96px);
-  min-height: 0;
-  overflow: hidden;
+  gap: 18px;
+  align-items: start;
 }
 
 .settings-profile-panel,
@@ -1650,9 +1633,7 @@ tbody tr:hover {
 
 .dashboard-screen,
 .reports-screen {
-  height: calc(100vh - 40px);
   min-height: 0;
-  overflow: hidden;
 }
 
 .dashboard-titlebar,
@@ -1695,11 +1676,9 @@ tbody tr:hover {
 }
 
 .dashboard-grid {
-  height: calc(100% - 64px);
-  min-height: 0;
   display: grid;
   grid-template-columns: minmax(270px, 0.72fr) minmax(0, 1.3fr) minmax(270px, 0.8fr);
-  grid-template-rows: minmax(176px, 0.82fr) minmax(210px, 1fr);
+  grid-template-rows: auto auto;
   gap: 14px;
 }
 
@@ -1971,7 +1950,6 @@ tbody tr:hover {
 
 .reports-screen {
   display: grid;
-  grid-template-rows: auto auto minmax(0, auto) minmax(0, 1fr);
   gap: 12px;
 }
 
@@ -2155,7 +2133,6 @@ tbody tr:hover {
 .report-detail-grid,
 .report-table-panel {
   min-height: 0;
-  overflow: hidden;
 }
 
 .report-monthly-chart {
@@ -2187,8 +2164,7 @@ tbody tr:hover {
 }
 
 .report-table-panel .table-wrap {
-  max-height: calc(100vh - 386px);
-  overflow: auto;
+  max-height: none;
 }
 
 @keyframes page-rise {
