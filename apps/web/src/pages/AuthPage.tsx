@@ -1,11 +1,10 @@
 import { type FormEvent, useState } from 'react';
 import {
-  Activity,
   BadgeCheck,
   BarChart3,
   LogIn,
   ShieldCheck,
-  Sprout,
+  Wheat,
   UserPlus,
 } from 'lucide-react';
 import {
@@ -40,6 +39,13 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
   const [signupForm, setSignupForm] = useState(initialSignupForm);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const isLoginReady =
+    loginForm.email.trim().length > 0 && loginForm.password.length >= 8;
+  const isSignupReady =
+    signupForm.firstName.trim().length >= 2 &&
+    signupForm.lastName.trim().length >= 2 &&
+    signupForm.email.trim().length > 0 &&
+    signupForm.password.length >= 8;
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -81,38 +87,22 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
     <main className="auth-screen">
       <section className="auth-panel">
         <div className="auth-hero">
-          <div className="auth-hero-topline">
-            <span>
-              <Sprout size={18} aria-hidden="true" />
-              Smart farm ledger
-            </span>
-            <span>
-              <Activity size={18} aria-hidden="true" />
-              Live reports
-            </span>
-          </div>
-
           <div className="auth-hero-copy">
-            <p className="eyebrow">Agriculture workspace</p>
+            <p className="auth-kicker">Punjab crop ledger</p>
             <h1>Zamindar Plus</h1>
             <p>
-              A calm, visual command center for zameen records, crop cycles,
-              expenses, income, and profit.
+              Manage gandum, chawal, sugarcane, zameen, kharcha, aamdani, and
+              munafa from one beautiful farm workspace.
             </p>
-          </div>
 
-          <div className="auth-metric-strip" aria-label="Workspace highlights">
-            <div>
-              <strong>1</strong>
-              <span>shared backend</span>
-            </div>
-            <div>
-              <strong>8</strong>
-              <span>ledger modules</span>
-            </div>
-            <div>
-              <strong>24/7</strong>
-              <span>local workflow</span>
+            <div className="auth-crop-list" aria-label="Supported crops">
+              <span>
+                <Wheat size={15} aria-hidden="true" />
+                Gandum
+              </span>
+              <span>Chawal</span>
+              <span>Sugarcane</span>
+              <span>Kapas</span>
             </div>
           </div>
         </div>
@@ -146,6 +136,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
           <div className="segmented-control" aria-label="Authentication mode">
             <button
               className={mode === 'login' ? 'active' : ''}
+              aria-pressed={mode === 'login'}
               type="button"
               onClick={() => setMode('login')}
             >
@@ -154,6 +145,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
             </button>
             <button
               className={mode === 'signup' ? 'active' : ''}
+              aria-pressed={mode === 'signup'}
               type="button"
               onClick={() => setMode('signup')}
             >
@@ -165,7 +157,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
           {error ? <p className="error">{error}</p> : null}
 
           {mode === 'login' ? (
-            <form className="form-grid" onSubmit={handleLogin}>
+            <form className="form-grid auth-form" onSubmit={handleLogin}>
               <label>
                 Email
                 <input
@@ -191,12 +183,20 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
                 />
               </label>
 
-              <button className="primary-button" disabled={isSaving} type="submit">
+              <button
+                className={
+                  isLoginReady
+                    ? 'primary-button auth-submit-button is-ready'
+                    : 'primary-button auth-submit-button'
+                }
+                disabled={isSaving}
+                type="submit"
+              >
                 {isSaving ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
           ) : (
-            <form className="form-grid" onSubmit={handleSignup}>
+            <form className="form-grid auth-form signup-form" onSubmit={handleSignup}>
               <label>
                 First Name
                 <input
@@ -278,7 +278,15 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
                 </select>
               </label>
 
-              <button className="primary-button" disabled={isSaving} type="submit">
+              <button
+                className={
+                  isSignupReady
+                    ? 'primary-button auth-submit-button is-ready'
+                    : 'primary-button auth-submit-button'
+                }
+                disabled={isSaving}
+                type="submit"
+              >
                 {isSaving ? 'Creating...' : 'Create Account'}
               </button>
             </form>
