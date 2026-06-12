@@ -1,4 +1,17 @@
 import { useEffect, useState } from 'react';
+import {
+  BarChart3,
+  CircleDollarSign,
+  ClipboardList,
+  LandPlot,
+  LayoutDashboard,
+  LogOut,
+  Sprout,
+  UserRound,
+  UsersRound,
+  Wheat,
+  type LucideIcon,
+} from 'lucide-react';
 import './App.css';
 import {
   AUTH_EXPIRED_EVENT,
@@ -19,15 +32,15 @@ import { ExpensesPage } from './pages/ExpensesPage';
 import { IncomePage } from './pages/IncomePage';
 import { ReportsPage } from './pages/ReportsPage';
 
-const navItems = [
-  'Dashboard',
-  'Users',
-  'Profiles',
-  'Zameen',
-  'Crops',
-  'Expenses',
-  'Income',
-  'Reports',
+const navItems: Array<{ label: string; icon: LucideIcon }> = [
+  { label: 'Dashboard', icon: LayoutDashboard },
+  { label: 'Users', icon: UserRound },
+  { label: 'Profiles', icon: UsersRound },
+  { label: 'Zameen', icon: LandPlot },
+  { label: 'Crops', icon: Wheat },
+  { label: 'Expenses', icon: ClipboardList },
+  { label: 'Income', icon: CircleDollarSign },
+  { label: 'Reports', icon: BarChart3 },
 ];
 
 function App() {
@@ -95,6 +108,9 @@ function App() {
     return (
       <main className="auth-screen">
         <section className="auth-panel">
+          <div className="loading-mark" aria-hidden="true">
+            <Sprout size={28} />
+          </div>
           <p className="eyebrow">Zamindar Plus</p>
           <h1>Opening workspace...</h1>
         </section>
@@ -110,11 +126,19 @@ function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <strong>Zamindar Plus</strong>
-          <span>Farm ledger platform</span>
+          <div className="brand-mark" aria-hidden="true">
+            <Sprout size={24} />
+          </div>
+          <div>
+            <strong>Zamindar Plus</strong>
+            <span>Farm ledger platform</span>
+          </div>
         </div>
 
         <div className="sidebar-user">
+          <div className="sidebar-user-avatar" aria-hidden="true">
+            {currentUser.firstName.slice(0, 1)}
+          </div>
           <span>
             {currentUser.firstName} {currentUser.lastName}
           </span>
@@ -124,18 +148,21 @@ function App() {
         <nav className="nav-list">
           {navItems.map((item) => (
             <button
-              className={item === activePage ? 'nav-button active' : 'nav-button'}
-              key={item}
+              aria-label={item.label}
+              className={item.label === activePage ? 'nav-button active' : 'nav-button'}
+              key={item.label}
               type="button"
-              onClick={() => setActivePage(item)}
+              onClick={() => setActivePage(item.label)}
             >
-              {item}
+              <item.icon size={18} aria-hidden="true" />
+              <span>{item.label}</span>
             </button>
           ))}
         </nav>
 
         <button className="logout-button" type="button" onClick={handleLogout}>
-          Sign Out
+          <LogOut size={18} aria-hidden="true" />
+          <span>Sign Out</span>
         </button>
       </aside>
 

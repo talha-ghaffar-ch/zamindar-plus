@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from 'react';
+import { Activity, LogIn, ShieldCheck, Sprout, UserPlus } from 'lucide-react';
 import {
   login,
   signup,
@@ -71,9 +72,35 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
   return (
     <main className="auth-screen">
       <section className="auth-panel">
+        <div className="auth-visual" aria-hidden="true">
+          <div className="auth-visual-mark">
+            <Sprout size={34} />
+          </div>
+          <div className="auth-pulse-card">
+            <span>Ledger online</span>
+            <strong>98%</strong>
+          </div>
+          <div className="auth-signal-grid">
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
+        </div>
+
         <div className="auth-brand">
           <p className="eyebrow">Zamindar Plus</p>
           <h1>Farm ledger workspace</h1>
+          <div className="auth-status-row">
+            <span>
+              <ShieldCheck size={14} aria-hidden="true" />
+              Secure session
+            </span>
+            <span>
+              <Activity size={14} aria-hidden="true" />
+              Live reports
+            </span>
+          </div>
         </div>
 
         <div className="segmented-control" aria-label="Authentication mode">
@@ -82,6 +109,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
             type="button"
             onClick={() => setMode('login')}
           >
+            <LogIn size={15} aria-hidden="true" />
             Sign In
           </button>
           <button
@@ -89,6 +117,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
             type="button"
             onClick={() => setMode('signup')}
           >
+            <UserPlus size={15} aria-hidden="true" />
             Create Account
           </button>
         </div>
