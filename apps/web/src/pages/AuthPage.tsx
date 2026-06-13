@@ -299,7 +299,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
             <h2>{mode === 'login' ? 'Sign in' : 'Create account'}</h2>
             <p>
               {mode === 'login'
-                ? 'Open your farm dashboard and continue from your latest records.'
+                ? 'Open your farm dashboard and continue from your latest records today.'
                 : 'Create a farmer account connected to the shared backend.'}
             </p>
           </div>
