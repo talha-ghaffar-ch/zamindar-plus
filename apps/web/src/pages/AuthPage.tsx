@@ -69,6 +69,10 @@ const initialLoginForm: LoginPayload = {
   password: '',
 };
 const GOOGLE_SCRIPT_ID = 'google-identity-services-script';
+let initializedGoogleClientId = '';
+let activeGoogleCredentialHandler:
+  | ((response: GoogleCredentialResponse) => void)
+  | null = null;
 
 function loadGoogleIdentityScript() {
   return new Promise<void>((resolve, reject) => {
@@ -170,6 +174,14 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
   );
 
   useEffect(() => {
+    activeGoogleCredentialHandler = handleGoogleCredential;
+
+    return () => {
+      activeGoogleCredentialHandler = null;
+    };
+  }, [handleGoogleCredential]);
+
+  useEffect(() => {
     if (!googleClientId || !googleButtonRef.current) {
       return;
     }
@@ -184,10 +196,14 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
           return;
         }
 
-        window.google.accounts.id.initialize({
-          client_id: googleClientId,
-          callback: handleGoogleCredential,
-        });
+        if (initializedGoogleClientId !== googleClientId) {
+          window.google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: (response) => activeGoogleCredentialHandler?.(response),
+          });
+          initializedGoogleClientId = googleClientId;
+        }
+
         buttonElement.replaceChildren();
         window.google.accounts.id.renderButton(buttonElement, {
           theme: 'outline',
@@ -208,7 +224,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       isCancelled = true;
       buttonElement.replaceChildren();
     };
-  }, [googleClientId, handleGoogleCredential, mode]);
+  }, [googleClientId, mode]);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
