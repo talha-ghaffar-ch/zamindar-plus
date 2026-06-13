@@ -1504,7 +1504,7 @@ tbody tr:hover {
 }
 
 .google-auth-button {
-  width: 100%;
+  width: min(100%, 392px);
   min-height: 42px;
   display: flex;
   gap: 10px;
@@ -1512,7 +1512,7 @@ tbody tr:hover {
   justify-content: center;
   border: 1px solid rgba(100, 121, 114, 0.22);
   border-radius: 8px;
-  margin: 0 0 13px;
+  margin: 0 auto 13px;
   color: var(--ink);
   background: rgba(255, 255, 255, 0.9);
   font: inherit;
@@ -1537,16 +1537,23 @@ tbody tr:hover {
 }
 
 .google-auth-render {
-  width: 100%;
+  width: min(100%, 392px);
   min-height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 0 13px;
+  margin: 0 auto 13px;
 }
 
 .google-auth-render > div {
+  display: flex !important;
+  justify-content: center !important;
   width: 100% !important;
+}
+
+.google-auth-render iframe {
+  display: block !important;
+  margin: 0 auto !important;
 }
 
 .auth-form {
