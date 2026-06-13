@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomInt, randomUUID } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client, type TokenPayload } from 'google-auth-library';
 import { PrismaService } from '../prisma/prisma.service';
@@ -188,7 +188,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new BadRequestException('Verification link is invalid or expired.');
+      throw new BadRequestException('Verification code is invalid or expired.');
     }
 
     await this.prisma.user.update({
@@ -450,7 +450,7 @@ export class AuthService {
 
   private buildVerificationResponse(token?: string) {
     return {
-      message: 'Account created successfully. Please verify your email.',
+      message: 'Account created successfully. Please verify your email code.',
       verificationRequired: true,
       ...this.developmentVerificationToken(token),
     };
@@ -459,7 +459,7 @@ export class AuthService {
   private buildVerificationResentResponse(token?: string) {
     return {
       message:
-        'If that email is awaiting verification, a new verification email has been sent.',
+        'If that email is awaiting verification, a new verification code has been prepared.',
       ...this.developmentVerificationToken(token),
     };
   }
@@ -483,7 +483,7 @@ export class AuthService {
   }
 
   private createVerificationToken() {
-    const token = randomBytes(32).toString('hex');
+    const token = String(randomInt(100000, 1000000));
 
     return {
       token,

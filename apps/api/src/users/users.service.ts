@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomInt } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from '../auth/email.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -69,6 +69,7 @@ export class UsersService {
         email: createUserDto.email.toLowerCase(),
         phone: createUserDto.phone,
         farmerType: createUserDto.farmerType,
+        role: createUserDto.role ?? 'USER',
         passwordHash,
         emailVerified: true,
         emailVerifiedAt: new Date(),
@@ -101,8 +102,15 @@ export class UsersService {
     id: string,
     updateUserDto: UpdateUserDto,
   ) {
-    if (currentUserId !== id) {
+    const currentUser = await this.getCurrentUserRole(currentUserId);
+    const isAdmin = currentUser?.role === 'ADMIN';
+
+    if (currentUserId !== id && !isAdmin) {
       throw new ForbiddenException('You can only update your own user record.');
+    }
+
+    if (updateUserDto.role && !isAdmin) {
+      throw new ForbiddenException('Only admins can change user roles.');
     }
 
     const user = await this.prisma.user.findUnique({
@@ -156,6 +164,7 @@ export class UsersService {
         email: nextEmail,
         phone: updateUserDto.phone,
         farmerType: updateUserDto.farmerType,
+        role: isAdmin ? updateUserDto.role : undefined,
         profileImageUrl: updateUserDto.profileImageUrl,
         preferredAreaUnit: updateUserDto.preferredAreaUnit,
         preferredCurrency: updateUserDto.preferredCurrency,
@@ -201,7 +210,9 @@ export class UsersService {
   }
 
   async remove(currentUserId: string, id: string) {
-    if (currentUserId !== id) {
+    const currentUser = await this.getCurrentUserRole(currentUserId);
+
+    if (currentUserId !== id && currentUser?.role !== 'ADMIN') {
       throw new ForbiddenException('You can only delete your own user record.');
     }
 
@@ -231,7 +242,15 @@ export class UsersService {
   }
 
   private async ensureAdmin(userId: string) {
-    const currentUser = await this.prisma.user.findUnique({
+    const currentUser = await this.getCurrentUserRole(userId);
+
+    if (currentUser?.role !== 'ADMIN') {
+      throw new ForbiddenException('Only admins can manage user accounts.');
+    }
+  }
+
+  private getCurrentUserRole(userId: string) {
+    return this.prisma.user.findUnique({
       where: {
         id: userId,
       },
@@ -239,14 +258,10 @@ export class UsersService {
         role: true,
       },
     });
-
-    if (currentUser?.role !== 'ADMIN') {
-      throw new ForbiddenException('Only admins can create user accounts.');
-    }
   }
 
   private createVerificationToken() {
-    const token = randomBytes(32).toString('hex');
+    const token = String(randomInt(100000, 1000000));
 
     return {
       token,

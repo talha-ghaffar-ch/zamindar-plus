@@ -536,6 +536,11 @@ export function SettingsPage({
             </div>
           </div>
 
+          <p className="feature-soon-note">
+            Email, SMS, and weekly report delivery will be available after
+            notification services are configured.
+          </p>
+
           <div className="settings-toggle-grid">
             <label className="settings-toggle-row">
               <span>
@@ -545,12 +550,13 @@ export function SettingsPage({
               <input
                 checked={form.emailNotifications}
                 type="checkbox"
-                onChange={(event) =>
+                onChange={(event) => {
+                  onNotify('Notification delivery will be available soon.');
                   setForm({
                     ...form,
                     emailNotifications: event.target.checked,
-                  })
-                }
+                  });
+                }}
               />
             </label>
 
@@ -562,12 +568,13 @@ export function SettingsPage({
               <input
                 checked={form.smsNotifications}
                 type="checkbox"
-                onChange={(event) =>
+                onChange={(event) => {
+                  onNotify('Notification delivery will be available soon.');
                   setForm({
                     ...form,
                     smsNotifications: event.target.checked,
-                  })
-                }
+                  });
+                }}
               />
             </label>
 
@@ -579,9 +586,10 @@ export function SettingsPage({
               <input
                 checked={form.weeklyReport}
                 type="checkbox"
-                onChange={(event) =>
-                  setForm({ ...form, weeklyReport: event.target.checked })
-                }
+                onChange={(event) => {
+                  onNotify('Weekly report delivery will be available soon.');
+                  setForm({ ...form, weeklyReport: event.target.checked });
+                }}
               />
             </label>
           </div>

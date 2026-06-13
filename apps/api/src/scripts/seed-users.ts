@@ -15,8 +15,6 @@ const requiredEnvironmentVariables = [
   'DATABASE_URL',
   'SEED_ADMIN_EMAIL',
   'SEED_ADMIN_PASSWORD',
-  'SEED_TEST_EMAIL',
-  'SEED_TEST_PASSWORD',
 ] as const;
 
 function getRequiredEnvironmentVariable(name: string) {
@@ -85,13 +83,18 @@ async function main() {
       lastName: process.env.SEED_ADMIN_LAST_NAME?.trim() || 'User',
       role: 'ADMIN',
     });
-    await upsertSeedUser(prisma, {
-      email: getRequiredEnvironmentVariable('SEED_TEST_EMAIL').toLowerCase(),
-      password: getRequiredEnvironmentVariable('SEED_TEST_PASSWORD'),
-      firstName: process.env.SEED_TEST_FIRST_NAME?.trim() || 'Test',
-      lastName: process.env.SEED_TEST_LAST_NAME?.trim() || 'Farmer',
-      role: 'USER',
-    });
+    const testEmail = process.env.SEED_TEST_EMAIL?.trim().toLowerCase();
+    const testPassword = process.env.SEED_TEST_PASSWORD?.trim();
+
+    if (testEmail && testPassword) {
+      await upsertSeedUser(prisma, {
+        email: testEmail,
+        password: testPassword,
+        firstName: process.env.SEED_TEST_FIRST_NAME?.trim() || 'Test',
+        lastName: process.env.SEED_TEST_LAST_NAME?.trim() || 'Farmer',
+        role: 'USER',
+      });
+    }
 
     console.log('Seed users are ready.');
   } finally {

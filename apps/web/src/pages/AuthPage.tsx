@@ -3,10 +3,13 @@ import {
   ArrowLeft,
   BadgeCheck,
   BarChart3,
+  CheckCircle2,
   Eye,
   EyeOff,
   KeyRound,
   LogIn,
+  MailCheck,
+  RefreshCw,
   ShieldCheck,
   UserPlus,
 } from 'lucide-react';
@@ -61,7 +64,7 @@ type AuthPageProps = {
   onNotify: (message: string) => void;
 };
 
-type AuthMode = 'login' | 'signup' | 'forgot' | 'reset';
+type AuthMode = 'login' | 'signup' | 'verify' | 'forgot' | 'reset';
 
 const initialSignupForm: CreateUserPayload = {
   firstName: '',
@@ -84,6 +87,8 @@ const initialResetPasswordForm = {
   confirmPassword: '',
 };
 const GOOGLE_SCRIPT_ID = 'google-identity-services-script';
+const RESEND_COOLDOWN_SECONDS = 60;
+const MAX_VERIFICATION_RESEND_ATTEMPTS = 4;
 let initializedGoogleClientId = '';
 let activeGoogleCredentialHandler:
   | ((response: GoogleCredentialResponse) => void)
@@ -142,10 +147,41 @@ function GoogleIcon() {
   );
 }
 
+function getAuthTitle(mode: AuthMode) {
+  if (mode === 'login') return 'Sign in';
+  if (mode === 'signup') return 'Create account';
+  if (mode === 'verify') return 'Verify account';
+  if (mode === 'forgot') return 'Reset password';
+
+  return 'Set new password';
+}
+
+function getAuthDescription(mode: AuthMode) {
+  if (mode === 'login') {
+    return 'Open your farm dashboard and continue from your latest records.';
+  }
+
+  if (mode === 'signup') {
+    return 'Create a farmer account connected to the shared backend.';
+  }
+
+  if (mode === 'verify') {
+    return 'Enter the verification code to complete your account setup.';
+  }
+
+  if (mode === 'forgot') {
+    return 'Password reset email delivery will be enabled after SMTP setup.';
+  }
+
+  return 'Your reset link is ready. Choose a strong new password.';
+}
+
 export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
   const [mode, setMode] = useState<AuthMode>('login');
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
+  const emailDeliveryEnabled =
+    import.meta.env.VITE_EMAIL_DELIVERY_ENABLED === 'true';
   const [loginForm, setLoginForm] = useState(initialLoginForm);
   const [signupForm, setSignupForm] = useState(initialSignupForm);
   const [forgotPasswordForm, setForgotPasswordForm] = useState(
@@ -155,6 +191,12 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     initialResetPasswordForm,
   );
   const [resetToken, setResetToken] = useState('');
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [localVerificationCode, setLocalVerificationCode] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendAttempts, setResendAttempts] = useState(0);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -169,6 +211,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     signupForm.lastName.trim().length >= 2 &&
     signupForm.email.trim().length > 0 &&
     signupForm.password.length >= 8;
+  const isVerificationReady = verificationCode.trim().length >= 6;
   const isForgotPasswordReady = forgotPasswordForm.email.trim().length > 0;
   const isResetPasswordReady =
     resetToken.length > 0 &&
@@ -190,16 +233,20 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       try {
         onAuthenticated(await googleLogin({ credential: response.credential }));
       } catch (googleError) {
-        setError(
+        const message =
           googleError instanceof Error
             ? googleError.message
-            : 'Google sign-in failed.',
-        );
+            : 'Google sign-in failed.';
+        setError(message);
+
+        if (message.toLowerCase().includes('not configured')) {
+          onNotify('Google sign-in will be available soon.');
+        }
       } finally {
         setIsSaving(false);
       }
     },
-    [onAuthenticated],
+    [onAuthenticated, onNotify],
   );
 
   useEffect(() => {
@@ -209,6 +256,20 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       activeGoogleCredentialHandler = null;
     };
   }, [handleGoogleCredential]);
+
+  useEffect(() => {
+    if (mode !== 'verify' || resendCooldown <= 0) {
+      return;
+    }
+
+    const timerId = window.setTimeout(() => {
+      setResendCooldown((currentCooldown) => Math.max(currentCooldown - 1, 0));
+    }, 1000);
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [mode, resendCooldown]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -312,12 +373,18 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     event.preventDefault();
     setError('');
     setSuccess('');
+    setShowForgotPassword(false);
     setIsSaving(true);
 
     try {
       onAuthenticated(await login(loginForm));
     } catch (loginError) {
-      setError(loginError instanceof Error ? loginError.message : 'Login failed.');
+      const message =
+        loginError instanceof Error ? loginError.message : 'Login failed.';
+      setError(message);
+      setShowForgotPassword(
+        message.toLowerCase().includes('invalid email or password'),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -330,19 +397,27 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     setIsSaving(true);
 
     try {
-      await signup({
+      const createdEmail = signupForm.email.trim();
+      const response = await signup({
         ...signupForm,
+        email: createdEmail,
         phone: signupForm.phone || undefined,
         farmerType: signupForm.farmerType || undefined,
       });
+
+      setPendingVerificationEmail(createdEmail);
+      setVerificationCode('');
+      setLocalVerificationCode(response.devVerificationToken ?? '');
+      setResendAttempts(0);
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
       setSignupForm(initialSignupForm);
       setLoginForm({
-        email: signupForm.email,
+        email: createdEmail,
         password: '',
       });
-      setMode('login');
-      setSuccess('Account created successfully. Please verify your email before signing in.');
-      onNotify('Account created successfully. Check your email to verify it.');
+      setMode('verify');
+      setSuccess(response.message);
+      onNotify('Account created successfully. Verify your email to continue.');
     } catch (signupError) {
       setError(
         signupError instanceof Error ? signupError.message : 'Signup failed.',
@@ -352,16 +427,47 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     }
   }
 
+  async function handleVerifyAccount(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    setSuccess('');
+    setIsSaving(true);
+
+    try {
+      const response = await verifyEmail({ token: verificationCode.trim() });
+      setVerificationCode('');
+      setLocalVerificationCode('');
+      setPendingVerificationEmail('');
+      setResendCooldown(0);
+      setResendAttempts(0);
+      setMode('login');
+      setSuccess(response.message);
+      onNotify('Email verified successfully');
+    } catch (verificationError) {
+      setError(
+        verificationError instanceof Error
+          ? verificationError.message
+          : 'Email verification failed.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   function handleGooglePlaceholder() {
     setSuccess('');
-    setError('Google sign-in is not configured for this environment.');
+    setError('Google sign-in will be available soon.');
+    onNotify('Google sign-in will be available soon.');
   }
 
   async function handleResendVerification() {
-    const email = loginForm.email.trim();
+    if (!pendingVerificationEmail) {
+      setError('Create an account first, then request a new verification code.');
+      return;
+    }
 
-    if (!email) {
-      setError('Enter your email first, then resend the verification email.');
+    if (resendAttempts >= MAX_VERIFICATION_RESEND_ATTEMPTS) {
+      setError('Verification resend limit reached. Try again later.');
       return;
     }
 
@@ -370,14 +476,19 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     setIsResendingVerification(true);
 
     try {
-      const response = await resendVerification({ email });
+      const response = await resendVerification({
+        email: pendingVerificationEmail,
+      });
+      setLocalVerificationCode(response.devVerificationToken ?? '');
+      setResendAttempts((currentAttempts) => currentAttempts + 1);
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
       setSuccess(response.message);
-      onNotify('Verification email sent');
+      onNotify('Verification code refreshed');
     } catch (resendError) {
       setError(
         resendError instanceof Error
           ? resendError.message
-          : 'Verification email could not be sent.',
+          : 'Verification code could not be refreshed.',
       );
     } finally {
       setIsResendingVerification(false);
@@ -388,6 +499,13 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     event.preventDefault();
     setError('');
     setSuccess('');
+
+    if (!emailDeliveryEnabled) {
+      setError('Password reset email delivery will be available soon.');
+      onNotify('Password reset will be available soon.');
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -451,6 +569,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     setMode(nextMode);
     setError('');
     setSuccess('');
+    setShowForgotPassword(false);
   }
 
   return (
@@ -468,24 +587,8 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
         <div className="auth-card">
           <div className="auth-card-header">
             <p className="eyebrow">Secure access</p>
-            <h2>
-              {mode === 'login'
-                ? 'Sign in'
-                : mode === 'signup'
-                  ? 'Create account'
-                  : mode === 'forgot'
-                    ? 'Reset password'
-                    : 'Set new password'}
-            </h2>
-            <p>
-              {mode === 'login'
-                ? 'Open your farm dashboard and continue from your latest records.'
-                : mode === 'signup'
-                  ? 'Create a farmer account connected to the shared backend.'
-                  : mode === 'forgot'
-                    ? 'Enter your account email and we will send a secure reset link.'
-                    : 'Your reset link is ready. Choose a strong new password.'}
-            </p>
+            <h2>{getAuthTitle(mode)}</h2>
+            <p>{getAuthDescription(mode)}</p>
           </div>
 
           <div className="auth-status-row">
@@ -543,10 +646,10 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
             <button
               className="text-button auth-back-button"
               type="button"
-              onClick={() => switchMode('login')}
+              onClick={() => switchMode(mode === 'verify' ? 'signup' : 'login')}
             >
               <ArrowLeft size={15} aria-hidden="true" />
-              Back to sign in
+              {mode === 'verify' ? 'Back to create account' : 'Back to sign in'}
             </button>
           )}
 
@@ -561,9 +664,10 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                   required
                   type="email"
                   value={loginForm.email}
-                  onChange={(event) =>
-                    setLoginForm({ ...loginForm, email: event.target.value })
-                  }
+                  onChange={(event) => {
+                    setShowForgotPassword(false);
+                    setLoginForm({ ...loginForm, email: event.target.value });
+                  }}
                 />
               </label>
 
@@ -575,9 +679,13 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                     minLength={8}
                     type={isLoginPasswordVisible ? 'text' : 'password'}
                     value={loginForm.password}
-                    onChange={(event) =>
-                      setLoginForm({ ...loginForm, password: event.target.value })
-                    }
+                    onChange={(event) => {
+                      setShowForgotPassword(false);
+                      setLoginForm({
+                        ...loginForm,
+                        password: event.target.value,
+                      });
+                    }}
                   />
                   <button
                     aria-label={
@@ -610,26 +718,17 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                 {isSaving ? 'Signing in...' : 'Sign in'}
               </button>
 
-              <button
-                className="resend-verification-button"
-                disabled={isSaving || isResendingVerification}
-                type="button"
-                onClick={handleResendVerification}
-              >
-                {isResendingVerification
-                  ? 'Sending verification email...'
-                  : 'Resend verification email'}
-              </button>
-
-              <button
-                className="text-button auth-link-button"
-                disabled={isSaving}
-                type="button"
-                onClick={openForgotPassword}
-              >
-                <KeyRound size={15} aria-hidden="true" />
-                Forgot password?
-              </button>
+              {showForgotPassword ? (
+                <button
+                  className="text-button auth-link-button"
+                  disabled={isSaving}
+                  type="button"
+                  onClick={openForgotPassword}
+                >
+                  <KeyRound size={15} aria-hidden="true" />
+                  Forgot password?
+                </button>
+              ) : null}
             </form>
           ) : null}
 
@@ -748,8 +847,81 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
             </form>
           ) : null}
 
+          {mode === 'verify' ? (
+            <form className="form-grid auth-form" onSubmit={handleVerifyAccount}>
+              <div className="verification-mailbox">
+                <MailCheck size={20} aria-hidden="true" />
+                <span>
+                  Verification pending for <strong>{pendingVerificationEmail}</strong>
+                </span>
+              </div>
+
+              {localVerificationCode ? (
+                <p className="local-verification-note">
+                  Email delivery is disabled for now. Local test code:{' '}
+                  <strong>{localVerificationCode}</strong>
+                </p>
+              ) : null}
+
+              <label>
+                <FieldLabel required>Verification code</FieldLabel>
+                <input
+                  required
+                  inputMode="numeric"
+                  maxLength={6}
+                  minLength={6}
+                  placeholder="Enter 6-digit code"
+                  value={verificationCode}
+                  onChange={(event) =>
+                    setVerificationCode(
+                      event.target.value.replace(/\D/g, '').slice(0, 6),
+                    )
+                  }
+                />
+              </label>
+
+              <button
+                className={
+                  isVerificationReady
+                    ? 'primary-button auth-submit-button is-ready'
+                    : 'primary-button auth-submit-button'
+                }
+                disabled={isSaving}
+                type="submit"
+              >
+                <CheckCircle2 size={16} aria-hidden="true" />
+                {isSaving ? 'Verifying...' : 'Verify account'}
+              </button>
+
+              {resendCooldown > 0 ? (
+                <p className="verification-cooldown">
+                  Resend verification email available in {resendCooldown}s.
+                </p>
+              ) : resendAttempts < MAX_VERIFICATION_RESEND_ATTEMPTS ? (
+                <button
+                  className="resend-verification-button is-ready"
+                  disabled={isResendingVerification}
+                  type="button"
+                  onClick={handleResendVerification}
+                >
+                  <RefreshCw size={15} aria-hidden="true" />
+                  {isResendingVerification
+                    ? 'Refreshing code...'
+                    : 'Resend verification email'}
+                </button>
+              ) : (
+                <p className="verification-cooldown">
+                  Resend limit reached. Try signing up again later.
+                </p>
+              )}
+            </form>
+          ) : null}
+
           {mode === 'forgot' ? (
             <form className="form-grid auth-form" onSubmit={handleForgotPassword}>
+              <p className="feature-soon-note">
+                This feature will be available after email service setup.
+              </p>
               <label>
                 <FieldLabel required>Email</FieldLabel>
                 <input

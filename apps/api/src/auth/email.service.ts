@@ -14,14 +14,17 @@ export class EmailService {
   async sendVerificationEmail(input: VerificationEmailInput) {
     const verificationUrl = this.buildVerificationUrl(input.token);
 
-    if (!this.isSmtpConfigured()) {
+    if (!this.isEmailDeliveryEnabled()) {
       if (process.env.NODE_ENV !== 'production') {
         console.log(
-          `Email verification link for ${input.email}: ${verificationUrl}`,
+          `Email verification code for ${input.email}: ${input.token}`,
         );
-        return { sent: false, verificationUrl };
       }
 
+      return { sent: false, verificationUrl };
+    }
+
+    if (!this.isSmtpConfigured()) {
       throw new ServiceUnavailableException(
         'Email delivery is not configured.',
       );
@@ -47,22 +50,26 @@ export class EmailService {
       text: [
         `Assalam o alaikum ${input.firstName},`,
         '',
-        'Please verify your Zamindar Plus account by opening this link:',
+        'Please verify your Zamindar Plus account with this code:',
+        input.token,
+        '',
+        'You can also open this link:',
         verificationUrl,
         '',
-        'This link will expire in 24 hours.',
+        'This code will expire in 24 hours.',
       ].join('\n'),
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.6;color:#12201b">
           <h2>Verify your Zamindar Plus email</h2>
           <p>Assalam o alaikum ${this.escapeHtml(input.firstName)},</p>
           <p>Please verify your account to start using Zamindar Plus.</p>
+          <p style="font-size:28px;font-weight:800;letter-spacing:8px">${input.token}</p>
           <p>
             <a href="${verificationUrl}" style="background:#147a63;color:white;padding:12px 18px;border-radius:8px;text-decoration:none">
               Verify email
             </a>
           </p>
-          <p>This link will expire in 24 hours.</p>
+          <p>This code will expire in 24 hours.</p>
         </div>
       `,
     });
@@ -73,12 +80,15 @@ export class EmailService {
   async sendPasswordResetEmail(input: PasswordResetEmailInput) {
     const resetUrl = this.buildPasswordResetUrl(input.token);
 
-    if (!this.isSmtpConfigured()) {
+    if (!this.isEmailDeliveryEnabled()) {
       if (process.env.NODE_ENV !== 'production') {
         console.log(`Password reset link for ${input.email}: ${resetUrl}`);
-        return { sent: false, resetUrl };
       }
 
+      return { sent: false, resetUrl };
+    }
+
+    if (!this.isSmtpConfigured()) {
       throw new ServiceUnavailableException(
         'Email delivery is not configured.',
       );
@@ -151,6 +161,10 @@ export class EmailService {
     return Boolean(
       process.env.SMTP_HOST?.trim() && process.env.SMTP_FROM?.trim(),
     );
+  }
+
+  private isEmailDeliveryEnabled() {
+    return process.env.EMAIL_DELIVERY_ENABLED === 'true';
   }
 
   private escapeHtml(value: string) {

@@ -37,6 +37,10 @@ export class UpdateUserDto {
   farmerType?: string;
 
   @IsOptional()
+  @IsIn(['ADMIN', 'USER'])
+  role?: 'ADMIN' | 'USER';
+
+  @IsOptional()
   @IsString()
   @MaxLength(250000)
   profileImageUrl?: string;

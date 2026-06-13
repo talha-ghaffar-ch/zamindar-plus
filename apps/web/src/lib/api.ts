@@ -85,6 +85,7 @@ export type CreateUserPayload = {
   phone?: string;
   password: string;
   farmerType?: string;
+  role?: 'ADMIN' | 'USER';
 };
 
 export type UpdateUserPayload = Partial<CreateUserPayload> & {

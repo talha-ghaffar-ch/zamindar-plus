@@ -10,6 +10,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
+  ShieldCheck,
   Sprout,
   UsersRound,
   Wheat,
@@ -36,8 +37,9 @@ import { ExpensesPage } from './pages/ExpensesPage';
 import { IncomePage } from './pages/IncomePage';
 import { ReportsPage } from './pages/ReportsPage';
 import { HelpPage } from './pages/HelpPage';
+import { AdminPage } from './pages/AdminPage';
 
-const navItems: Array<{ label: string; icon: LucideIcon }> = [
+const mainNavItems: Array<{ label: string; icon: LucideIcon }> = [
   { label: 'Dashboard', icon: LayoutDashboard },
   { label: 'Profiles', icon: UsersRound },
   { label: 'Zameen', icon: LandPlot },
@@ -45,9 +47,10 @@ const navItems: Array<{ label: string; icon: LucideIcon }> = [
   { label: 'Expenses', icon: ClipboardList },
   { label: 'Income', icon: CircleDollarSign },
   { label: 'Reports', icon: BarChart3 },
-  { label: 'Help', icon: HelpCircle },
-  { label: 'Settings', icon: Settings },
 ];
+const helpNavItem = { label: 'Help', icon: HelpCircle };
+const adminNavItem = { label: 'Admin', icon: ShieldCheck };
+const settingsNavItem = { label: 'Settings', icon: Settings };
 
 function App() {
   const [activePage, setActivePage] = useState('Dashboard');
@@ -165,6 +168,11 @@ function App() {
     );
   }
 
+  const visibleNavItems =
+    currentUser.role === 'ADMIN'
+      ? [...mainNavItems, adminNavItem, helpNavItem, settingsNavItem]
+      : [...mainNavItems, helpNavItem, settingsNavItem];
+
   return (
     <div className={isSidebarCollapsed ? 'app-shell sidebar-collapsed' : 'app-shell'}>
       <aside className="sidebar">
@@ -204,7 +212,7 @@ function App() {
         </div>
 
         <nav className="nav-list">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <button
               aria-label={item.label}
               className={item.label === activePage ? 'nav-button active' : 'nav-button'}
@@ -246,6 +254,8 @@ function App() {
           <IncomePage onNotify={showToast} />
         ) : activePage === 'Reports' ? (
           <ReportsPage onNotify={showToast} />
+        ) : activePage === 'Admin' ? (
+          <AdminPage currentUser={currentUser} onNotify={showToast} />
         ) : activePage === 'Help' ? (
           <HelpPage onNavigate={setActivePage} />
         ) : (
