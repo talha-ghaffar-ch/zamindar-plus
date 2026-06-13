@@ -251,10 +251,10 @@ function App() {
         ) : (
           <section className="page-header">
             <div>
-              <p className="eyebrow">{activePage}</p>
-              <h1>{activePage}</h1>
+              <p className="eyebrow">Workspace</p>
+              <h1>Section unavailable</h1>
             </div>
-            <p className="muted">This screen will be built next.</p>
+            <p className="muted">Choose a section from the sidebar.</p>
           </section>
         )}
       </main>
