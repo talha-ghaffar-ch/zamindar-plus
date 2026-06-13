@@ -29,6 +29,17 @@ pm2 restart "$PM2_APP_NAME" --update-env
 pm2 save
 
 echo "Checking local API health..."
-curl -fsS http://localhost:3000 >/dev/null
+for attempt in {1..20}; do
+  if curl -fsS http://localhost:3000 >/dev/null; then
+    echo "API health check passed."
+    echo "API deployment complete."
+    exit 0
+  fi
 
-echo "API deployment complete."
+  echo "Waiting for API to start... ($attempt/20)"
+  sleep 2
+done
+
+echo "API health check failed."
+pm2 logs "$PM2_APP_NAME" --lines 80 --nostream
+exit 1
