@@ -143,7 +143,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
       !bestCrop || crop.netProfit > bestCrop.netProfit ? crop : bestCrop,
     null,
   );
-  const recentMonths = monthlyReports.slice(-6);
+  const recentMonths = monthlyReports.slice(0, 6).reverse();
   const maxMonthlyValue = Math.max(
     ...recentMonths.map((report) =>
       Math.max(report.totalExpense, report.totalIncome, Math.abs(report.netProfit)),

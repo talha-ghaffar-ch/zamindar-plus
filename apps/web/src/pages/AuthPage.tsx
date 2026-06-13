@@ -12,7 +12,9 @@ import { FieldLabel } from '../components/FieldLabel';
 import {
   googleLogin,
   login,
+  resendVerification,
   signup,
+  verifyEmail,
   type AuthResponse,
   type CreateUserPayload,
   type LoginPayload,
@@ -136,6 +138,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [isLoginPasswordVisible, setIsLoginPasswordVisible] = useState(false);
   const [isSignupPasswordVisible, setIsSignupPasswordVisible] = useState(false);
   const isLoginReady =
@@ -180,6 +183,45 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       activeGoogleCredentialHandler = null;
     };
   }, [handleGoogleCredential]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const verificationToken = searchParams.get('verifyEmail');
+
+    if (!verificationToken) {
+      return;
+    }
+
+    searchParams.delete('verifyEmail');
+    const nextSearch = searchParams.toString();
+    const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}`;
+
+    window.history.replaceState({}, document.title, nextUrl);
+    const verifyTimer = window.setTimeout(() => {
+      setMode('login');
+      setError('');
+      setSuccess('');
+      setIsSaving(true);
+
+      void verifyEmail({ token: verificationToken })
+        .then((response) => {
+          setSuccess(response.message);
+          onNotify('Email verified successfully');
+        })
+        .catch((verificationError) => {
+          setError(
+            verificationError instanceof Error
+              ? verificationError.message
+              : 'Email verification failed.',
+          );
+        })
+        .finally(() => setIsSaving(false));
+    }, 0);
+
+    return () => {
+      window.clearTimeout(verifyTimer);
+    };
+  }, [onNotify]);
 
   useEffect(() => {
     if (!googleClientId || !googleButtonRef.current) {
@@ -259,8 +301,8 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
         password: '',
       });
       setMode('login');
-      setSuccess('Account created successfully. Please sign in to continue.');
-      onNotify('Account created successfully');
+      setSuccess('Account created successfully. Please verify your email before signing in.');
+      onNotify('Account created successfully. Check your email to verify it.');
     } catch (signupError) {
       setError(
         signupError instanceof Error ? signupError.message : 'Signup failed.',
@@ -273,6 +315,33 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
   function handleGooglePlaceholder() {
     setSuccess('');
     setError('Google sign-in is not configured for this environment.');
+  }
+
+  async function handleResendVerification() {
+    const email = loginForm.email.trim();
+
+    if (!email) {
+      setError('Enter your email first, then resend the verification email.');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setIsResendingVerification(true);
+
+    try {
+      const response = await resendVerification({ email });
+      setSuccess(response.message);
+      onNotify('Verification email sent');
+    } catch (resendError) {
+      setError(
+        resendError instanceof Error
+          ? resendError.message
+          : 'Verification email could not be sent.',
+      );
+    } finally {
+      setIsResendingVerification(false);
+    }
   }
 
   function switchMode(nextMode: 'login' | 'signup') {
@@ -299,7 +368,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
             <h2>{mode === 'login' ? 'Sign in' : 'Create account'}</h2>
             <p>
               {mode === 'login'
-                ? 'Open your farm dashboard and continue from your latest records today.'
+                ? 'Open your farm dashboard and continue from your latest records.'
                 : 'Create a farmer account connected to the shared backend.'}
             </p>
           </div>
@@ -411,6 +480,17 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                 type="submit"
               >
                 {isSaving ? 'Signing in...' : 'Sign in'}
+              </button>
+
+              <button
+                className="resend-verification-button"
+                disabled={isSaving || isResendingVerification}
+                type="button"
+                onClick={handleResendVerification}
+              >
+                {isResendingVerification
+                  ? 'Sending verification email...'
+                  : 'Resend verification email'}
               </button>
             </form>
           ) : (

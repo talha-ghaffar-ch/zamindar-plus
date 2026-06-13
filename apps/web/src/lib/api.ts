@@ -44,6 +44,8 @@ export type User = {
   phone: string | null;
   farmerType: string | null;
   role: string;
+  emailVerified: boolean;
+  emailVerifiedAt: string | null;
   profileImageUrl: string | null;
   preferredAreaUnit: string;
   preferredCurrency: string;
@@ -108,6 +110,25 @@ export type GoogleLoginPayload = {
 export type AuthResponse = {
   accessToken: string;
   user: User;
+};
+
+export type SignupResponse = {
+  message: string;
+  verificationRequired: boolean;
+  devVerificationToken?: string;
+};
+
+export type VerifyEmailPayload = {
+  token: string;
+};
+
+export type ResendVerificationPayload = {
+  email: string;
+};
+
+export type MessageResponse = {
+  message: string;
+  devVerificationToken?: string;
 };
 
 export type Zameen = {
@@ -291,7 +312,7 @@ export function clearAuthToken() {
 }
 
 export function signup(payload: CreateUserPayload) {
-  return requestJson<AuthResponse>('/auth/signup', {
+  return requestJson<SignupResponse>('/auth/signup', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
@@ -306,6 +327,20 @@ export function login(payload: LoginPayload) {
 
 export function googleLogin(payload: GoogleLoginPayload) {
   return requestJson<AuthResponse>('/auth/google', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function verifyEmail(payload: VerifyEmailPayload) {
+  return requestJson<MessageResponse>('/auth/verify-email', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function resendVerification(payload: ResendVerificationPayload) {
+  return requestJson<MessageResponse>('/auth/resend-verification', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

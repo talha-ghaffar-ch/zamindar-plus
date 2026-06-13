@@ -1,16 +1,20 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client, type TokenPayload } from 'google-auth-library';
 import { PrismaService } from '../prisma/prisma.service';
 import { GoogleLoginDto } from './dto/google-login.dto';
 import { LoginDto } from './dto/login.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { SignupDto } from './dto/signup.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { EmailService } from './email.service';
 
 const safeUserSelect = {
   id: true,
@@ -20,6 +24,8 @@ const safeUserSelect = {
   phone: true,
   farmerType: true,
   role: true,
+  emailVerified: true,
+  emailVerifiedAt: true,
   profileImageUrl: true,
   preferredAreaUnit: true,
   preferredCurrency: true,
@@ -32,6 +38,28 @@ const safeUserSelect = {
   updatedAt: true,
 };
 
+type SafeUser = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+  farmerType: string | null;
+  role: string;
+  emailVerified: boolean;
+  emailVerifiedAt: Date | null;
+  profileImageUrl: string | null;
+  preferredAreaUnit: string;
+  preferredCurrency: string;
+  preferredLanguage: string;
+  dateFormat: string;
+  emailNotifications: boolean;
+  smsNotifications: boolean;
+  weeklyReport: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 @Injectable()
 export class AuthService {
   private readonly googleClient = new OAuth2Client();
@@ -39,12 +67,14 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
   ) {}
 
   async signup(signupDto: SignupDto) {
+    const email = signupDto.email.toLowerCase();
     const existingUser = await this.prisma.user.findUnique({
       where: {
-        email: signupDto.email,
+        email,
       },
       select: {
         id: true,
@@ -56,25 +86,46 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(signupDto.password, 12);
+    const verification = this.createVerificationToken();
     const user = await this.prisma.user.create({
       data: {
         firstName: signupDto.firstName,
         lastName: signupDto.lastName,
-        email: signupDto.email,
+        email,
         phone: signupDto.phone,
         farmerType: signupDto.farmerType,
         passwordHash,
+        emailVerified: false,
+        emailVerifiedAt: null,
+        emailVerificationTokenHash: verification.tokenHash,
+        emailVerificationExpiresAt: verification.expiresAt,
       },
       select: safeUserSelect,
     });
 
-    return this.buildAuthResponse(user);
+    try {
+      await this.emailService.sendVerificationEmail({
+        email: user.email,
+        firstName: user.firstName,
+        token: verification.token,
+      });
+    } catch (error) {
+      await this.prisma.user.delete({
+        where: {
+          id: user.id,
+        },
+      });
+      throw error;
+    }
+
+    return this.buildVerificationResponse(verification.token);
   }
 
   async login(loginDto: LoginDto) {
+    const email = loginDto.email.toLowerCase();
     const user = await this.prisma.user.findUnique({
       where: {
-        email: loginDto.email,
+        email,
       },
     });
 
@@ -91,6 +142,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password.');
     }
 
+    if (!user.emailVerified) {
+      throw new UnauthorizedException(
+        'Please verify your email before signing in.',
+      );
+    }
+
     return this.buildAuthResponse({
       id: user.id,
       firstName: user.firstName,
@@ -99,6 +156,8 @@ export class AuthService {
       phone: user.phone,
       farmerType: user.farmerType,
       role: user.role,
+      emailVerified: user.emailVerified,
+      emailVerifiedAt: user.emailVerifiedAt,
       profileImageUrl: user.profileImageUrl,
       preferredAreaUnit: user.preferredAreaUnit,
       preferredCurrency: user.preferredCurrency,
@@ -110,6 +169,79 @@ export class AuthService {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });
+  }
+
+  async verifyEmail(verifyEmailDto: VerifyEmailDto) {
+    const tokenHash = this.hashVerificationToken(verifyEmailDto.token);
+    const user = await this.prisma.user.findFirst({
+      where: {
+        emailVerificationTokenHash: tokenHash,
+        emailVerificationExpiresAt: {
+          gt: new Date(),
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Verification link is invalid or expired.');
+    }
+
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        emailVerified: true,
+        emailVerifiedAt: new Date(),
+        emailVerificationTokenHash: null,
+        emailVerificationExpiresAt: null,
+      },
+    });
+
+    return {
+      message: 'Email verified successfully. You can now sign in.',
+    };
+  }
+
+  async resendVerification(resendVerificationDto: ResendVerificationDto) {
+    const email = resendVerificationDto.email.toLowerCase();
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        emailVerified: true,
+      },
+    });
+
+    if (!user || user.emailVerified) {
+      return this.buildVerificationResentResponse();
+    }
+
+    const verification = this.createVerificationToken();
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        emailVerificationTokenHash: verification.tokenHash,
+        emailVerificationExpiresAt: verification.expiresAt,
+      },
+    });
+
+    await this.emailService.sendVerificationEmail({
+      email: user.email,
+      firstName: user.firstName,
+      token: verification.token,
+    });
+
+    return this.buildVerificationResentResponse(verification.token);
   }
 
   async googleLogin(googleLoginDto: GoogleLoginDto) {
@@ -158,6 +290,10 @@ export class AuthService {
             data: {
               googleId: googleProfile.sub,
               authProvider: 'GOOGLE',
+              emailVerified: true,
+              emailVerifiedAt: new Date(),
+              emailVerificationTokenHash: null,
+              emailVerificationExpiresAt: null,
               profileImageUrl:
                 existingUser.profileImageUrl ?? googleProfile.picture,
             },
@@ -183,6 +319,8 @@ export class AuthService {
         passwordHash,
         googleId: googleProfile.sub,
         authProvider: 'GOOGLE',
+        emailVerified: true,
+        emailVerifiedAt: new Date(),
         profileImageUrl: googleProfile.picture,
         farmerType: 'Land Owner',
       },
@@ -207,25 +345,7 @@ export class AuthService {
     return user;
   }
 
-  private async buildAuthResponse(user: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string | null;
-    farmerType: string | null;
-    role: string;
-    profileImageUrl: string | null;
-    preferredAreaUnit: string;
-    preferredCurrency: string;
-    preferredLanguage: string;
-    dateFormat: string;
-    emailNotifications: boolean;
-    smsNotifications: boolean;
-    weeklyReport: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-  }) {
+  private async buildAuthResponse(user: SafeUser) {
     const accessToken = await this.jwtService.signAsync({
       userId: user.id,
       email: user.email,
@@ -235,6 +355,46 @@ export class AuthService {
       accessToken,
       user,
     };
+  }
+
+  private buildVerificationResponse(token?: string) {
+    return {
+      message: 'Account created successfully. Please verify your email.',
+      verificationRequired: true,
+      ...this.developmentVerificationToken(token),
+    };
+  }
+
+  private buildVerificationResentResponse(token?: string) {
+    return {
+      message:
+        'If that email is awaiting verification, a new verification email has been sent.',
+      ...this.developmentVerificationToken(token),
+    };
+  }
+
+  private developmentVerificationToken(token?: string) {
+    if (process.env.NODE_ENV === 'production' || !token) {
+      return {};
+    }
+
+    return {
+      devVerificationToken: token,
+    };
+  }
+
+  private createVerificationToken() {
+    const token = randomBytes(32).toString('hex');
+
+    return {
+      token,
+      tokenHash: this.hashVerificationToken(token),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    };
+  }
+
+  private hashVerificationToken(token: string) {
+    return createHash('sha256').update(token).digest('hex');
   }
 
   private async verifyGoogleCredential(credential: string) {

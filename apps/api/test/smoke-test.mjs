@@ -14,6 +14,7 @@ const server = spawn(process.execPath, ['dist/src/main.js'], {
   cwd: process.cwd(),
   env: {
     ...process.env,
+    NODE_ENV: 'test',
     PORT: String(port),
     JWT_SECRET: process.env.JWT_SECRET ?? 'zamindar-plus-smoke-test-secret',
     CORS_ORIGIN: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
@@ -100,6 +101,48 @@ async function signup(email) {
   });
 }
 
+async function signupAndVerify(email) {
+  const signupResponse = await signup(email);
+
+  assert(
+    signupResponse.verificationRequired === true,
+    'Signup did not require email verification.',
+  );
+  assert(
+    signupResponse.devVerificationToken,
+    'Signup did not return a test verification token.',
+  );
+
+  await requestJson('/auth/login', {
+    method: 'POST',
+    expectedStatus: 401,
+    body: {
+      email,
+      password,
+    },
+  });
+
+  const verificationResponse = await requestJson('/auth/verify-email', {
+    method: 'POST',
+    body: {
+      token: signupResponse.devVerificationToken,
+    },
+  });
+
+  assert(
+    verificationResponse.message.includes('verified'),
+    'Email verification did not complete.',
+  );
+
+  return requestJson('/auth/login', {
+    method: 'POST',
+    body: {
+      email,
+      password,
+    },
+  });
+}
+
 async function cleanupAccount(auth) {
   if (!auth?.accessToken || !auth?.user?.id) {
     return;
@@ -134,8 +177,8 @@ try {
     },
   });
 
-  ownerAuth = await signup(ownerEmail);
-  otherAuth = await signup(otherEmail);
+  ownerAuth = await signupAndVerify(ownerEmail);
+  otherAuth = await signupAndVerify(otherEmail);
 
   await requestJson('/users', {
     method: 'POST',

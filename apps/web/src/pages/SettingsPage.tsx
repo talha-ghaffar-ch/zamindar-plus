@@ -263,8 +263,15 @@ export function SettingsPage({
       const updatedUser = await updateUser(currentUser.id, payload);
       onUserUpdated(updatedUser);
       setForm(buildForm(updatedUser));
-      setSuccess('Settings saved.');
-      onNotify('Settings saved successfully');
+      const message = updatedUser.emailVerified
+        ? 'Settings saved.'
+        : 'Settings saved. Please verify your new email address.';
+      setSuccess(message);
+      onNotify(
+        updatedUser.emailVerified
+          ? 'Settings saved successfully'
+          : 'Settings saved. Verify your new email.',
+      );
     } catch (saveError) {
       setError(
         saveError instanceof Error ? saveError.message : 'Failed to save settings.',
@@ -369,6 +376,10 @@ export function SettingsPage({
             <div>
               <dt>Account email</dt>
               <dd>{currentUser.email}</dd>
+            </div>
+            <div>
+              <dt>Email status</dt>
+              <dd>{currentUser.emailVerified ? 'Verified' : 'Not verified'}</dd>
             </div>
           </dl>
         </section>

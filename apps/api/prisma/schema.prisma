@@ -9,27 +9,33 @@ datasource db {
 }
 
 model User {
-  id                 String    @id @default(cuid())
-  firstName          String
-  lastName           String
-  email              String    @unique
-  phone              String?
-  passwordHash       String
-  googleId           String?   @unique
-  authProvider       String    @default("PASSWORD")
-  farmerType         String?
-  role               String    @default("USER")
-  profileImageUrl    String?
-  preferredAreaUnit  String    @default("Acre")
-  preferredCurrency  String    @default("PKR")
-  preferredLanguage  String    @default("English")
-  dateFormat         String    @default("DD/MM/YYYY")
-  emailNotifications Boolean   @default(true)
-  smsNotifications   Boolean   @default(false)
-  weeklyReport       Boolean   @default(true)
-  profiles           Profile[]
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id                         String    @id @default(cuid())
+  firstName                  String
+  lastName                   String
+  email                      String    @unique
+  phone                      String?
+  passwordHash               String
+  googleId                   String?   @unique
+  authProvider               String    @default("PASSWORD")
+  emailVerified              Boolean   @default(true)
+  emailVerifiedAt            DateTime?
+  emailVerificationTokenHash String?
+  emailVerificationExpiresAt DateTime?
+  farmerType                 String?
+  role                       String    @default("USER")
+  profileImageUrl            String?
+  preferredAreaUnit          String    @default("Acre")
+  preferredCurrency          String    @default("PKR")
+  preferredLanguage          String    @default("English")
+  dateFormat                 String    @default("DD/MM/YYYY")
+  emailNotifications         Boolean   @default(true)
+  smsNotifications           Boolean   @default(false)
+  weeklyReport               Boolean   @default(true)
+  profiles                   Profile[]
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
+
+  @@index([emailVerificationTokenHash])
 }
 
 model Profile {

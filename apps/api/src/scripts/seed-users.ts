@@ -42,6 +42,10 @@ async function upsertSeedUser(prisma: PrismaClient, config: SeedUserConfig) {
       passwordHash,
       role: config.role,
       authProvider: 'PASSWORD',
+      emailVerified: true,
+      emailVerifiedAt: new Date(),
+      emailVerificationTokenHash: null,
+      emailVerificationExpiresAt: null,
     },
     create: {
       firstName: config.firstName,
@@ -51,6 +55,8 @@ async function upsertSeedUser(prisma: PrismaClient, config: SeedUserConfig) {
       role: config.role,
       authProvider: 'PASSWORD',
       farmerType: 'Land Owner',
+      emailVerified: true,
+      emailVerifiedAt: new Date(),
     },
   });
 }

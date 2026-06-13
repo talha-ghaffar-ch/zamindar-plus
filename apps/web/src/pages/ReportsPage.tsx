@@ -158,8 +158,22 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
     { label: 'Crop profitability', mode: 'crops', icon: ReceiptText },
     { label: 'Monthly movement', mode: 'monthly', icon: CalendarRange },
   ];
+  const hasSummaryData = summary
+    ? summary.zameenCount + summary.cropCount + transactionCount > 0
+    : false;
+  const hasCropReportData = sortedCropReports.length > 0;
+  const hasMonthlyReportData = filteredMonthlyReports.length > 0;
+
+  function notifyNoExportData(reportName: string) {
+    onNotify(`${reportName} has no data to export`);
+  }
 
   function handleExportSummary() {
+    if (!hasSummaryData) {
+      notifyNoExportData('Summary report');
+      return;
+    }
+
     exportCsv('zamindar-plus-summary.csv', [
       ['Metric', 'Value'],
       ['Total Expense', summary?.totalExpense ?? 0],
@@ -174,6 +188,11 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
   }
 
   function handleExportCrops() {
+    if (!hasCropReportData) {
+      notifyNoExportData('Crop report');
+      return;
+    }
+
     exportCsv('zamindar-plus-crop-profitability.csv', [
       ['Crop', 'Zameen', 'Status', 'Expense', 'Income', 'Net Profit', 'Expense Count', 'Income Count'],
       ...sortedCropReports.map((report) => [
@@ -191,6 +210,11 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
   }
 
   function handleExportMonthly() {
+    if (!hasMonthlyReportData) {
+      notifyNoExportData('Monthly report');
+      return;
+    }
+
     exportCsv('zamindar-plus-monthly-summary.csv', [
       ['Month', 'Expense', 'Income', 'Net Profit', 'Expense Count', 'Income Count'],
       ...filteredMonthlyReports.map((report) => [
@@ -225,15 +249,27 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
               </option>
             ))}
           </select>
-          <button type="button" onClick={handleExportSummary}>
+          <button
+            disabled={isLoading || !hasSummaryData}
+            type="button"
+            onClick={handleExportSummary}
+          >
             <Download size={16} aria-hidden="true" />
             Summary
           </button>
-          <button type="button" onClick={handleExportCrops}>
+          <button
+            disabled={isLoading || !hasCropReportData}
+            type="button"
+            onClick={handleExportCrops}
+          >
             <FileSpreadsheet size={16} aria-hidden="true" />
             Crops
           </button>
-          <button type="button" onClick={handleExportMonthly}>
+          <button
+            disabled={isLoading || !hasMonthlyReportData}
+            type="button"
+            onClick={handleExportMonthly}
+          >
             <FileSpreadsheet size={16} aria-hidden="true" />
             Monthly
           </button>

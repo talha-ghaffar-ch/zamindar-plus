@@ -4,7 +4,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { createHash, randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
+import { EmailService } from '../auth/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -17,6 +19,8 @@ const safeUserSelect = {
   phone: true,
   farmerType: true,
   role: true,
+  emailVerified: true,
+  emailVerifiedAt: true,
   profileImageUrl: true,
   preferredAreaUnit: true,
   preferredCurrency: true,
@@ -31,17 +35,24 @@ const safeUserSelect = {
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
 
   async create(currentUserId: string, createUserDto: CreateUserDto) {
     await this.ensureAdmin(currentUserId);
 
     const existingUser = await this.prisma.user.findUnique({
       where: {
-        email: createUserDto.email,
+        email: createUserDto.email.toLowerCase(),
       },
       select: {
         id: true,
+        email: true,
+        firstName: true,
+        emailVerified: true,
+        emailVerifiedAt: true,
       },
     });
 
@@ -55,10 +66,12 @@ export class UsersService {
       data: {
         firstName: createUserDto.firstName,
         lastName: createUserDto.lastName,
-        email: createUserDto.email,
+        email: createUserDto.email.toLowerCase(),
         phone: createUserDto.phone,
         farmerType: createUserDto.farmerType,
         passwordHash,
+        emailVerified: true,
+        emailVerifiedAt: new Date(),
       },
       select: safeUserSelect,
     });
@@ -98,6 +111,9 @@ export class UsersService {
       },
       select: {
         id: true,
+        email: true,
+        emailVerified: true,
+        emailVerifiedAt: true,
       },
     });
 
@@ -105,10 +121,13 @@ export class UsersService {
       throw new NotFoundException('User not found.');
     }
 
-    if (updateUserDto.email) {
+    const nextEmail = updateUserDto.email?.toLowerCase();
+    const isEmailChanging = Boolean(nextEmail && nextEmail !== user.email);
+
+    if (nextEmail) {
       const existingUser = await this.prisma.user.findUnique({
         where: {
-          email: updateUserDto.email,
+          email: nextEmail,
         },
         select: {
           id: true,
@@ -123,15 +142,18 @@ export class UsersService {
     const passwordHash = updateUserDto.password
       ? await bcrypt.hash(updateUserDto.password, 12)
       : undefined;
+    const verification = isEmailChanging
+      ? this.createVerificationToken()
+      : undefined;
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: {
         id,
       },
       data: {
         firstName: updateUserDto.firstName,
         lastName: updateUserDto.lastName,
-        email: updateUserDto.email,
+        email: nextEmail,
         phone: updateUserDto.phone,
         farmerType: updateUserDto.farmerType,
         profileImageUrl: updateUserDto.profileImageUrl,
@@ -143,9 +165,39 @@ export class UsersService {
         smsNotifications: updateUserDto.smsNotifications,
         weeklyReport: updateUserDto.weeklyReport,
         passwordHash,
+        emailVerified: isEmailChanging ? false : undefined,
+        emailVerifiedAt: isEmailChanging ? null : undefined,
+        emailVerificationTokenHash: verification?.tokenHash,
+        emailVerificationExpiresAt: verification?.expiresAt,
       },
       select: safeUserSelect,
     });
+
+    if (isEmailChanging && verification) {
+      try {
+        await this.emailService.sendVerificationEmail({
+          email: updatedUser.email,
+          firstName: updatedUser.firstName,
+          token: verification.token,
+        });
+      } catch (error) {
+        await this.prisma.user.update({
+          where: {
+            id,
+          },
+          data: {
+            email: user.email,
+            emailVerified: user.emailVerified,
+            emailVerifiedAt: user.emailVerifiedAt,
+            emailVerificationTokenHash: null,
+            emailVerificationExpiresAt: null,
+          },
+        });
+        throw error;
+      }
+    }
+
+    return updatedUser;
   }
 
   async remove(currentUserId: string, id: string) {
@@ -191,5 +243,15 @@ export class UsersService {
     if (currentUser?.role !== 'ADMIN') {
       throw new ForbiddenException('Only admins can create user accounts.');
     }
+  }
+
+  private createVerificationToken() {
+    const token = randomBytes(32).toString('hex');
+
+    return {
+      token,
+      tokenHash: createHash('sha256').update(token).digest('hex'),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    };
   }
 }
