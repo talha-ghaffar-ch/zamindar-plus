@@ -3,6 +3,7 @@ import {
   BarChart3,
   CircleDollarSign,
   ClipboardList,
+  HelpCircle,
   LandPlot,
   LayoutDashboard,
   LogOut,
@@ -34,6 +35,7 @@ import { CropsPage } from './pages/CropsPage';
 import { ExpensesPage } from './pages/ExpensesPage';
 import { IncomePage } from './pages/IncomePage';
 import { ReportsPage } from './pages/ReportsPage';
+import { HelpPage } from './pages/HelpPage';
 
 const navItems: Array<{ label: string; icon: LucideIcon }> = [
   { label: 'Dashboard', icon: LayoutDashboard },
@@ -43,6 +45,7 @@ const navItems: Array<{ label: string; icon: LucideIcon }> = [
   { label: 'Expenses', icon: ClipboardList },
   { label: 'Income', icon: CircleDollarSign },
   { label: 'Reports', icon: BarChart3 },
+  { label: 'Help', icon: HelpCircle },
   { label: 'Settings', icon: Settings },
 ];
 
@@ -243,6 +246,8 @@ function App() {
           <IncomePage onNotify={showToast} />
         ) : activePage === 'Reports' ? (
           <ReportsPage onNotify={showToast} />
+        ) : activePage === 'Help' ? (
+          <HelpPage onNavigate={setActivePage} />
         ) : (
           <section className="page-header">
             <div>

@@ -6,6 +6,7 @@ const testRunId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 const ownerEmail = `smoke-owner-${testRunId}@example.com`;
 const otherEmail = `smoke-other-${testRunId}@example.com`;
 const password = 'Password123';
+const resetPassword = 'Password456';
 let serverOutput = '';
 let ownerAuth = null;
 let otherAuth = null;
@@ -143,6 +144,45 @@ async function signupAndVerify(email) {
   });
 }
 
+async function resetAccountPassword(email) {
+  const forgotResponse = await requestJson('/auth/forgot-password', {
+    method: 'POST',
+    body: {
+      email,
+    },
+  });
+
+  assert(
+    forgotResponse.devVerificationToken,
+    'Forgot password did not return a test reset token.',
+  );
+
+  await requestJson('/auth/reset-password', {
+    method: 'POST',
+    body: {
+      token: forgotResponse.devVerificationToken,
+      password: resetPassword,
+    },
+  });
+
+  await requestJson('/auth/login', {
+    method: 'POST',
+    expectedStatus: 401,
+    body: {
+      email,
+      password,
+    },
+  });
+
+  return requestJson('/auth/login', {
+    method: 'POST',
+    body: {
+      email,
+      password: resetPassword,
+    },
+  });
+}
+
 async function cleanupAccount(auth) {
   if (!auth?.accessToken || !auth?.user?.id) {
     return;
@@ -179,6 +219,7 @@ try {
 
   ownerAuth = await signupAndVerify(ownerEmail);
   otherAuth = await signupAndVerify(otherEmail);
+  ownerAuth = await resetAccountPassword(ownerEmail);
 
   await requestJson('/users', {
     method: 'POST',
@@ -196,7 +237,7 @@ try {
     method: 'POST',
     body: {
       email: ownerEmail,
-      password,
+      password: resetPassword,
     },
   });
 

@@ -49,6 +49,10 @@ function formatMonth(report: MonthlySummaryReport) {
   return `${monthNames[report.month - 1] ?? report.month} ${report.year}`;
 }
 
+function monthInputValue(report: MonthlySummaryReport) {
+  return `${report.year}-${String(report.month).padStart(2, '0')}`;
+}
+
 function percentStyle(value: number, maxValue: number) {
   const normalizedValue = maxValue > 0 ? Math.max((value / maxValue) * 100, 6) : 6;
 
@@ -85,6 +89,10 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
   const [monthlyReports, setMonthlyReports] = useState<MonthlySummaryReport[]>([]);
   const [reportMode, setReportMode] = useState<ReportMode>('overview');
   const [selectedYear, setSelectedYear] = useState('all');
+  const [selectedCropId, setSelectedCropId] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [fromMonth, setFromMonth] = useState('');
+  const [toMonth, setToMonth] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -130,17 +138,37 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
     selectedYear === 'all'
       ? monthlyReports
       : monthlyReports.filter((report) => String(report.year) === selectedYear);
+  const rangeFilteredMonthlyReports = filteredMonthlyReports.filter((report) => {
+    const reportMonthValue = monthInputValue(report);
+
+    return (
+      (!fromMonth || reportMonthValue >= fromMonth) &&
+      (!toMonth || reportMonthValue <= toMonth)
+    );
+  });
   const sortedCropReports = [...cropReports].sort(
     (firstCrop, secondCrop) => secondCrop.netProfit - firstCrop.netProfit,
   );
+  const filteredCropReports = sortedCropReports.filter(
+    (report) =>
+      (selectedCropId === 'all' || report.cropId === selectedCropId) &&
+      (selectedStatus === 'all' || report.status === selectedStatus),
+  );
+  const cropFilterOptions = sortedCropReports.map((report) => ({
+    id: report.cropId,
+    label: `${report.cropName} - ${report.zameenName}`,
+  }));
+  const statusFilterOptions = Array.from(
+    new Set(sortedCropReports.map((report) => report.status).filter(Boolean)),
+  ).sort();
   const maxMoneyValue = Math.max(
     summary?.totalIncome ?? 0,
     summary?.totalExpense ?? 0,
     Math.abs(summary?.netProfit ?? 0),
-    ...filteredMonthlyReports.map((report) =>
+    ...rangeFilteredMonthlyReports.map((report) =>
       Math.max(report.totalIncome, report.totalExpense, Math.abs(report.netProfit)),
     ),
-    ...cropReports.map((report) =>
+    ...filteredCropReports.map((report) =>
       Math.max(report.totalIncome, report.totalExpense, Math.abs(report.netProfit)),
     ),
     1,
@@ -152,7 +180,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
     summary && summary.totalIncome > 0
       ? Math.round((summary.netProfit / summary.totalIncome) * 100)
       : 0;
-  const bestCrop = sortedCropReports[0];
+  const bestCrop = filteredCropReports[0];
   const reportTabs: Array<{ label: string; mode: ReportMode; icon: typeof BarChart3 }> = [
     { label: 'Overview', mode: 'overview', icon: BarChart3 },
     { label: 'Crop profitability', mode: 'crops', icon: ReceiptText },
@@ -161,8 +189,22 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
   const hasSummaryData = summary
     ? summary.zameenCount + summary.cropCount + transactionCount > 0
     : false;
-  const hasCropReportData = sortedCropReports.length > 0;
-  const hasMonthlyReportData = filteredMonthlyReports.length > 0;
+  const hasCropReportData = filteredCropReports.length > 0;
+  const hasMonthlyReportData = rangeFilteredMonthlyReports.length > 0;
+  const filtersAreActive =
+    selectedYear !== 'all' ||
+    selectedCropId !== 'all' ||
+    selectedStatus !== 'all' ||
+    fromMonth ||
+    toMonth;
+
+  function clearFilters() {
+    setSelectedYear('all');
+    setSelectedCropId('all');
+    setSelectedStatus('all');
+    setFromMonth('');
+    setToMonth('');
+  }
 
   function notifyNoExportData(reportName: string) {
     onNotify(`${reportName} has no data to export`);
@@ -195,7 +237,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
 
     exportCsv('zamindar-plus-crop-profitability.csv', [
       ['Crop', 'Zameen', 'Status', 'Expense', 'Income', 'Net Profit', 'Expense Count', 'Income Count'],
-      ...sortedCropReports.map((report) => [
+      ...filteredCropReports.map((report) => [
         report.cropName,
         report.zameenName,
         report.status,
@@ -217,7 +259,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
 
     exportCsv('zamindar-plus-monthly-summary.csv', [
       ['Month', 'Expense', 'Income', 'Net Profit', 'Expense Count', 'Income Count'],
-      ...filteredMonthlyReports.map((report) => [
+      ...rangeFilteredMonthlyReports.map((report) => [
         formatMonth(report),
         report.totalExpense,
         report.totalIncome,
@@ -237,18 +279,6 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
           <h1>Profit intelligence</h1>
         </div>
         <div className="report-actions">
-          <select
-            className="inline-filter"
-            value={selectedYear}
-            onChange={(event) => setSelectedYear(event.target.value)}
-          >
-            <option value="all">All years</option>
-            {availableYears.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
           <button
             disabled={isLoading || !hasSummaryData}
             type="button"
@@ -303,6 +333,86 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
           <span>Margin</span>
           <strong>{summary ? `${profitMargin}%` : 'Loading...'}</strong>
         </article>
+      </section>
+
+      <section className="panel report-filter-panel">
+        <div>
+          <p className="eyebrow">Filters</p>
+          <h2>Focus the report</h2>
+        </div>
+        <div className="report-filter-grid">
+          <label>
+            <span>Year</span>
+            <select
+              className="inline-filter"
+              value={selectedYear}
+              onChange={(event) => setSelectedYear(event.target.value)}
+            >
+              <option value="all">All years</option>
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Crop</span>
+            <select
+              className="inline-filter"
+              value={selectedCropId}
+              onChange={(event) => setSelectedCropId(event.target.value)}
+            >
+              <option value="all">All crops</option>
+              {cropFilterOptions.map((crop) => (
+                <option key={crop.id} value={crop.id}>
+                  {crop.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Status</span>
+            <select
+              className="inline-filter"
+              value={selectedStatus}
+              onChange={(event) => setSelectedStatus(event.target.value)}
+            >
+              <option value="all">All statuses</option>
+              {statusFilterOptions.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>From month</span>
+            <input
+              className="inline-filter"
+              type="month"
+              value={fromMonth}
+              onChange={(event) => setFromMonth(event.target.value)}
+            />
+          </label>
+          <label>
+            <span>To month</span>
+            <input
+              className="inline-filter"
+              type="month"
+              value={toMonth}
+              onChange={(event) => setToMonth(event.target.value)}
+            />
+          </label>
+          <button
+            className="text-button"
+            disabled={!filtersAreActive}
+            type="button"
+            onClick={clearFilters}
+          >
+            Clear filters
+          </button>
+        </div>
       </section>
 
       <section className="panel report-control-panel">
@@ -361,16 +471,16 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
             <div className="panel-header compact-panel-header">
               <div>
                 <p className="eyebrow">Monthly trend</p>
-                <h2>{filteredMonthlyReports.length} months</h2>
+                <h2>{rangeFilteredMonthlyReports.length} months</h2>
               </div>
             </div>
             <div className="monthly-chart report-monthly-chart">
               {isLoading ? (
                 <p className="muted">Loading monthly reports...</p>
-              ) : filteredMonthlyReports.length === 0 ? (
+              ) : rangeFilteredMonthlyReports.length === 0 ? (
                 <p className="muted">No monthly report data yet.</p>
               ) : (
-                filteredMonthlyReports.map((report) => (
+                rangeFilteredMonthlyReports.map((report) => (
                   <div className="monthly-column" key={`${report.year}-${report.month}`}>
                     <div className="monthly-bars">
                       <span
@@ -423,7 +533,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
           <div className="panel-header compact-panel-header">
             <div>
               <p className="eyebrow">Crop profitability</p>
-              <h2>{sortedCropReports.length} crops</h2>
+              <h2>{filteredCropReports.length} crops</h2>
             </div>
           </div>
 
@@ -445,12 +555,12 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
                   <tr>
                     <td colSpan={7}>Loading crop reports...</td>
                   </tr>
-                ) : sortedCropReports.length === 0 ? (
+                ) : filteredCropReports.length === 0 ? (
                   <tr>
                     <td colSpan={7}>No crop report data yet.</td>
                   </tr>
                 ) : (
-                  sortedCropReports.map((report) => (
+                  filteredCropReports.map((report) => (
                     <tr key={report.cropId}>
                       <td>{report.cropName}</td>
                       <td>{report.zameenName}</td>
@@ -473,7 +583,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
           <div className="panel-header compact-panel-header">
             <div>
               <p className="eyebrow">Monthly summary</p>
-              <h2>{filteredMonthlyReports.length} months</h2>
+              <h2>{rangeFilteredMonthlyReports.length} months</h2>
             </div>
           </div>
 
@@ -493,12 +603,12 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
                   <tr>
                     <td colSpan={5}>Loading monthly reports...</td>
                   </tr>
-                ) : filteredMonthlyReports.length === 0 ? (
+                ) : rangeFilteredMonthlyReports.length === 0 ? (
                   <tr>
                     <td colSpan={5}>No monthly report data yet.</td>
                   </tr>
                 ) : (
-                  filteredMonthlyReports.map((report) => (
+                  rangeFilteredMonthlyReports.map((report) => (
                     <tr key={`${report.year}-${report.month}`}>
                       <td>{formatMonth(report)}</td>
                       <td>{formatCurrency(report.totalExpense)}</td>

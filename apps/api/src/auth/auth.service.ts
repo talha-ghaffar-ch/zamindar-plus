@@ -10,8 +10,10 @@ import * as bcrypt from 'bcrypt';
 import { OAuth2Client, type TokenPayload } from 'google-auth-library';
 import { PrismaService } from '../prisma/prisma.service';
 import { GoogleLoginDto } from './dto/google-login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SignupDto } from './dto/signup.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { EmailService } from './email.service';
@@ -244,6 +246,95 @@ export class AuthService {
     return this.buildVerificationResentResponse(verification.token);
   }
 
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const email = forgotPasswordDto.email.toLowerCase();
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+      },
+    });
+
+    if (!user) {
+      return this.buildPasswordResetSentResponse();
+    }
+
+    const reset = this.createPasswordResetToken();
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        passwordResetTokenHash: reset.tokenHash,
+        passwordResetExpiresAt: reset.expiresAt,
+      },
+    });
+
+    try {
+      await this.emailService.sendPasswordResetEmail({
+        email: user.email,
+        firstName: user.firstName,
+        token: reset.token,
+      });
+    } catch (error) {
+      await this.prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          passwordResetTokenHash: null,
+          passwordResetExpiresAt: null,
+        },
+      });
+      throw error;
+    }
+
+    return this.buildPasswordResetSentResponse(reset.token);
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const tokenHash = this.hashVerificationToken(resetPasswordDto.token);
+    const user = await this.prisma.user.findFirst({
+      where: {
+        passwordResetTokenHash: tokenHash,
+        passwordResetExpiresAt: {
+          gt: new Date(),
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException(
+        'Password reset link is invalid or expired.',
+      );
+    }
+
+    const passwordHash = await bcrypt.hash(resetPasswordDto.password, 12);
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        passwordHash,
+        passwordResetTokenHash: null,
+        passwordResetExpiresAt: null,
+        emailVerified: true,
+        emailVerifiedAt: new Date(),
+      },
+    });
+
+    return {
+      message: 'Password reset successfully. You can now sign in.',
+    };
+  }
+
   async googleLogin(googleLoginDto: GoogleLoginDto) {
     const googleProfile = await this.verifyGoogleCredential(
       googleLoginDto.credential,
@@ -373,6 +464,14 @@ export class AuthService {
     };
   }
 
+  private buildPasswordResetSentResponse(token?: string) {
+    return {
+      message:
+        'If that email is registered, a password reset link has been sent.',
+      ...this.developmentVerificationToken(token),
+    };
+  }
+
   private developmentVerificationToken(token?: string) {
     if (process.env.NODE_ENV === 'production' || !token) {
       return {};
@@ -390,6 +489,16 @@ export class AuthService {
       token,
       tokenHash: this.hashVerificationToken(token),
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    };
+  }
+
+  private createPasswordResetToken() {
+    const token = randomBytes(32).toString('hex');
+
+    return {
+      token,
+      tokenHash: this.hashVerificationToken(token),
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
     };
   }
 

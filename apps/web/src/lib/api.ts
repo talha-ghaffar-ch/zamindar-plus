@@ -126,6 +126,15 @@ export type ResendVerificationPayload = {
   email: string;
 };
 
+export type ForgotPasswordPayload = {
+  email: string;
+};
+
+export type ResetPasswordPayload = {
+  token: string;
+  password: string;
+};
+
 export type MessageResponse = {
   message: string;
   devVerificationToken?: string;
@@ -341,6 +350,20 @@ export function verifyEmail(payload: VerifyEmailPayload) {
 
 export function resendVerification(payload: ResendVerificationPayload) {
   return requestJson<MessageResponse>('/auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function forgotPassword(payload: ForgotPasswordPayload) {
+  return requestJson<MessageResponse>('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function resetPassword(payload: ResetPasswordPayload) {
+  return requestJson<MessageResponse>('/auth/reset-password', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

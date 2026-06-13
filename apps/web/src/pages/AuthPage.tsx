@@ -1,18 +1,22 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ArrowLeft,
   BadgeCheck,
   BarChart3,
   Eye,
   EyeOff,
+  KeyRound,
   LogIn,
   ShieldCheck,
   UserPlus,
 } from 'lucide-react';
 import { FieldLabel } from '../components/FieldLabel';
 import {
+  forgotPassword,
   googleLogin,
   login,
   resendVerification,
+  resetPassword,
   signup,
   verifyEmail,
   type AuthResponse,
@@ -57,6 +61,8 @@ type AuthPageProps = {
   onNotify: (message: string) => void;
 };
 
+type AuthMode = 'login' | 'signup' | 'forgot' | 'reset';
+
 const initialSignupForm: CreateUserPayload = {
   firstName: '',
   lastName: '',
@@ -69,6 +75,13 @@ const initialSignupForm: CreateUserPayload = {
 const initialLoginForm: LoginPayload = {
   email: '',
   password: '',
+};
+const initialForgotPasswordForm = {
+  email: '',
+};
+const initialResetPasswordForm = {
+  password: '',
+  confirmPassword: '',
 };
 const GOOGLE_SCRIPT_ID = 'google-identity-services-script';
 let initializedGoogleClientId = '';
@@ -130,17 +143,25 @@ function GoogleIcon() {
 }
 
 export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [mode, setMode] = useState<AuthMode>('login');
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
   const [loginForm, setLoginForm] = useState(initialLoginForm);
   const [signupForm, setSignupForm] = useState(initialSignupForm);
+  const [forgotPasswordForm, setForgotPasswordForm] = useState(
+    initialForgotPasswordForm,
+  );
+  const [resetPasswordForm, setResetPasswordForm] = useState(
+    initialResetPasswordForm,
+  );
+  const [resetToken, setResetToken] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [isLoginPasswordVisible, setIsLoginPasswordVisible] = useState(false);
   const [isSignupPasswordVisible, setIsSignupPasswordVisible] = useState(false);
+  const [isResetPasswordVisible, setIsResetPasswordVisible] = useState(false);
   const isLoginReady =
     loginForm.email.trim().length > 0 && loginForm.password.length >= 8;
   const isSignupReady =
@@ -148,6 +169,11 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     signupForm.lastName.trim().length >= 2 &&
     signupForm.email.trim().length > 0 &&
     signupForm.password.length >= 8;
+  const isForgotPasswordReady = forgotPasswordForm.email.trim().length > 0;
+  const isResetPasswordReady =
+    resetToken.length > 0 &&
+    resetPasswordForm.password.length >= 8 &&
+    resetPasswordForm.password === resetPasswordForm.confirmPassword;
 
   const handleGoogleCredential = useCallback(
     async (response: GoogleCredentialResponse) => {
@@ -187,17 +213,31 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const verificationToken = searchParams.get('verifyEmail');
+    const passwordResetToken = searchParams.get('resetPassword');
 
-    if (!verificationToken) {
+    if (!verificationToken && !passwordResetToken) {
       return;
     }
 
     searchParams.delete('verifyEmail');
+    searchParams.delete('resetPassword');
     const nextSearch = searchParams.toString();
     const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}`;
 
     window.history.replaceState({}, document.title, nextUrl);
     const verifyTimer = window.setTimeout(() => {
+      if (passwordResetToken) {
+        setMode('reset');
+        setResetToken(passwordResetToken);
+        setError('');
+        setSuccess('Choose a new password for your account.');
+        return;
+      }
+
+      if (!verificationToken) {
+        return;
+      }
+
       setMode('login');
       setError('');
       setSuccess('');
@@ -344,7 +384,70 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     }
   }
 
-  function switchMode(nextMode: 'login' | 'signup') {
+  async function handleForgotPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    setSuccess('');
+    setIsSaving(true);
+
+    try {
+      const response = await forgotPassword({
+        email: forgotPasswordForm.email.trim(),
+      });
+      setSuccess(response.message);
+      onNotify('Password reset email sent');
+    } catch (forgotError) {
+      setError(
+        forgotError instanceof Error
+          ? forgotError.message
+          : 'Password reset email could not be sent.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleResetPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (resetPasswordForm.password !== resetPasswordForm.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const response = await resetPassword({
+        token: resetToken,
+        password: resetPasswordForm.password,
+      });
+      setResetToken('');
+      setResetPasswordForm(initialResetPasswordForm);
+      setMode('login');
+      setSuccess(response.message);
+      onNotify('Password reset successfully');
+    } catch (resetError) {
+      setError(
+        resetError instanceof Error
+          ? resetError.message
+          : 'Password reset failed.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  function openForgotPassword() {
+    setForgotPasswordForm({
+      email: loginForm.email,
+    });
+    switchMode('forgot');
+  }
+
+  function switchMode(nextMode: AuthMode) {
     setMode(nextMode);
     setError('');
     setSuccess('');
@@ -365,11 +468,23 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
         <div className="auth-card">
           <div className="auth-card-header">
             <p className="eyebrow">Secure access</p>
-            <h2>{mode === 'login' ? 'Sign in' : 'Create account'}</h2>
+            <h2>
+              {mode === 'login'
+                ? 'Sign in'
+                : mode === 'signup'
+                  ? 'Create account'
+                  : mode === 'forgot'
+                    ? 'Reset password'
+                    : 'Set new password'}
+            </h2>
             <p>
               {mode === 'login'
                 ? 'Open your farm dashboard and continue from your latest records.'
-                : 'Create a farmer account connected to the shared backend.'}
+                : mode === 'signup'
+                  ? 'Create a farmer account connected to the shared backend.'
+                  : mode === 'forgot'
+                    ? 'Enter your account email and we will send a secure reset link.'
+                    : 'Your reset link is ready. Choose a strong new password.'}
             </p>
           </div>
 
@@ -388,37 +503,50 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
             </span>
           </div>
 
-          <div className="segmented-control" aria-label="Authentication mode">
+          {mode === 'login' || mode === 'signup' ? (
+            <>
+              <div className="segmented-control" aria-label="Authentication mode">
+                <button
+                  className={mode === 'login' ? 'active' : ''}
+                  aria-pressed={mode === 'login'}
+                  type="button"
+                  onClick={() => switchMode('login')}
+                >
+                  <LogIn size={15} aria-hidden="true" />
+                  Sign in
+                </button>
+                <button
+                  className={mode === 'signup' ? 'active' : ''}
+                  aria-pressed={mode === 'signup'}
+                  type="button"
+                  onClick={() => switchMode('signup')}
+                >
+                  <UserPlus size={15} aria-hidden="true" />
+                  Create account
+                </button>
+              </div>
+
+              {googleClientId ? (
+                <div className="google-auth-render" ref={googleButtonRef} />
+              ) : (
+                <button
+                  className="google-auth-button"
+                  type="button"
+                  onClick={handleGooglePlaceholder}
+                >
+                  <GoogleIcon />
+                  {mode === 'login' ? 'Sign in with Google' : 'Sign up with Google'}
+                </button>
+              )}
+            </>
+          ) : (
             <button
-              className={mode === 'login' ? 'active' : ''}
-              aria-pressed={mode === 'login'}
+              className="text-button auth-back-button"
               type="button"
               onClick={() => switchMode('login')}
             >
-              <LogIn size={15} aria-hidden="true" />
-              Sign in
-            </button>
-            <button
-              className={mode === 'signup' ? 'active' : ''}
-              aria-pressed={mode === 'signup'}
-              type="button"
-              onClick={() => switchMode('signup')}
-            >
-              <UserPlus size={15} aria-hidden="true" />
-              Create account
-            </button>
-          </div>
-
-          {googleClientId ? (
-            <div className="google-auth-render" ref={googleButtonRef} />
-          ) : (
-            <button
-              className="google-auth-button"
-              type="button"
-              onClick={handleGooglePlaceholder}
-            >
-              <GoogleIcon />
-              {mode === 'login' ? 'Sign in with Google' : 'Sign up with Google'}
+              <ArrowLeft size={15} aria-hidden="true" />
+              Back to sign in
             </button>
           )}
 
@@ -492,8 +620,20 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                   ? 'Sending verification email...'
                   : 'Resend verification email'}
               </button>
+
+              <button
+                className="text-button auth-link-button"
+                disabled={isSaving}
+                type="button"
+                onClick={openForgotPassword}
+              >
+                <KeyRound size={15} aria-hidden="true" />
+                Forgot password?
+              </button>
             </form>
-          ) : (
+          ) : null}
+
+          {mode === 'signup' ? (
             <form className="form-grid auth-form signup-form" onSubmit={handleSignup}>
               <label>
                 <FieldLabel required>First name</FieldLabel>
@@ -606,7 +746,103 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                 {isSaving ? 'Creating...' : 'Create account'}
               </button>
             </form>
-          )}
+          ) : null}
+
+          {mode === 'forgot' ? (
+            <form className="form-grid auth-form" onSubmit={handleForgotPassword}>
+              <label>
+                <FieldLabel required>Email</FieldLabel>
+                <input
+                  required
+                  type="email"
+                  value={forgotPasswordForm.email}
+                  onChange={(event) =>
+                    setForgotPasswordForm({
+                      email: event.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <button
+                className={
+                  isForgotPasswordReady
+                    ? 'primary-button auth-submit-button is-ready'
+                    : 'primary-button auth-submit-button'
+                }
+                disabled={isSaving}
+                type="submit"
+              >
+                {isSaving ? 'Sending...' : 'Send reset link'}
+              </button>
+            </form>
+          ) : null}
+
+          {mode === 'reset' ? (
+            <form className="form-grid auth-form" onSubmit={handleResetPassword}>
+              <label>
+                <FieldLabel required>New password</FieldLabel>
+                <span className="password-field">
+                  <input
+                    required
+                    minLength={8}
+                    type={isResetPasswordVisible ? 'text' : 'password'}
+                    value={resetPasswordForm.password}
+                    onChange={(event) =>
+                      setResetPasswordForm({
+                        ...resetPasswordForm,
+                        password: event.target.value,
+                      })
+                    }
+                  />
+                  <button
+                    aria-label={
+                      isResetPasswordVisible ? 'Hide password' : 'Show password'
+                    }
+                    className="password-toggle"
+                    type="button"
+                    onClick={() =>
+                      setIsResetPasswordVisible((isVisible) => !isVisible)
+                    }
+                  >
+                    {isResetPasswordVisible ? (
+                      <EyeOff size={17} aria-hidden="true" />
+                    ) : (
+                      <Eye size={17} aria-hidden="true" />
+                    )}
+                  </button>
+                </span>
+              </label>
+
+              <label>
+                <FieldLabel required>Confirm password</FieldLabel>
+                <input
+                  required
+                  minLength={8}
+                  type={isResetPasswordVisible ? 'text' : 'password'}
+                  value={resetPasswordForm.confirmPassword}
+                  onChange={(event) =>
+                    setResetPasswordForm({
+                      ...resetPasswordForm,
+                      confirmPassword: event.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <button
+                className={
+                  isResetPasswordReady
+                    ? 'primary-button auth-submit-button is-ready'
+                    : 'primary-button auth-submit-button'
+                }
+                disabled={isSaving}
+                type="submit"
+              >
+                {isSaving ? 'Resetting...' : 'Reset password'}
+              </button>
+            </form>
+          ) : null}
         </div>
       </section>
     </main>

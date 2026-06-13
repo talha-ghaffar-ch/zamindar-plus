@@ -7,6 +7,8 @@ type VerificationEmailInput = {
   token: string;
 };
 
+type PasswordResetEmailInput = VerificationEmailInput;
+
 @Injectable()
 export class EmailService {
   async sendVerificationEmail(input: VerificationEmailInput) {
@@ -68,14 +70,79 @@ export class EmailService {
     return { sent: true, verificationUrl };
   }
 
+  async sendPasswordResetEmail(input: PasswordResetEmailInput) {
+    const resetUrl = this.buildPasswordResetUrl(input.token);
+
+    if (!this.isSmtpConfigured()) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`Password reset link for ${input.email}: ${resetUrl}`);
+        return { sent: false, resetUrl };
+      }
+
+      throw new ServiceUnavailableException(
+        'Email delivery is not configured.',
+      );
+    }
+
+    const port = Number(process.env.SMTP_PORT ?? 587);
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port,
+      secure: port === 465,
+      auth: process.env.SMTP_USER
+        ? {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASSWORD,
+          }
+        : undefined,
+    });
+
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to: input.email,
+      subject: 'Reset your Zamindar Plus password',
+      text: [
+        `Assalam o alaikum ${input.firstName},`,
+        '',
+        'Use this link to reset your Zamindar Plus password:',
+        resetUrl,
+        '',
+        'This link will expire in 1 hour. If you did not request it, ignore this email.',
+      ].join('\n'),
+      html: `
+        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#12201b">
+          <h2>Reset your Zamindar Plus password</h2>
+          <p>Assalam o alaikum ${this.escapeHtml(input.firstName)},</p>
+          <p>Use this secure link to set a new password.</p>
+          <p>
+            <a href="${resetUrl}" style="background:#147a63;color:white;padding:12px 18px;border-radius:8px;text-decoration:none">
+              Reset password
+            </a>
+          </p>
+          <p>This link will expire in 1 hour. If you did not request it, ignore this email.</p>
+        </div>
+      `,
+    });
+
+    return { sent: true, resetUrl };
+  }
+
   private buildVerificationUrl(token: string) {
+    return this.buildAppUrl('verifyEmail', token);
+  }
+
+  private buildPasswordResetUrl(token: string) {
+    return this.buildAppUrl('resetPassword', token);
+  }
+
+  private buildAppUrl(paramName: string, token: string) {
     const appUrl =
       process.env.APP_URL?.trim() ||
       process.env.CORS_ORIGIN?.split(',')[0]?.trim() ||
       'http://localhost:5173';
 
     const url = new URL(appUrl);
-    url.searchParams.set('verifyEmail', token);
+    url.searchParams.set(paramName, token);
 
     return url.toString();
   }
