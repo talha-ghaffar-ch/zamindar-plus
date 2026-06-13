@@ -15,7 +15,7 @@
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
-    "seed:users": "ts-node src/scripts/seed-users.ts",
+    "seed:users": "npm run build && node dist/src/scripts/seed-users.js",
     "test": "npm run build && node test/smoke-test.mjs",
     "test:watch": "npm run test",
     "test:cov": "npm run test",
