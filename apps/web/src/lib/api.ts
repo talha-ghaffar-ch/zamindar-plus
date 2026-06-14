@@ -54,6 +54,7 @@ export type User = {
   emailNotifications: boolean;
   smsNotifications: boolean;
   weeklyReport: boolean;
+  googleConnected?: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -134,6 +135,15 @@ export type ForgotPasswordPayload = {
 export type ResetPasswordPayload = {
   token: string;
   password: string;
+};
+
+export type AiChatResponse = {
+  reply: string;
+};
+
+export type AiChatHistoryMessage = {
+  role: 'assistant' | 'user';
+  text: string;
 };
 
 export type MessageResponse = {
@@ -342,6 +352,19 @@ export function googleLogin(payload: GoogleLoginPayload) {
   });
 }
 
+export function connectGoogleAccount(payload: GoogleLoginPayload) {
+  return requestJson<User>('/auth/connect-google', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function disconnectGoogleAccount() {
+  return requestJson<User>('/auth/disconnect-google', {
+    method: 'POST',
+  });
+}
+
 export function verifyEmail(payload: VerifyEmailPayload) {
   return requestJson<MessageResponse>('/auth/verify-email', {
     method: 'POST',
@@ -376,6 +399,16 @@ export function getMe() {
 
 export function getReportSummary() {
   return requestJson<ReportSummary>('/reports/summary');
+}
+
+export function sendAiChatMessage(
+  message: string,
+  history: AiChatHistoryMessage[] = [],
+) {
+  return requestJson<AiChatResponse>('/ai/chat', {
+    method: 'POST',
+    body: JSON.stringify({ message, history }),
+  });
 }
 
 export function getCropProfitabilityReport() {

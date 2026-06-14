@@ -63,6 +63,23 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('connect-google')
+  @HttpCode(200)
+  connectGoogle(
+    @CurrentUserId() userId: string,
+    @Body() googleLoginDto: GoogleLoginDto,
+  ) {
+    return this.authService.connectGoogleAccount(userId, googleLoginDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('disconnect-google')
+  @HttpCode(200)
+  disconnectGoogle(@CurrentUserId() userId: string) {
+    return this.authService.disconnectGoogleAccount(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   me(@CurrentUserId() userId: string) {
     return this.authService.me(userId);

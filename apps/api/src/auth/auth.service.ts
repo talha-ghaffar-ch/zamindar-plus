@@ -58,8 +58,13 @@ type SafeUser = {
   emailNotifications: boolean;
   smsNotifications: boolean;
   weeklyReport: boolean;
+  googleConnected: boolean;
   createdAt: Date;
   updatedAt: Date;
+};
+
+type UserWithGoogle = Omit<SafeUser, 'googleConnected'> & {
+  googleId: string | null;
 };
 
 @Injectable()
@@ -168,6 +173,7 @@ export class AuthService {
       emailNotifications: user.emailNotifications,
       smsNotifications: user.smsNotifications,
       weeklyReport: user.weeklyReport,
+      googleConnected: Boolean(user.googleId),
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });
@@ -394,7 +400,7 @@ export class AuthService {
             },
           });
 
-      return this.buildAuthResponse(user);
+      return this.buildAuthResponse(this.withGoogleConnected(user));
     }
 
     const nameParts = this.getGoogleNameParts(googleProfile);
@@ -415,10 +421,104 @@ export class AuthService {
         profileImageUrl: googleProfile.picture,
         farmerType: 'Land Owner',
       },
-      select: safeUserSelect,
+      select: {
+        ...safeUserSelect,
+        googleId: true,
+      },
     });
 
-    return this.buildAuthResponse(user);
+    return this.buildAuthResponse(this.withGoogleConnected(user));
+  }
+
+  async connectGoogleAccount(userId: string, googleLoginDto: GoogleLoginDto) {
+    const googleProfile = await this.verifyGoogleCredential(
+      googleLoginDto.credential,
+    );
+    const email = googleProfile.email?.toLowerCase();
+
+    if (!email || !googleProfile.sub) {
+      throw new UnauthorizedException('Google account details are incomplete.');
+    }
+
+    const currentUser = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        ...safeUserSelect,
+        googleId: true,
+      },
+    });
+
+    if (!currentUser) {
+      throw new UnauthorizedException('Authenticated user was not found.');
+    }
+
+    if (currentUser.email.toLowerCase() !== email) {
+      throw new ConflictException(
+        'Google email must match your account email.',
+      );
+    }
+
+    if (currentUser.googleId && currentUser.googleId !== googleProfile.sub) {
+      throw new ConflictException(
+        'This account is already connected to another Google account.',
+      );
+    }
+
+    const googleOwner = await this.prisma.user.findFirst({
+      where: {
+        googleId: googleProfile.sub,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (googleOwner && googleOwner.id !== currentUser.id) {
+      throw new ConflictException(
+        'This Google account is already connected to another user.',
+      );
+    }
+
+    const user = await this.prisma.user.update({
+      where: {
+        id: currentUser.id,
+      },
+      data: {
+        googleId: googleProfile.sub,
+        authProvider: 'GOOGLE',
+        emailVerified: true,
+        emailVerifiedAt: currentUser.emailVerifiedAt ?? new Date(),
+        emailVerificationTokenHash: null,
+        emailVerificationExpiresAt: null,
+        profileImageUrl: currentUser.profileImageUrl ?? googleProfile.picture,
+      },
+      select: {
+        ...safeUserSelect,
+        googleId: true,
+      },
+    });
+
+    return this.withGoogleConnected(user);
+  }
+
+  async disconnectGoogleAccount(userId: string) {
+    const user = await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        googleId: null,
+        authProvider: 'PASSWORD',
+      },
+      select: {
+        ...safeUserSelect,
+        googleId: true,
+      },
+    });
+
+    return this.withGoogleConnected(user);
   }
 
   async me(userId: string) {
@@ -426,14 +526,17 @@ export class AuthService {
       where: {
         id: userId,
       },
-      select: safeUserSelect,
+      select: {
+        ...safeUserSelect,
+        googleId: true,
+      },
     });
 
     if (!user) {
       throw new UnauthorizedException('Authenticated user was not found.');
     }
 
-    return user;
+    return this.withGoogleConnected(user);
   }
 
   private async buildAuthResponse(user: SafeUser) {
@@ -445,6 +548,15 @@ export class AuthService {
     return {
       accessToken,
       user,
+    };
+  }
+
+  private withGoogleConnected(user: UserWithGoogle): SafeUser {
+    const { googleId: _googleId, ...safeUser } = user;
+
+    return {
+      ...safeUser,
+      googleConnected: Boolean(_googleId),
     };
   }
 

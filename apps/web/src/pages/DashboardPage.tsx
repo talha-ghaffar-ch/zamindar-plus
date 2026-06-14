@@ -5,7 +5,7 @@ import {
   BanknoteArrowDown,
   BanknoteArrowUp,
   BarChart3,
-  CalendarDays,
+  Bot,
   CircleDollarSign,
   ClipboardList,
   Gauge,
@@ -15,14 +15,11 @@ import {
   ReceiptText,
   Route,
   Sprout,
-  TrendingUp,
   Wheat,
 } from 'lucide-react';
 import {
-  getCropProfitabilityReport,
   getMonthlySummaryReport,
   getReportSummary,
-  type CropProfitabilityReport,
   type MonthlySummaryReport,
   type ReportSummary,
   type User,
@@ -75,23 +72,17 @@ function ringStyle(value: number) {
 export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
   const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [monthlyReports, setMonthlyReports] = useState<MonthlySummaryReport[]>([]);
-  const [cropReports, setCropReports] = useState<CropProfitabilityReport[]>([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let isActive = true;
 
-    Promise.all([
-      getReportSummary(),
-      getMonthlySummaryReport(),
-      getCropProfitabilityReport(),
-    ])
-      .then(([summaryData, monthlyData, cropData]) => {
+    Promise.all([getReportSummary(), getMonthlySummaryReport()])
+      .then(([summaryData, monthlyData]) => {
         if (!isActive) return;
 
         setSummary(summaryData);
         setMonthlyReports(monthlyData);
-        setCropReports(cropData);
       })
       .catch((loadError) => {
         if (isActive) {
@@ -132,17 +123,6 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
             100,
         )
       : 0;
-  const recordCount = summary
-    ? summary.zameenCount +
-      summary.cropCount +
-      summary.expenseCount +
-      summary.incomeCount
-    : 0;
-  const topCrop = cropReports.reduce<CropProfitabilityReport | null>(
-    (bestCrop, crop) =>
-      !bestCrop || crop.netProfit > bestCrop.netProfit ? crop : bestCrop,
-    null,
-  );
   const recentMonths = monthlyReports.slice(0, 6).reverse();
   const maxMonthlyValue = Math.max(
     ...recentMonths.map((report) =>
@@ -248,24 +228,6 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
     },
   ];
 
-  const nextSteps = [
-    {
-      label: 'Land records',
-      value: summary?.zameenCount ? 'Ready' : 'Add first zameen',
-      page: 'Zameen',
-    },
-    {
-      label: 'Crop cycles',
-      value: summary?.cropCount ? 'Tracked' : 'Create crop allocation',
-      page: 'Crops',
-    },
-    {
-      label: 'Money flow',
-      value: transactionCount ? 'Active' : 'Record expense or income',
-      page: transactionCount ? 'Reports' : 'Expenses',
-    },
-  ];
-
   return (
     <section className="dashboard-screen">
       <div className="dashboard-titlebar">
@@ -363,10 +325,19 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
               <p className="eyebrow">Monthly movement</p>
               <h2>{recentMonths.length ? `${recentMonths.length} month trend` : 'No monthly data'}</h2>
             </div>
-            <LineChart size={20} aria-hidden="true" />
+            <div className="chart-legend">
+              <span className="legend-income">Income</span>
+              <span className="legend-expense">Expense</span>
+              <span className="legend-profit">Net</span>
+            </div>
           </div>
 
-          <div className="monthly-chart" aria-label="Monthly income, expense, and profit chart">
+          <div className="monthly-chart-wrap">
+            <div className="chart-caption">
+              <LineChart size={16} aria-hidden="true" />
+              <span>Compare cash in, cash out, and net result by month.</span>
+            </div>
+            <div className="monthly-chart" aria-label="Monthly income, expense, and profit chart">
             {recentMonths.length === 0 ? (
               <p className="muted">Monthly reports will appear when income and expenses are recorded.</p>
             ) : (
@@ -390,37 +361,20 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
                 </div>
               ))
             )}
-          </div>
-        </section>
-
-        <section className="panel dashboard-health-panel">
-          <div className="panel-header compact-panel-header">
-            <div>
-              <p className="eyebrow">Record health</p>
-              <h2>{recordCount.toLocaleString()} records</h2>
             </div>
-            <TrendingUp size={20} aria-hidden="true" />
-          </div>
-
-          <div className="health-list">
-            {nextSteps.map((step) => (
-              <button key={step.label} type="button" onClick={() => onNavigate(step.page)}>
-                <span>{step.label}</span>
-                <strong>{step.value}</strong>
-              </button>
-            ))}
-          </div>
-
-          <div className="top-crop-card">
-            <CalendarDays size={18} aria-hidden="true" />
-            <span>Best crop</span>
-            <strong>
-              {topCrop
-                ? `${topCrop.cropName} - ${formatCurrency(topCrop.netProfit)}`
-                : 'Waiting for crop income'}
-            </strong>
           </div>
         </section>
+
+        <button
+          className="panel dashboard-ai-panel dashboard-ai-launch"
+          type="button"
+          onClick={() => onNavigate('Zamindar AI')}
+        >
+          <div className="dashboard-ai-orb" aria-hidden="true">
+            <Bot size={34} />
+          </div>
+          <strong>Zamindar AI</strong>
+        </button>
       </div>
     </section>
   );

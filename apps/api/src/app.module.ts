@@ -9,6 +9,7 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { IncomeModule } from './income/income.module';
 import { ReportsModule } from './reports/reports.module';
 import { AuthModule } from './auth/auth.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AuthModule } from './auth/auth.module';
     IncomeModule,
     ReportsModule,
     AuthModule,
+    AiModule,
   ],
   controllers: [AppController],
 })

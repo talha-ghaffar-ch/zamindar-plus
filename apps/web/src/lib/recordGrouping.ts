@@ -5,7 +5,17 @@ export type RecordGroup<T> = {
 };
 
 export function dateInputValue(dateValue: string) {
-  return dateValue.slice(0, 10);
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
 }
 
 export function dateParts(dateValue: string) {
@@ -18,7 +28,17 @@ export function dateParts(dateValue: string) {
 }
 
 export function formatDate(dateValue: string) {
-  return new Date(dateValue).toLocaleDateString('en-GB');
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return [
+    String(date.getDate()).padStart(2, '0'),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    date.getFullYear(),
+  ].join('/');
 }
 
 export function formatMonthYear(year: number, month: number) {

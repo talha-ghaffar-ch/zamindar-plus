@@ -1,4 +1,11 @@
-import { type ChangeEvent, type FormEvent, useState } from 'react';
+import {
+  type ChangeEvent,
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   Bell,
   Camera,
@@ -14,11 +21,45 @@ import {
 } from 'lucide-react';
 import { FieldLabel } from '../components/FieldLabel';
 import {
+  connectGoogleAccount,
   deleteUser,
+  disconnectGoogleAccount,
   updateUser,
   type UpdateUserPayload,
   type User,
 } from '../lib/api';
+
+type GoogleCredentialResponse = {
+  credential?: string;
+};
+
+type GoogleButtonText = 'signin_with' | 'signup_with';
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: GoogleCredentialResponse) => void;
+          }) => void;
+          renderButton: (
+            parent: HTMLElement,
+            options: {
+              theme: 'outline';
+              size: 'large';
+              type: 'standard';
+              shape: 'pill';
+              text: GoogleButtonText;
+              width: number;
+            },
+          ) => void;
+        };
+      };
+    };
+  }
+}
 
 type SettingsPageProps = {
   currentUser: User;
@@ -26,6 +67,42 @@ type SettingsPageProps = {
   onAccountDeleted: () => void;
   onNotify: (message: string) => void;
 };
+
+const GOOGLE_SCRIPT_ID = 'google-identity-services-script';
+let settingsInitializedGoogleClientId = '';
+let activeSettingsGoogleCredentialHandler:
+  | ((response: GoogleCredentialResponse) => void)
+  | null = null;
+
+function loadGoogleIdentityScript() {
+  return new Promise<void>((resolve, reject) => {
+    if (window.google?.accounts.id) {
+      resolve();
+      return;
+    }
+
+    const existingScript = document.getElementById(
+      GOOGLE_SCRIPT_ID,
+    ) as HTMLScriptElement | null;
+
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve(), { once: true });
+      existingScript.addEventListener('error', () => reject(new Error()), {
+        once: true,
+      });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = GOOGLE_SCRIPT_ID;
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.addEventListener('load', () => resolve(), { once: true });
+    script.addEventListener('error', () => reject(new Error()), { once: true });
+    document.head.append(script);
+  });
+}
 
 function avatarMotif(motif: string) {
   if (motif === 'wheat') {
@@ -170,7 +247,6 @@ function buildForm(user: User) {
     preferredAreaUnit: user.preferredAreaUnit ?? 'Acre',
     preferredCurrency: user.preferredCurrency ?? 'PKR',
     preferredLanguage: user.preferredLanguage ?? 'English',
-    dateFormat: user.dateFormat ?? 'DD/MM/YYYY',
     emailNotifications: user.emailNotifications ?? true,
     smsNotifications: user.smsNotifications ?? false,
     weeklyReport: user.weeklyReport ?? true,
@@ -193,11 +269,125 @@ export function SettingsPage({
   onNotify,
 }: SettingsPageProps) {
   const [form, setForm] = useState(buildForm(currentUser));
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
+  const [isDisconnectingGoogle, setIsDisconnectingGoogle] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const isGoogleConnected = Boolean(currentUser.googleConnected);
+
+  const handleGoogleCredential = useCallback(
+    async (response: GoogleCredentialResponse) => {
+      setError('');
+      setSuccess('');
+
+      if (!response.credential) {
+        setError('Google did not return a valid account credential.');
+        return;
+      }
+
+      setIsConnectingGoogle(true);
+
+      try {
+        const updatedUser = await connectGoogleAccount({
+          credential: response.credential,
+        });
+        onUserUpdated(updatedUser);
+        setForm(buildForm(updatedUser));
+        setSuccess('Google account connected.');
+        onNotify('Google account connected successfully');
+      } catch (connectError) {
+        setError(
+          connectError instanceof Error
+            ? connectError.message
+            : 'Google account could not be connected.',
+        );
+      } finally {
+        setIsConnectingGoogle(false);
+      }
+    },
+    [onNotify, onUserUpdated],
+  );
+
+  async function handleDisconnectGoogle() {
+    setError('');
+    setSuccess('');
+    setIsDisconnectingGoogle(true);
+
+    try {
+      const updatedUser = await disconnectGoogleAccount();
+      onUserUpdated(updatedUser);
+      setForm(buildForm(updatedUser));
+      setSuccess('Google account disconnected.');
+      onNotify('Google account disconnected successfully');
+    } catch (disconnectError) {
+      setError(
+        disconnectError instanceof Error
+          ? disconnectError.message
+          : 'Google account could not be disconnected.',
+      );
+    } finally {
+      setIsDisconnectingGoogle(false);
+    }
+  }
+
+  useEffect(() => {
+    activeSettingsGoogleCredentialHandler = handleGoogleCredential;
+
+    return () => {
+      activeSettingsGoogleCredentialHandler = null;
+    };
+  }, [handleGoogleCredential]);
+
+  useEffect(() => {
+    if (isGoogleConnected || !googleClientId || !googleButtonRef.current) {
+      return;
+    }
+
+    let isCancelled = false;
+    const buttonElement = googleButtonRef.current;
+    buttonElement.replaceChildren();
+
+    void loadGoogleIdentityScript()
+      .then(() => {
+        if (isCancelled || !window.google?.accounts.id) {
+          return;
+        }
+
+        if (settingsInitializedGoogleClientId !== googleClientId) {
+          window.google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: (response) =>
+              activeSettingsGoogleCredentialHandler?.(response),
+          });
+          settingsInitializedGoogleClientId = googleClientId;
+        }
+
+        buttonElement.replaceChildren();
+        window.google.accounts.id.renderButton(buttonElement, {
+          theme: 'outline',
+          size: 'large',
+          type: 'standard',
+          shape: 'pill',
+          text: 'signin_with',
+          width: Math.min(buttonElement.clientWidth || 320, 360),
+        });
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setError('Google account connection could not load.');
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+      buttonElement.replaceChildren();
+    };
+  }, [googleClientId, isGoogleConnected]);
 
   async function handleImageUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -253,7 +443,6 @@ export function SettingsPage({
       preferredAreaUnit: form.preferredAreaUnit,
       preferredCurrency: form.preferredCurrency,
       preferredLanguage: form.preferredLanguage,
-      dateFormat: form.dateFormat,
       emailNotifications: form.emailNotifications,
       smsNotifications: form.smsNotifications,
       weeklyReport: form.weeklyReport,
@@ -261,8 +450,12 @@ export function SettingsPage({
 
     try {
       const updatedUser = await updateUser(currentUser.id, payload);
-      onUserUpdated(updatedUser);
-      setForm(buildForm(updatedUser));
+      const nextUser = {
+        ...updatedUser,
+        googleConnected: currentUser.googleConnected,
+      };
+      onUserUpdated(nextUser);
+      setForm(buildForm(nextUser));
       const message = updatedUser.emailVerified
         ? 'Settings saved.'
         : 'Settings saved. Please verify your new email address.';
@@ -457,6 +650,46 @@ export function SettingsPage({
             </label>
           </div>
 
+          <div className="settings-google-panel">
+            <div>
+              <p className="eyebrow">Google account</p>
+              <h3>
+                {isGoogleConnected
+                  ? 'Google account connected'
+                  : 'Connect Google account'}
+              </h3>
+              <p className="muted">
+                {isGoogleConnected
+                  ? `Connected with ${currentUser.email}.`
+                  : 'Use the Google account with this exact email: '}
+                {!isGoogleConnected ? <strong>{currentUser.email}</strong> : null}
+              </p>
+            </div>
+
+            {isGoogleConnected ? (
+              <button
+                className="text-button google-disconnect-button"
+                disabled={isDisconnectingGoogle}
+                type="button"
+                onClick={() => void handleDisconnectGoogle()}
+              >
+                {isDisconnectingGoogle
+                  ? 'Disconnecting...'
+                  : 'Disconnect Google account'}
+              </button>
+            ) : googleClientId ? (
+              <div
+                aria-busy={isConnectingGoogle}
+                className="google-auth-render settings-google-button"
+                ref={googleButtonRef}
+              />
+            ) : (
+              <button className="text-button" disabled type="button">
+                Google connection is not configured
+              </button>
+            )}
+          </div>
+
           <div className="settings-divider" />
 
           <div className="settings-section-heading">
@@ -511,19 +744,6 @@ export function SettingsPage({
               </select>
             </label>
 
-            <label>
-              <FieldLabel required>Date format</FieldLabel>
-              <select
-                value={form.dateFormat}
-                onChange={(event) =>
-                  setForm({ ...form, dateFormat: event.target.value })
-                }
-              >
-                <option>DD/MM/YYYY</option>
-                <option>MM/DD/YYYY</option>
-                <option>YYYY-MM-DD</option>
-              </select>
-            </label>
           </div>
 
           <div className="settings-divider" />

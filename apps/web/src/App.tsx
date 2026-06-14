@@ -38,6 +38,7 @@ import { IncomePage } from './pages/IncomePage';
 import { ReportsPage } from './pages/ReportsPage';
 import { HelpPage } from './pages/HelpPage';
 import { AdminPage } from './pages/AdminPage';
+import { ZamindarAiPage } from './pages/ZamindarAiPage';
 
 const mainNavItems: Array<{ label: string; icon: LucideIcon }> = [
   { label: 'Dashboard', icon: LayoutDashboard },
@@ -254,6 +255,8 @@ function App() {
           <IncomePage onNotify={showToast} />
         ) : activePage === 'Reports' ? (
           <ReportsPage onNotify={showToast} />
+        ) : activePage === 'Zamindar AI' ? (
+          <ZamindarAiPage />
         ) : activePage === 'Admin' ? (
           <AdminPage currentUser={currentUser} onNotify={showToast} />
         ) : activePage === 'Help' ? (

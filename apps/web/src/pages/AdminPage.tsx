@@ -1,7 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   BadgeCheck,
-  MailWarning,
   ShieldCheck,
   Trash2,
   UserCog,
@@ -41,7 +40,13 @@ function formatDate(dateValue: string | null) {
     return 'Not verified';
   }
 
-  return new Date(dateValue).toLocaleDateString('en-GB');
+  const date = new Date(dateValue);
+
+  return [
+    String(date.getDate()).padStart(2, '0'),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    date.getFullYear(),
+  ].join('/');
 }
 
 export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
@@ -196,17 +201,6 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
           <span>Verified</span>
           <strong>{stats.verified}</strong>
         </article>
-      </section>
-
-      <section className="panel feature-notice-panel">
-        <MailWarning size={20} aria-hidden="true" />
-        <div>
-          <strong>Email and Google sign-in status</strong>
-          <p>
-            SMTP delivery, real password-reset emails, and production Google OAuth
-            remain disabled until those services are configured.
-          </p>
-        </div>
       </section>
 
       {error ? <p className="error">{error}</p> : null}

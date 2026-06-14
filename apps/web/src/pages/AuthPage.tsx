@@ -180,8 +180,6 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
   const [mode, setMode] = useState<AuthMode>('login');
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
-  const emailDeliveryEnabled =
-    import.meta.env.VITE_EMAIL_DELIVERY_ENABLED === 'true';
   const [loginForm, setLoginForm] = useState(initialLoginForm);
   const [signupForm, setSignupForm] = useState(initialSignupForm);
   const [forgotPasswordForm, setForgotPasswordForm] = useState(
@@ -194,8 +192,6 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
   const [pendingPasswordResetEmail, setPendingPasswordResetEmail] = useState('');
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
-  const [localVerificationCode, setLocalVerificationCode] = useState('');
-  const [localPasswordResetCode, setLocalPasswordResetCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendAttempts, setResendAttempts] = useState(0);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -399,7 +395,6 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
 
       setPendingVerificationEmail(createdEmail);
       setVerificationCode('');
-      setLocalVerificationCode(response.devVerificationToken ?? '');
       setResendAttempts(0);
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
       setSignupForm(initialSignupForm);
@@ -428,7 +423,6 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     try {
       const response = await verifyEmail({ token: verificationCode.trim() });
       setVerificationCode('');
-      setLocalVerificationCode('');
       setPendingVerificationEmail('');
       setResendCooldown(0);
       setResendAttempts(0);
@@ -471,7 +465,6 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       const response = await resendVerification({
         email: pendingVerificationEmail,
       });
-      setLocalVerificationCode(response.devVerificationToken ?? '');
       setResendAttempts((currentAttempts) => currentAttempts + 1);
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
       setSuccess(response.message);
@@ -492,12 +485,6 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     setError('');
     setSuccess('');
 
-    if (!emailDeliveryEnabled) {
-      setError('Password reset email delivery will be available soon.');
-      onNotify('Password reset will be available soon.');
-      return;
-    }
-
     setIsSaving(true);
 
     try {
@@ -506,8 +493,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
         email: resetEmail,
       });
       setPendingPasswordResetEmail(resetEmail);
-      setResetToken(response.devVerificationToken ?? '');
-      setLocalPasswordResetCode(response.devVerificationToken ?? '');
+      setResetToken('');
       setResetPasswordForm(initialResetPasswordForm);
       setMode('reset');
       setSuccess(response.message);
@@ -542,7 +528,6 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       });
       setResetToken('');
       setPendingPasswordResetEmail('');
-      setLocalPasswordResetCode('');
       setResetPasswordForm(initialResetPasswordForm);
       setMode('login');
       setSuccess(response.message);
@@ -574,7 +559,6 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     if (nextMode !== 'reset') {
       setResetToken('');
       setPendingPasswordResetEmail('');
-      setLocalPasswordResetCode('');
     }
   }
 
@@ -862,12 +846,6 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                 </span>
               </div>
 
-              {localVerificationCode ? (
-                <p className="local-verification-note">
-                  Local test code: <strong>{localVerificationCode}</strong>
-                </p>
-              ) : null}
-
               <label>
                 <FieldLabel required>Verification code</FieldLabel>
                 <input
@@ -924,11 +902,6 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
 
           {mode === 'forgot' ? (
             <form className="form-grid auth-form" onSubmit={handleForgotPassword}>
-              {!emailDeliveryEnabled ? (
-                <p className="feature-soon-note">
-                  This feature will be available after email service setup.
-                </p>
-              ) : null}
               <label>
                 <FieldLabel required>Email</FieldLabel>
                 <input
@@ -966,12 +939,6 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                     Reset code sent to <strong>{pendingPasswordResetEmail}</strong>
                   </span>
                 </div>
-              ) : null}
-
-              {localPasswordResetCode ? (
-                <p className="local-verification-note">
-                  Local test code: <strong>{localPasswordResetCode}</strong>
-                </p>
               ) : null}
 
               <label>
