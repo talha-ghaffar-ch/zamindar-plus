@@ -12,8 +12,6 @@ type PasswordResetEmailInput = VerificationEmailInput;
 @Injectable()
 export class EmailService {
   async sendVerificationEmail(input: VerificationEmailInput) {
-    const verificationUrl = this.buildVerificationUrl(input.token);
-
     if (!this.isEmailDeliveryEnabled()) {
       if (process.env.NODE_ENV !== 'production') {
         console.log(
@@ -21,7 +19,7 @@ export class EmailService {
         );
       }
 
-      return { sent: false, verificationUrl };
+      return { sent: false };
     }
 
     if (!this.isSmtpConfigured()) {
@@ -53,9 +51,6 @@ export class EmailService {
         'Please verify your Zamindar Plus account with this code:',
         input.token,
         '',
-        'You can also open this link:',
-        verificationUrl,
-        '',
         'This code will expire in 24 hours.',
       ].join('\n'),
       html: `
@@ -64,28 +59,21 @@ export class EmailService {
           <p>Assalam o alaikum ${this.escapeHtml(input.firstName)},</p>
           <p>Please verify your account to start using Zamindar Plus.</p>
           <p style="font-size:28px;font-weight:800;letter-spacing:8px">${input.token}</p>
-          <p>
-            <a href="${verificationUrl}" style="background:#147a63;color:white;padding:12px 18px;border-radius:8px;text-decoration:none">
-              Verify email
-            </a>
-          </p>
           <p>This code will expire in 24 hours.</p>
         </div>
       `,
     });
 
-    return { sent: true, verificationUrl };
+    return { sent: true };
   }
 
   async sendPasswordResetEmail(input: PasswordResetEmailInput) {
-    const resetUrl = this.buildPasswordResetUrl(input.token);
-
     if (!this.isEmailDeliveryEnabled()) {
       if (process.env.NODE_ENV !== 'production') {
-        console.log(`Password reset link for ${input.email}: ${resetUrl}`);
+        console.log(`Password reset code for ${input.email}: ${input.token}`);
       }
 
-      return { sent: false, resetUrl };
+      return { sent: false };
     }
 
     if (!this.isSmtpConfigured()) {
@@ -114,47 +102,23 @@ export class EmailService {
       text: [
         `Assalam o alaikum ${input.firstName},`,
         '',
-        'Use this link to reset your Zamindar Plus password:',
-        resetUrl,
+        'Use this code to reset your Zamindar Plus password:',
+        input.token,
         '',
-        'This link will expire in 1 hour. If you did not request it, ignore this email.',
+        'This code will expire in 1 hour. If you did not request it, ignore this email.',
       ].join('\n'),
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.6;color:#12201b">
           <h2>Reset your Zamindar Plus password</h2>
           <p>Assalam o alaikum ${this.escapeHtml(input.firstName)},</p>
-          <p>Use this secure link to set a new password.</p>
-          <p>
-            <a href="${resetUrl}" style="background:#147a63;color:white;padding:12px 18px;border-radius:8px;text-decoration:none">
-              Reset password
-            </a>
-          </p>
-          <p>This link will expire in 1 hour. If you did not request it, ignore this email.</p>
+          <p>Use this secure code to set a new password.</p>
+          <p style="font-size:28px;font-weight:800;letter-spacing:8px">${input.token}</p>
+          <p>This code will expire in 1 hour. If you did not request it, ignore this email.</p>
         </div>
       `,
     });
 
-    return { sent: true, resetUrl };
-  }
-
-  private buildVerificationUrl(token: string) {
-    return this.buildAppUrl('verifyEmail', token);
-  }
-
-  private buildPasswordResetUrl(token: string) {
-    return this.buildAppUrl('resetPassword', token);
-  }
-
-  private buildAppUrl(paramName: string, token: string) {
-    const appUrl =
-      process.env.APP_URL?.trim() ||
-      process.env.CORS_ORIGIN?.split(',')[0]?.trim() ||
-      'http://localhost:5173';
-
-    const url = new URL(appUrl);
-    url.searchParams.set(paramName, token);
-
-    return url.toString();
+    return { sent: true };
   }
 
   private isSmtpConfigured() {

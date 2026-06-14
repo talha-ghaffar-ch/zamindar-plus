@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { createHash, randomBytes, randomInt, randomUUID } from 'node:crypto';
+import { createHash, randomInt, randomUUID } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client, type TokenPayload } from 'google-auth-library';
 import { PrismaService } from '../prisma/prisma.service';
@@ -312,7 +312,7 @@ export class AuthService {
 
     if (!user) {
       throw new BadRequestException(
-        'Password reset link is invalid or expired.',
+        'Password reset code is invalid or expired.',
       );
     }
 
@@ -467,7 +467,7 @@ export class AuthService {
   private buildPasswordResetSentResponse(token?: string) {
     return {
       message:
-        'If that email is registered, a password reset link has been sent.',
+        'If that email is registered, a password reset code has been sent.',
       ...this.developmentVerificationToken(token),
     };
   }
@@ -493,7 +493,7 @@ export class AuthService {
   }
 
   private createPasswordResetToken() {
-    const token = randomBytes(32).toString('hex');
+    const token = String(randomInt(100000, 1000000));
 
     return {
       token,

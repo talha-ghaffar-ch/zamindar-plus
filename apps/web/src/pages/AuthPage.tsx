@@ -170,10 +170,10 @@ function getAuthDescription(mode: AuthMode) {
   }
 
   if (mode === 'forgot') {
-    return 'Password reset email delivery will be enabled after SMTP setup.';
+    return 'Enter your account email and we will send a password reset code.';
   }
 
-  return 'Your reset link is ready. Choose a strong new password.';
+  return 'Enter the code from your email and choose a strong new password.';
 }
 
 export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
@@ -191,9 +191,11 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     initialResetPasswordForm,
   );
   const [resetToken, setResetToken] = useState('');
+  const [pendingPasswordResetEmail, setPendingPasswordResetEmail] = useState('');
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [localVerificationCode, setLocalVerificationCode] = useState('');
+  const [localPasswordResetCode, setLocalPasswordResetCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendAttempts, setResendAttempts] = useState(0);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -214,7 +216,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
   const isVerificationReady = verificationCode.trim().length >= 6;
   const isForgotPasswordReady = forgotPasswordForm.email.trim().length > 0;
   const isResetPasswordReady =
-    resetToken.length > 0 &&
+    resetToken.trim().length >= 6 &&
     resetPasswordForm.password.length >= 8 &&
     resetPasswordForm.password === resetPasswordForm.confirmPassword;
 
@@ -274,27 +276,17 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const verificationToken = searchParams.get('verifyEmail');
-    const passwordResetToken = searchParams.get('resetPassword');
 
-    if (!verificationToken && !passwordResetToken) {
+    if (!verificationToken) {
       return;
     }
 
     searchParams.delete('verifyEmail');
-    searchParams.delete('resetPassword');
     const nextSearch = searchParams.toString();
     const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}`;
 
     window.history.replaceState({}, document.title, nextUrl);
     const verifyTimer = window.setTimeout(() => {
-      if (passwordResetToken) {
-        setMode('reset');
-        setResetToken(passwordResetToken);
-        setError('');
-        setSuccess('Choose a new password for your account.');
-        return;
-      }
-
       if (!verificationToken) {
         return;
       }
@@ -509,11 +501,17 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     setIsSaving(true);
 
     try {
+      const resetEmail = forgotPasswordForm.email.trim();
       const response = await forgotPassword({
-        email: forgotPasswordForm.email.trim(),
+        email: resetEmail,
       });
+      setPendingPasswordResetEmail(resetEmail);
+      setResetToken(response.devVerificationToken ?? '');
+      setLocalPasswordResetCode(response.devVerificationToken ?? '');
+      setResetPasswordForm(initialResetPasswordForm);
+      setMode('reset');
       setSuccess(response.message);
-      onNotify('Password reset email sent');
+      onNotify('Password reset code sent');
     } catch (forgotError) {
       setError(
         forgotError instanceof Error
@@ -539,10 +537,12 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
 
     try {
       const response = await resetPassword({
-        token: resetToken,
+        token: resetToken.trim(),
         password: resetPasswordForm.password,
       });
       setResetToken('');
+      setPendingPasswordResetEmail('');
+      setLocalPasswordResetCode('');
       setResetPasswordForm(initialResetPasswordForm);
       setMode('login');
       setSuccess(response.message);
@@ -570,6 +570,12 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     setError('');
     setSuccess('');
     setShowForgotPassword(false);
+
+    if (nextMode !== 'reset') {
+      setResetToken('');
+      setPendingPasswordResetEmail('');
+      setLocalPasswordResetCode('');
+    }
   }
 
   return (
@@ -858,8 +864,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
 
               {localVerificationCode ? (
                 <p className="local-verification-note">
-                  Email delivery is disabled for now. Local test code:{' '}
-                  <strong>{localVerificationCode}</strong>
+                  Local test code: <strong>{localVerificationCode}</strong>
                 </p>
               ) : null}
 
@@ -919,9 +924,11 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
 
           {mode === 'forgot' ? (
             <form className="form-grid auth-form" onSubmit={handleForgotPassword}>
-              <p className="feature-soon-note">
-                This feature will be available after email service setup.
-              </p>
+              {!emailDeliveryEnabled ? (
+                <p className="feature-soon-note">
+                  This feature will be available after email service setup.
+                </p>
+              ) : null}
               <label>
                 <FieldLabel required>Email</FieldLabel>
                 <input
@@ -945,13 +952,45 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                 disabled={isSaving}
                 type="submit"
               >
-                {isSaving ? 'Sending...' : 'Send reset link'}
+                {isSaving ? 'Sending...' : 'Send reset code'}
               </button>
             </form>
           ) : null}
 
           {mode === 'reset' ? (
             <form className="form-grid auth-form" onSubmit={handleResetPassword}>
+              {pendingPasswordResetEmail ? (
+                <div className="verification-mailbox">
+                  <MailCheck size={20} aria-hidden="true" />
+                  <span>
+                    Reset code sent to <strong>{pendingPasswordResetEmail}</strong>
+                  </span>
+                </div>
+              ) : null}
+
+              {localPasswordResetCode ? (
+                <p className="local-verification-note">
+                  Local test code: <strong>{localPasswordResetCode}</strong>
+                </p>
+              ) : null}
+
+              <label>
+                <FieldLabel required>Reset code</FieldLabel>
+                <input
+                  required
+                  inputMode="numeric"
+                  maxLength={6}
+                  minLength={6}
+                  placeholder="Enter 6-digit code"
+                  value={resetToken}
+                  onChange={(event) =>
+                    setResetToken(
+                      event.target.value.replace(/\D/g, '').slice(0, 6),
+                    )
+                  }
+                />
+              </label>
+
               <label>
                 <FieldLabel required>New password</FieldLabel>
                 <span className="password-field">
