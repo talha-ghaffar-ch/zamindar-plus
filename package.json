@@ -8,6 +8,10 @@
     "dev:web": "npm run dev -w apps/web",
     "build:web": "npm run build -w apps/web",
     "lint:web": "npm run lint -w apps/web",
+    "dev:mobile": "npm run start -w apps/mobile",
+    "android:mobile": "npm run android -w apps/mobile",
+    "lint:mobile": "npm run lint -w apps/mobile",
+    "test:mobile": "npm run test -w apps/mobile",
     "dev:api": "npm run start:dev -w apps/api",
     "build:api": "npm run build -w apps/api",
     "lint:api": "npm run lint -w apps/api",
@@ -15,7 +19,7 @@
     "prisma:migrate": "npm run prisma:migrate -w apps/api",
     "seed:users": "npm run seed:users -w apps/api",
     "build": "npm run build:web && npm run build:api",
-    "lint": "npm run lint:web && npm run lint:api",
+    "lint": "npm run lint:web && npm run lint:api && npm run lint:mobile",
     "check": "npm run build && npm run lint && npm run test"
   },
   "repository": {

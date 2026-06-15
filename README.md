@@ -17,6 +17,7 @@ Zamindar Plus is a local-first farm ledger platform for managing profiles, zamee
 zamindar-plus/
   apps/
     api/      NestJS backend
+    mobile/   React Native mobile app
     web/      React website
   packages/
     shared/   Shared utilities
@@ -68,6 +69,12 @@ Run the web app in another terminal:
 npm run dev:web
 ```
 
+Run the mobile app in another terminal after Android Studio/emulator is ready:
+
+```bash
+npm run android:mobile
+```
+
 Default local URLs:
 
 - Web: `http://localhost:5173`
@@ -79,6 +86,7 @@ Default local URLs:
 ```bash
 npm run build:web
 npm run lint:web
+npm run lint:mobile
 npm run build:api
 npm run lint:api
 npm run test:api
