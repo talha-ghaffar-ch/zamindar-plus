@@ -61,6 +61,15 @@ jobs:
       - name: Lint web
         run: npm run lint:web
 
+      - name: Typecheck mobile
+        run: npm run typecheck:mobile
+
+      - name: Lint mobile
+        run: npm run lint:mobile
+
+      - name: Run mobile smoke test
+        run: npm run test:mobile -- -- --runInBand
+
       - name: Build API
         run: npm run build:api
 
