@@ -1,6 +1,8 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -71,11 +73,11 @@ const emptyFarmData: FarmData = {
 };
 
 const tabs: Array<{key: Tab; label: string; icon: string}> = [
-  {key: 'home', label: 'Home', icon: '⌂'},
+  {key: 'home', label: 'Home', icon: 'H'},
   {key: 'add', label: 'Add', icon: '+'},
-  {key: 'records', label: 'Records', icon: '▦'},
-  {key: 'reports', label: 'Reports', icon: '↗'},
-  {key: 'ai', label: 'AI', icon: '✦'},
+  {key: 'records', label: 'Records', icon: 'R'},
+  {key: 'reports', label: 'Reports', icon: 'P'},
+  {key: 'ai', label: 'AI', icon: 'AI'},
 ];
 
 const addModes: Array<{key: AddMode; label: string}> = [
@@ -204,10 +206,17 @@ function AppContent() {
 
   return (
     <SafeAreaView style={styles.shell}>
+      <View pointerEvents="none" style={styles.shellGlowOne} />
+      <View pointerEvents="none" style={styles.shellGlowTwo} />
       <View style={styles.topBar}>
-        <View>
-          <Text style={styles.brandText}>Zamindar Plus</Text>
-          <Text style={styles.brandSubText}>Farm ledger mobile</Text>
+        <View style={styles.brandCluster}>
+          <View style={styles.brandMiniMark}>
+            <Text style={styles.brandMiniText}>Z+</Text>
+          </View>
+          <View>
+            <Text style={styles.brandText}>Zamindar Plus</Text>
+            <Text style={styles.brandSubText}>Mobile farm cockpit</Text>
+          </View>
         </View>
         <Pressable
           accessibilityRole="button"
@@ -293,9 +302,7 @@ function AppContent() {
 function SplashScreen() {
   return (
     <SafeAreaView style={styles.splash}>
-      <View style={styles.logoMark}>
-        <Text style={styles.logoIcon}>⌁</Text>
-      </View>
+      <PulseMark label="Z+" />
       <Text style={styles.splashTitle}>Zamindar Plus</Text>
       <Text style={styles.splashText}>Opening your farm ledger...</Text>
       <ActivityIndicator color="#f8d57a" size="large" />
@@ -397,15 +404,19 @@ function AuthScreen({
         style={styles.authKeyboard}>
         <ScrollView contentContainerStyle={styles.authContent}>
           <View style={styles.mobileHero}>
-            <View style={styles.logoMark}>
-              <Text style={styles.logoIcon}>⌁</Text>
-            </View>
+            <View pointerEvents="none" style={styles.heroGlow} />
+            <PulseMark label="Z+" compact />
             <Text style={styles.heroEyebrow}>Farm records made simple</Text>
             <Text style={styles.heroTitle}>Zamindar Plus</Text>
             <Text style={styles.heroText}>
-              Add kharcha, aamdani, zameen, and crop records without digging
-              through a crowded desktop-style menu.
+              A clean mobile cockpit for zameen, crops, kharcha, aamdani, reports,
+              and Zamindar AI.
             </Text>
+            <View style={styles.heroChipRow}>
+              <Text style={styles.heroChip}>Fast entry</Text>
+              <Text style={styles.heroChip}>Live reports</Text>
+              <Text style={styles.heroChip}>AI help</Text>
+            </View>
           </View>
 
           <View style={styles.authCard}>
@@ -614,6 +625,22 @@ function HomeScreen({
   onNavigate: (tab: Tab) => void;
 }) {
   const summary = farmData.summary;
+  const recentTransactions = [...farmData.expenses, ...farmData.income]
+    .sort((left, right) => {
+      const leftDate =
+        'expenseDate' in left ? left.expenseDate : left.incomeDate;
+      const rightDate =
+        'expenseDate' in right ? right.expenseDate : right.incomeDate;
+      return new Date(rightDate).getTime() - new Date(leftDate).getTime();
+    })
+    .slice(0, 3);
+  const setupScore = Math.round(
+    ((farmData.profiles.length > 0 ? 1 : 0) +
+      (farmData.zameen.length > 0 ? 1 : 0) +
+      (farmData.crops.length > 0 ? 1 : 0) +
+      (farmData.expenses.length + farmData.income.length > 0 ? 1 : 0)) *
+      25,
+  );
   const hasAnyRecord =
     farmData.profiles.length +
       farmData.zameen.length +
@@ -625,13 +652,42 @@ function HomeScreen({
   return (
     <View>
       <View style={styles.welcomeCard}>
-        <Text style={styles.eyebrow}>Assalam o alaikum</Text>
-          <Text style={[styles.pageTitle, styles.welcomeCardTitle]}>
-          {user.firstName}, your farm ledger is ready.
+        <View pointerEvents="none" style={styles.cardGlow} />
+        <View style={styles.welcomeHeader}>
+          <View>
+            <Text style={styles.eyebrow}>Assalam o alaikum</Text>
+            <Text style={[styles.pageTitle, styles.welcomeCardTitle]}>
+              {user.firstName}'s farm cockpit
+            </Text>
+          </View>
+          <View style={styles.livePill}>
+            <Text style={styles.liveDot}>●</Text>
+            <Text style={styles.livePillText}>Live</Text>
+          </View>
+        </View>
+        <Text style={styles.welcomeText}>
+          Daily cash movement, crops, and records are arranged for fast phone use.
         </Text>
-        <Text style={styles.pageText}>
-          Use quick add for daily entries. Keep detailed reports one tap away.
-        </Text>
+        <View style={styles.dashboardStrip}>
+          <View style={styles.profitPanel}>
+            <Text style={styles.panelLabel}>Net profit</Text>
+            <Text style={styles.panelValue}>
+              {formatCurrency(summary?.netProfit ?? 0)}
+            </Text>
+            <Text style={styles.panelHint}>
+              {summary?.totalIncome
+                ? `${Math.max(
+                    0,
+                    Math.round(((summary?.netProfit ?? 0) / summary.totalIncome) * 100),
+                  )}% margin`
+                : 'Waiting for income'}
+            </Text>
+          </View>
+          <View style={styles.healthRing}>
+            <Text style={styles.healthRingValue}>{setupScore}%</Text>
+            <Text style={styles.healthRingLabel}>ready</Text>
+          </View>
+        </View>
       </View>
 
       {!hasAnyRecord ? (
@@ -667,9 +723,11 @@ function HomeScreen({
         />
       </View>
 
+      <DashboardChart reports={farmData.monthlyReports} />
+
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Fast work</Text>
-        <Text style={styles.sectionHint}>Most-used actions first</Text>
+        <Text style={styles.sectionTitle}>Fast actions</Text>
+        <Text style={styles.sectionHint}>Most-used work in one tap</Text>
       </View>
       <View style={styles.quickGrid}>
         {[
@@ -686,6 +744,35 @@ function HomeScreen({
             <Text style={styles.quickSubtitle}>{subtitle}</Text>
           </Pressable>
         ))}
+      </View>
+
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Latest movement</Text>
+        <Text style={styles.sectionHint}>Newest cash entries first</Text>
+      </View>
+      <View style={styles.timelineCard}>
+        {recentTransactions.length === 0 ? (
+          <EmptyText text="Your latest expense and income entries will appear here." />
+        ) : (
+          recentTransactions.map(record => {
+            const isExpense = 'expenseDate' in record;
+            const title = isExpense ? record.description : record.buyerName || 'Income';
+            const amount = isExpense ? record.amount : record.totalAmount;
+            const date = isExpense ? record.expenseDate : record.incomeDate;
+            const status = record.paymentStatus ?? 'Status not set';
+
+            return (
+              <TransactionRow
+                key={record.id}
+                title={title}
+                date={date}
+                amount={amount}
+                status={status}
+                tone={isExpense ? 'expense' : 'income'}
+              />
+            );
+          })
+        )}
       </View>
     </View>
   );
@@ -1307,24 +1394,26 @@ function RecordsScreen({farmData}: {farmData: FarmData}) {
       </RecordSection>
       <RecordSection title="Recent expenses">
         {farmData.expenses.slice(0, 8).map(expense => (
-          <RecordCard
+          <TransactionRow
             key={expense.id}
             title={expense.description}
-            meta={`${formatCurrency(expense.amount)} • ${formatDate(
-              expense.expenseDate,
-            )} • ${expense.paymentStatus ?? 'Status not set'}`}
+            date={expense.expenseDate}
+            amount={expense.amount}
+            status={expense.paymentStatus ?? 'Status not set'}
+            tone="expense"
           />
         ))}
         {farmData.expenses.length === 0 ? <EmptyText text="No expenses yet." /> : null}
       </RecordSection>
       <RecordSection title="Recent income">
         {farmData.income.slice(0, 8).map(income => (
-          <RecordCard
+          <TransactionRow
             key={income.id}
             title={income.buyerName || 'Income entry'}
-            meta={`${formatCurrency(income.totalAmount)} • ${formatDate(
-              income.incomeDate,
-            )} • ${income.paymentStatus ?? 'Status not set'}`}
+            date={income.incomeDate}
+            amount={income.totalAmount}
+            status={income.paymentStatus ?? 'Status not set'}
+            tone="income"
           />
         ))}
         {farmData.income.length === 0 ? <EmptyText text="No income yet." /> : null}
@@ -1334,18 +1423,11 @@ function RecordsScreen({farmData}: {farmData: FarmData}) {
 }
 
 function ReportsScreen({farmData}: {farmData: FarmData}) {
-  const maxMonthlyValue = Math.max(
-    ...farmData.monthlyReports.map(report =>
-      Math.max(report.totalExpense, report.totalIncome, Math.abs(report.netProfit)),
-    ),
-    1,
-  );
-
   return (
     <View>
       <Text style={styles.pageTitle}>Reports</Text>
       <Text style={styles.pageText}>
-        Mobile-first reporting: enough insight without overwhelming the user.
+        Compact profit, cash movement, and crop performance for quick decisions.
       </Text>
       <View style={styles.statsGrid}>
         <StatCard
@@ -1373,57 +1455,22 @@ function ReportsScreen({farmData}: {farmData: FarmData}) {
         />
       </View>
 
-      <View style={styles.reportCard}>
-        <Text style={styles.cardTitle}>Monthly movement</Text>
-        {farmData.monthlyReports.slice(0, 6).map(report => (
-          <View key={`${report.year}-${report.month}`} style={styles.barRow}>
-            <Text style={styles.barLabel}>
-              {report.month}/{report.year}
-            </Text>
-            <View style={styles.barTrack}>
-              <View
-                style={[
-                  styles.barFill,
-                  styles.barIncome,
-                  {
-                    width: `${Math.max(
-                      (report.totalIncome / maxMonthlyValue) * 100,
-                      4,
-                    )}%`,
-                  },
-                ]}
-              />
-              <View
-                style={[
-                  styles.barFill,
-                  styles.barExpense,
-                  {
-                    width: `${Math.max(
-                      (report.totalExpense / maxMonthlyValue) * 100,
-                      4,
-                    )}%`,
-                  },
-                ]}
-              />
-            </View>
-          </View>
-        ))}
-        {farmData.monthlyReports.length === 0 ? (
-          <EmptyText text="Monthly charts will appear when entries exist." />
-        ) : null}
-      </View>
+      <DashboardChart reports={farmData.monthlyReports} expanded />
 
       <RecordSection title="Crop profitability">
         {farmData.cropProfitability.length === 0 ? (
           <EmptyText text="Crop profit reports will appear after crop entries." />
         ) : (
           farmData.cropProfitability.map(report => (
-            <RecordCard
+            <CropProfitRow
               key={report.cropId}
-              title={report.cropName}
-              meta={`${report.zameenName} • Net ${formatCurrency(
-                report.netProfit,
-              )}`}
+              report={report}
+              maxValue={Math.max(
+                ...farmData.cropProfitability.map(item =>
+                  Math.max(item.totalExpense, item.totalIncome, Math.abs(item.netProfit)),
+                ),
+                1,
+              )}
             />
           ))
         )}
@@ -1476,11 +1523,10 @@ function AiScreen() {
   return (
     <View>
       <View style={styles.aiHero}>
-        <View style={styles.aiOrb}>
-          <Text style={styles.aiOrbText}>AI</Text>
-        </View>
-        <Text style={styles.pageTitle}>Zamindar AI</Text>
-        <Text style={styles.pageText}>
+        <View pointerEvents="none" style={styles.cardGlow} />
+        <PulseMark label="AI" compact />
+        <Text style={[styles.pageTitle, styles.aiTitle]}>Zamindar AI</Text>
+        <Text style={styles.aiText}>
           Project-focused help only. Chat is session-only and clears when the app
           restarts.
         </Text>
@@ -1578,6 +1624,197 @@ function SettingsModal({
         <PrimaryButton label="Sign out" danger onPress={onSignOut} />
       </SafeAreaView>
     </Modal>
+  );
+}
+
+function PulseMark({
+  label,
+  compact,
+}: {
+  label: string;
+  compact?: boolean;
+}) {
+  const pulse = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          duration: 1400,
+          easing: Easing.out(Easing.quad),
+          toValue: 1,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          duration: 1400,
+          easing: Easing.in(Easing.quad),
+          toValue: 0,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    animation.start();
+
+    return () => animation.stop();
+  }, [pulse]);
+
+  const scale = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.08],
+  });
+  const opacity = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.45, 0.9],
+  });
+
+  return (
+    <View style={[styles.pulseWrap, compact ? styles.pulseWrapCompact : null]}>
+      <Animated.View
+        style={[
+          styles.pulseHalo,
+          compact ? styles.pulseHaloCompact : null,
+          {opacity, transform: [{scale}]},
+        ]}
+      />
+      <View style={[styles.logoMark, compact ? styles.logoMarkCompact : null]}>
+        <Text style={[styles.logoIcon, compact ? styles.logoIconCompact : null]}>
+          {label}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function DashboardChart({
+  reports,
+  expanded,
+}: {
+  reports: FarmData['monthlyReports'];
+  expanded?: boolean;
+}) {
+  const visibleReports = reports.slice(0, expanded ? 8 : 5);
+  const maxValue = Math.max(
+    ...visibleReports.map(report =>
+      Math.max(report.totalExpense, report.totalIncome, Math.abs(report.netProfit)),
+    ),
+    1,
+  );
+
+  return (
+    <View style={[styles.reportCard, expanded ? styles.reportCardExpanded : null]}>
+      <View style={styles.reportHeader}>
+        <View>
+          <Text style={styles.cardTitle}>Monthly movement</Text>
+          <Text style={styles.cardSubtitle}>Income and expense by month</Text>
+        </View>
+        <View style={styles.legendRow}>
+          <Text style={styles.legendIncome}>Income</Text>
+          <Text style={styles.legendExpense}>Expense</Text>
+        </View>
+      </View>
+
+      {visibleReports.length === 0 ? (
+        <EmptyText text="Monthly charts will appear when entries exist." />
+      ) : (
+        visibleReports.map(report => (
+          <View key={`${report.year}-${report.month}`} style={styles.chartRow}>
+            <View style={styles.chartMonth}>
+              <Text style={styles.chartMonthText}>{formatReportMonth(report.month)}</Text>
+              <Text style={styles.chartYearText}>{report.year}</Text>
+            </View>
+            <View style={styles.chartBars}>
+              <View style={styles.barTrack}>
+                <View
+                  style={[
+                    styles.barFill,
+                    styles.barIncome,
+                    {width: `${Math.max((report.totalIncome / maxValue) * 100, 5)}%`},
+                  ]}
+                />
+              </View>
+              <View style={styles.barTrack}>
+                <View
+                  style={[
+                    styles.barFill,
+                    styles.barExpense,
+                    {width: `${Math.max((report.totalExpense / maxValue) * 100, 5)}%`},
+                  ]}
+                />
+              </View>
+            </View>
+            <Text style={styles.chartValue}>{formatCurrency(report.netProfit)}</Text>
+          </View>
+        ))
+      )}
+    </View>
+  );
+}
+
+function TransactionRow({
+  title,
+  date,
+  amount,
+  status,
+  tone,
+}: {
+  title: string;
+  date: string;
+  amount: number;
+  status: string;
+  tone: 'income' | 'expense';
+}) {
+  const isIncome = tone === 'income';
+
+  return (
+    <View style={styles.transactionRow}>
+      <View style={[styles.transactionStripe, isIncome ? styles.incomeStripe : styles.expenseStripe]} />
+      <View style={styles.transactionMain}>
+        <Text style={styles.recordTitle}>{title}</Text>
+        <Text style={styles.recordMeta}>{formatCurrency(amount)}</Text>
+      </View>
+      <View style={styles.transactionSide}>
+        <Text style={styles.transactionDate}>{formatDate(date)}</Text>
+        <Text
+          style={[
+            styles.statusPill,
+            isPositiveStatus(status) ? styles.statusPositive : styles.statusWarning,
+          ]}>
+          {status}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function CropProfitRow({
+  report,
+  maxValue,
+}: {
+  report: FarmData['cropProfitability'][number];
+  maxValue: number;
+}) {
+  const profitWidth = Math.max((Math.abs(report.netProfit) / maxValue) * 100, 5);
+
+  return (
+    <View style={styles.cropProfitRow}>
+      <View style={styles.cropProfitHeader}>
+        <View>
+          <Text style={styles.recordTitle}>{report.cropName}</Text>
+          <Text style={styles.recordMeta}>{report.zameenName}</Text>
+        </View>
+        <Text style={styles.cropProfitValue}>{formatCurrency(report.netProfit)}</Text>
+      </View>
+      <View style={styles.profitTrack}>
+        <View
+          style={[
+            styles.profitFill,
+            report.netProfit >= 0 ? styles.profitFillPositive : styles.profitFillNegative,
+            {width: `${profitWidth}%`},
+          ]}
+        />
+      </View>
+    </View>
   );
 }
 
@@ -1857,10 +2094,40 @@ function getErrorText(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
+function formatReportMonth(month: number) {
+  return new Date(Date.UTC(2026, month - 1, 1)).toLocaleString('en-US', {
+    month: 'short',
+  });
+}
+
+function isPositiveStatus(status: string) {
+  return ['paid', 'received', 'completed', 'active'].includes(status.toLowerCase());
+}
+
 const styles = StyleSheet.create({
   shell: {
     flex: 1,
-    backgroundColor: '#edf6f1',
+    backgroundColor: '#eef8f3',
+  },
+  shellGlowOne: {
+    backgroundColor: '#c2fff0',
+    borderRadius: 140,
+    height: 280,
+    opacity: 0.45,
+    position: 'absolute',
+    right: -120,
+    top: 80,
+    width: 280,
+  },
+  shellGlowTwo: {
+    backgroundColor: '#ffe5a8',
+    borderRadius: 120,
+    bottom: 120,
+    height: 240,
+    left: -130,
+    opacity: 0.24,
+    position: 'absolute',
+    width: 240,
   },
   splash: {
     alignItems: 'center',
@@ -1870,9 +2137,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
   },
+  pulseWrap: {
+    alignItems: 'center',
+    height: 92,
+    justifyContent: 'center',
+    width: 92,
+  },
+  pulseWrapCompact: {
+    height: 76,
+    width: 76,
+  },
+  pulseHalo: {
+    backgroundColor: '#19d9ba',
+    borderRadius: 46,
+    height: 92,
+    position: 'absolute',
+    width: 92,
+  },
+  pulseHaloCompact: {
+    borderRadius: 38,
+    height: 76,
+    width: 76,
+  },
   logoMark: {
     alignItems: 'center',
-    backgroundColor: '#12a98f',
+    backgroundColor: '#0db49a',
     borderRadius: 22,
     height: 76,
     justifyContent: 'center',
@@ -1881,9 +2170,18 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     width: 76,
   },
+  logoMarkCompact: {
+    borderRadius: 20,
+    height: 62,
+    width: 62,
+  },
   logoIcon: {
     color: '#fff8d7',
-    fontSize: 40,
+    fontSize: 28,
+    fontWeight: '900',
+  },
+  logoIconCompact: {
+    fontSize: 21,
     fontWeight: '900',
   },
   splashTitle: {
@@ -1897,11 +2195,32 @@ const styles = StyleSheet.create({
   },
   topBar: {
     alignItems: 'center',
-    backgroundColor: '#0f2d27',
+    backgroundColor: '#0b2d27',
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 18,
     paddingVertical: 14,
+  },
+  brandCluster: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  brandMiniMark: {
+    alignItems: 'center',
+    backgroundColor: '#14ad95',
+    borderRadius: 18,
+    height: 44,
+    justifyContent: 'center',
+    shadowColor: '#1ee5c7',
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    width: 44,
+  },
+  brandMiniText: {
+    color: '#fff8d7',
+    fontSize: 15,
+    fontWeight: '900',
   },
   brandText: {
     color: '#ffffff',
@@ -1916,7 +2235,7 @@ const styles = StyleSheet.create({
   },
   avatarButton: {
     alignItems: 'center',
-    backgroundColor: '#f8c66d',
+    backgroundColor: '#f7ca5d',
     borderRadius: 20,
     height: 44,
     justifyContent: 'center',
@@ -1931,8 +2250,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   bottomNav: {
-    backgroundColor: '#ffffff',
-    borderTopColor: '#d5e4dd',
+    backgroundColor: '#f9fffc',
+    borderTopColor: '#cfe1da',
     borderTopWidth: 1,
     bottom: 0,
     flexDirection: 'row',
@@ -1949,7 +2268,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   tabButtonActive: {
-    backgroundColor: '#e3f7ef',
+    backgroundColor: '#dff8ef',
   },
   tabIcon: {
     color: '#557067',
@@ -1980,13 +2299,23 @@ const styles = StyleSheet.create({
     padding: 18,
   },
   mobileHero: {
-    backgroundColor: '#123c34',
-    borderColor: '#245d50',
+    backgroundColor: '#082f29',
+    borderColor: '#2a6f62',
     borderRadius: 30,
     borderWidth: 1,
     gap: 10,
     overflow: 'hidden',
     padding: 24,
+  },
+  heroGlow: {
+    backgroundColor: '#1de5c3',
+    borderRadius: 160,
+    height: 260,
+    opacity: 0.18,
+    position: 'absolute',
+    right: -100,
+    top: -70,
+    width: 260,
   },
   heroEyebrow: {
     color: '#f8c66d',
@@ -2005,6 +2334,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     lineHeight: 24,
+  },
+  heroChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 6,
+  },
+  heroChip: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    borderRadius: 999,
+    borderWidth: 1,
+    color: '#eefcf8',
+    fontSize: 12,
+    fontWeight: '900',
+    overflow: 'hidden',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   authCard: {
     backgroundColor: '#ffffff',
@@ -2104,10 +2451,34 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   welcomeCard: {
-    backgroundColor: '#123c34',
+    backgroundColor: '#082f29',
     borderRadius: 30,
     marginBottom: 16,
+    overflow: 'hidden',
     padding: 22,
+  },
+  cardGlow: {
+    backgroundColor: '#20d9bd',
+    borderRadius: 130,
+    height: 220,
+    opacity: 0.16,
+    position: 'absolute',
+    right: -75,
+    top: -80,
+    width: 220,
+  },
+  welcomeHeader: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
+  },
+  welcomeText: {
+    color: '#d6e8e2',
+    fontSize: 15,
+    fontWeight: '700',
+    lineHeight: 22,
+    marginTop: 10,
   },
   eyebrow: {
     color: '#f2b84b',
@@ -2131,6 +2502,77 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 22,
     marginTop: 6,
+  },
+  livePill: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  liveDot: {
+    color: '#4cffbd',
+    fontSize: 10,
+  },
+  livePillText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  dashboardStrip: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 18,
+  },
+  profitPanel: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+    borderRadius: 22,
+    borderWidth: 1,
+    flex: 1,
+    padding: 15,
+  },
+  panelLabel: {
+    color: '#bcded4',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  panelValue: {
+    color: '#ffffff',
+    fontSize: 26,
+    fontWeight: '900',
+    marginTop: 8,
+  },
+  panelHint: {
+    color: '#f7cf70',
+    fontSize: 12,
+    fontWeight: '900',
+    marginTop: 3,
+  },
+  healthRing: {
+    alignItems: 'center',
+    backgroundColor: '#f6cf62',
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+    borderRadius: 999,
+    borderWidth: 8,
+    height: 106,
+    justifyContent: 'center',
+    width: 106,
+  },
+  healthRingValue: {
+    color: '#0d2b25',
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  healthRingLabel: {
+    color: '#385149',
+    fontSize: 11,
+    fontWeight: '900',
+    textTransform: 'uppercase',
   },
   onboardingCard: {
     backgroundColor: '#fff8e8',
@@ -2169,14 +2611,19 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   statCard: {
-    borderRadius: 22,
+    borderColor: '#ffffff',
+    borderRadius: 24,
+    borderWidth: 1,
     flexBasis: '47%',
     flexGrow: 1,
     minHeight: 104,
     padding: 16,
+    shadowColor: '#0f2d27',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
   },
   statCardGreen: {
-    backgroundColor: '#ddf8ea',
+    backgroundColor: '#dbf8e9',
   },
   statCardRed: {
     backgroundColor: '#ffebee',
@@ -2194,7 +2641,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     color: '#10231e',
-    fontSize: 23,
+    fontSize: 24,
     fontWeight: '900',
     marginTop: 16,
   },
@@ -2309,60 +2756,202 @@ const styles = StyleSheet.create({
   },
   reportCard: {
     backgroundColor: '#ffffff',
+    borderColor: '#d7e8e1',
     borderRadius: 24,
+    borderWidth: 1,
     gap: 12,
     marginBottom: 12,
     padding: 18,
+    shadowColor: '#0b2d27',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
   },
-  barRow: {
-    gap: 7,
+  reportCardExpanded: {
+    marginTop: 14,
   },
-  barLabel: {
-    color: '#50685f',
+  reportHeader: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
+  },
+  legendRow: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  legendIncome: {
+    color: '#0d8d69',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  legendExpense: {
+    color: '#cb4e59',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  chartRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  chartMonth: {
+    alignItems: 'center',
+    backgroundColor: '#eef8f3',
+    borderRadius: 15,
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+    width: 54,
+  },
+  chartMonthText: {
+    color: '#123029',
     fontSize: 12,
     fontWeight: '900',
+  },
+  chartYearText: {
+    color: '#62786f',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  chartBars: {
+    flex: 1,
+    gap: 6,
+  },
+  chartValue: {
+    color: '#10231e',
+    fontSize: 12,
+    fontWeight: '900',
+    minWidth: 72,
+    textAlign: 'right',
   },
   barTrack: {
     backgroundColor: '#edf5f1',
     borderRadius: 999,
-    height: 24,
+    height: 11,
     overflow: 'hidden',
   },
   barFill: {
     borderRadius: 999,
-    height: 10,
-    marginLeft: 6,
-    marginTop: 2,
+    height: 11,
   },
   barIncome: {
-    backgroundColor: '#1aa77d',
+    backgroundColor: '#10a878',
   },
   barExpense: {
-    backgroundColor: '#d85660',
+    backgroundColor: '#de5964',
+  },
+  timelineCard: {
+    backgroundColor: '#ffffff',
+    borderColor: '#d7e8e1',
+    borderRadius: 24,
+    borderWidth: 1,
+    gap: 10,
+    padding: 12,
+  },
+  transactionRow: {
+    alignItems: 'center',
+    backgroundColor: '#fafffc',
+    borderColor: '#e2eee9',
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    overflow: 'hidden',
+    padding: 12,
+  },
+  transactionStripe: {
+    borderRadius: 999,
+    height: 48,
+    width: 5,
+  },
+  incomeStripe: {
+    backgroundColor: '#0ba978',
+  },
+  expenseStripe: {
+    backgroundColor: '#d84f5b',
+  },
+  transactionMain: {
+    flex: 1,
+  },
+  transactionSide: {
+    alignItems: 'flex-end',
+    gap: 7,
+  },
+  transactionDate: {
+    color: '#10231e',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  statusPill: {
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: '900',
+    overflow: 'hidden',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
+  statusPositive: {
+    backgroundColor: '#dff8ec',
+    color: '#08795e',
+  },
+  statusWarning: {
+    backgroundColor: '#fff0d5',
+    color: '#a76000',
+  },
+  cropProfitRow: {
+    backgroundColor: '#ffffff',
+    borderColor: '#d7e8e1',
+    borderRadius: 22,
+    borderWidth: 1,
+    gap: 12,
+    padding: 15,
+  },
+  cropProfitHeader: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
+  },
+  cropProfitValue: {
+    color: '#0a7d63',
+    fontSize: 16,
+    fontWeight: '900',
+    textAlign: 'right',
+  },
+  profitTrack: {
+    backgroundColor: '#edf5f1',
+    borderRadius: 999,
+    height: 12,
+    overflow: 'hidden',
+  },
+  profitFill: {
+    borderRadius: 999,
+    height: 12,
+  },
+  profitFillPositive: {
+    backgroundColor: '#0ba978',
+  },
+  profitFillNegative: {
+    backgroundColor: '#d84f5b',
   },
   aiHero: {
     alignItems: 'center',
-    backgroundColor: '#123c34',
+    backgroundColor: '#082f29',
     borderRadius: 30,
     gap: 10,
     marginBottom: 16,
+    overflow: 'hidden',
     padding: 24,
   },
-  aiOrb: {
-    alignItems: 'center',
-    backgroundColor: '#13a98f',
-    borderRadius: 34,
-    height: 68,
-    justifyContent: 'center',
-    shadowColor: '#f2b84b',
-    shadowOpacity: 0.6,
-    shadowRadius: 20,
-    width: 68,
-  },
-  aiOrbText: {
+  aiTitle: {
     color: '#ffffff',
-    fontSize: 24,
-    fontWeight: '900',
+    textAlign: 'center',
+  },
+  aiText: {
+    color: '#d7ebe4',
+    fontSize: 15,
+    fontWeight: '700',
+    lineHeight: 22,
+    textAlign: 'center',
   },
   chatBox: {
     gap: 10,
