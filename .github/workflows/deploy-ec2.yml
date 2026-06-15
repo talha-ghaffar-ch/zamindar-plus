@@ -36,7 +36,26 @@ jobs:
           chmod 600 ~/.ssh/zamindar-plus-ec2.pem
           ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
 
+      - name: Package release
+        if: steps.deployment-secrets.outputs.ready == 'true'
+        run: |
+          tar \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='**/node_modules' \
+            --exclude='dist' \
+            --exclude='**/dist' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='*.log' \
+            -czf /tmp/zamindar-plus-release.tgz .
+
+      - name: Upload release to EC2
+        if: steps.deployment-secrets.outputs.ready == 'true'
+        run: |
+          scp -i ~/.ssh/zamindar-plus-ec2.pem /tmp/zamindar-plus-release.tgz "$EC2_USER@$EC2_HOST:/tmp/zamindar-plus-release.tgz"
+
       - name: Deploy on EC2
         if: steps.deployment-secrets.outputs.ready == 'true'
         run: |
-          ssh -i ~/.ssh/zamindar-plus-ec2.pem "$EC2_USER@$EC2_HOST" 'bash -s' < scripts/deploy-ec2-docker.sh
+          ssh -i ~/.ssh/zamindar-plus-ec2.pem "$EC2_USER@$EC2_HOST" 'RELEASE_ARCHIVE=/tmp/zamindar-plus-release.tgz bash -s' < scripts/deploy-ec2-docker.sh

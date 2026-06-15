@@ -123,8 +123,10 @@ After EC2 is working manually, add GitHub repository secrets:
 
 The workflow file is `.github/workflows/deploy-ec2.yml`.
 
-It SSHes into EC2, pulls `main`, and runs:
+It packages the checked-out GitHub code, uploads it to EC2, then runs:
 
 ```bash
 scripts/deploy-ec2-docker.sh
 ```
+
+This means the EC2 instance does not need GitHub credentials to pull the private repository.
