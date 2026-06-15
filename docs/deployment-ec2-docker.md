@@ -110,7 +110,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d --bui
 Run seed users once if needed:
 
 ```bash
-docker compose --env-file .env.production -f docker-compose.prod.yml exec api npm run seed:users
+docker compose --env-file .env.production -f docker-compose.prod.yml run --rm --no-deps api node dist/src/scripts/seed-users.js
 ```
 
 ## 5. CI/CD Later
