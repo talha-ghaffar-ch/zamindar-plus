@@ -21,7 +21,7 @@ YOUR_ELASTIC_IP.sslip.io
 Example:
 
 ```text
-43.205.175.32.sslip.io
+13.203.249.97.sslip.io
 ```
 
 ## 2. EC2 Runtime

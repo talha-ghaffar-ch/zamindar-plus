@@ -22,6 +22,9 @@ zamindar-plus/
     shared/   Shared utilities
   .github/
     workflows/ci.yml
+    workflows/deploy-ec2.yml
+  docs/
+    deployment-ec2-docker.md
 ```
 
 ## Local Setup
@@ -84,6 +87,7 @@ npm run check
 
 ## Notes
 
-- Deployment configuration has intentionally been removed. The project is currently meant to run locally.
+- Production deployment files are included for an EC2 + Docker + RDS setup.
+- The real production `.env.production` file must stay on the server and must never be committed.
 - Real email delivery requires SMTP values in `apps/api/.env`.
 - Google sign-in requires matching frontend and backend Google OAuth client IDs in local env files.

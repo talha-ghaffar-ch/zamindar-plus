@@ -13,12 +13,6 @@ type PasswordResetEmailInput = VerificationEmailInput;
 export class EmailService {
   async sendVerificationEmail(input: VerificationEmailInput) {
     if (!this.isEmailDeliveryEnabled()) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log(
-          `Email verification code for ${input.email}: ${input.token}`,
-        );
-      }
-
       return { sent: false };
     }
 
@@ -69,10 +63,6 @@ export class EmailService {
 
   async sendPasswordResetEmail(input: PasswordResetEmailInput) {
     if (!this.isEmailDeliveryEnabled()) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log(`Password reset code for ${input.email}: ${input.token}`);
-      }
-
       return { sent: false };
     }
 
