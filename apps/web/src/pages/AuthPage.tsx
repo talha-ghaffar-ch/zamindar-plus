@@ -180,6 +180,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
   const [mode, setMode] = useState<AuthMode>('login');
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
+  const [isGoogleButtonReady, setIsGoogleButtonReady] = useState(false);
   const [loginForm, setLoginForm] = useState(initialLoginForm);
   const [signupForm, setSignupForm] = useState(initialSignupForm);
   const [forgotPasswordForm, setForgotPasswordForm] = useState(
@@ -318,7 +319,9 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     }
 
     let isCancelled = false;
+    let readyTimer: number | undefined;
     const buttonElement = googleButtonRef.current;
+    setIsGoogleButtonReady(false);
     buttonElement.replaceChildren();
 
     void loadGoogleIdentityScript()
@@ -342,8 +345,13 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
           type: 'standard',
           shape: 'pill',
           text: mode === 'login' ? 'signin_with' : 'signup_with',
-          width: Math.min(buttonElement.clientWidth || 360, 400),
+          width: Math.round(buttonElement.getBoundingClientRect().width || 392),
         });
+        readyTimer = window.setTimeout(() => {
+          if (!isCancelled) {
+            setIsGoogleButtonReady(true);
+          }
+        }, 900);
       })
       .catch(() => {
         if (!isCancelled) {
@@ -353,6 +361,9 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
 
     return () => {
       isCancelled = true;
+      if (readyTimer) {
+        window.clearTimeout(readyTimer);
+      }
       buttonElement.replaceChildren();
     };
   }, [googleClientId, mode]);
@@ -620,7 +631,16 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               </div>
 
               {googleClientId ? (
-                <div className="google-auth-render" ref={googleButtonRef} />
+                <div
+                  className="google-auth-frame"
+                  data-ready={isGoogleButtonReady ? 'true' : 'false'}
+                >
+                  <div className="google-auth-fallback" aria-hidden="true">
+                    <GoogleIcon />
+                    {mode === 'login' ? 'Sign in with Google' : 'Sign up with Google'}
+                  </div>
+                  <div className="google-auth-render" ref={googleButtonRef} />
+                </div>
               ) : (
                 <button
                   className="google-auth-button"

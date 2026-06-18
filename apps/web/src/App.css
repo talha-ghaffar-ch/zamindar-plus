@@ -1536,6 +1536,45 @@ tbody tr:hover {
   box-shadow: 0 12px 24px rgba(22, 33, 29, 0.09);
 }
 
+.google-auth-frame {
+  position: relative;
+  width: min(100%, 392px);
+  height: 44px;
+  margin: 0 auto 13px;
+  overflow: hidden;
+  border-radius: 999px;
+}
+
+.google-auth-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(100, 121, 114, 0.22);
+  border-radius: 999px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.94);
+  font-weight: 900;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.google-auth-fallback svg {
+  width: 19px;
+  height: 19px;
+}
+
+.google-auth-frame[data-ready="true"] .google-auth-fallback {
+  opacity: 0;
+}
+
+.google-auth-frame[data-ready="false"] .google-auth-render {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .google-auth-render {
   width: min(100%, 392px);
   min-height: 42px;
@@ -1545,15 +1584,34 @@ tbody tr:hover {
   margin: 0 auto 13px;
 }
 
+.google-auth-frame .google-auth-render {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  opacity: 1;
+  transition: opacity 180ms ease;
+}
+
 .google-auth-render > div {
   display: flex !important;
   justify-content: center !important;
   width: 100% !important;
 }
 
+.google-auth-frame .google-auth-render > div {
+  height: 44px !important;
+}
+
 .google-auth-render iframe {
   display: block !important;
   margin: 0 auto !important;
+}
+
+.google-auth-frame .google-auth-render iframe {
+  width: 100% !important;
+  height: 44px !important;
 }
 
 .auth-form {
