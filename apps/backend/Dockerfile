@@ -3,8 +3,8 @@ FROM node:24-alpine AS base
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-COPY apps/api/package.json apps/api/package.json
-COPY apps/web/package.json apps/web/package.json
+COPY apps/backend/package.json apps/backend/package.json
+COPY apps/frontend/package.json apps/frontend/package.json
 COPY packages/shared/package.json packages/shared/package.json
 
 RUN npm ci
@@ -12,9 +12,9 @@ RUN npm ci
 COPY . .
 
 RUN npm run prisma:generate
-RUN npm run build:api
+RUN npm run build:backend
 
-WORKDIR /app/apps/api
+WORKDIR /app/apps/backend
 
 ENV NODE_ENV=production
 ENV PORT=3000
