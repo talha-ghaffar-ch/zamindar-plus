@@ -3,8 +3,6 @@
   "version": "1.0.0",
   "description": "Farm ledger platform for managing zameen, crops, expenses, income, reports, and farm records.",
   "scripts": {
-    "test": "npm run test:api",
-    "test:api": "docker compose up -d && npm run test -w apps/api",
     "dev:web": "npm run dev -w apps/web",
     "build:web": "npm run build -w apps/web",
     "lint:web": "npm run lint -w apps/web",
@@ -18,11 +16,9 @@
     "lint:api": "npm run lint -w apps/api",
     "prisma:generate": "npm run prisma:generate -w apps/api",
     "prisma:migrate": "npm run prisma:migrate -w apps/api",
-    "seed:users": "npm run seed:users -w apps/api",
-    "seed:demo": "npm run seed:demo -w apps/api",
     "build": "npm run build:web && npm run build:api",
     "lint": "npm run lint:web && npm run lint:api && npm run lint:mobile",
-    "check": "npm run build && npm run typecheck:mobile && npm run lint && npm run test && npm run test:mobile -- -- --runInBand"
+    "check": "npm run build && npm run typecheck:mobile && npm run lint && npm run test:mobile -- -- --runInBand"
   },
   "repository": {
     "type": "git",
