@@ -1,4 +1,12 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -13,8 +21,10 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useColorScheme,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   SafeAreaProvider,
   SafeAreaView,
@@ -60,6 +70,107 @@ import {
 type Tab = 'home' | 'add' | 'records' | 'reports' | 'ai';
 type AuthMode = 'login' | 'signup' | 'verify' | 'forgot' | 'reset';
 type AddMode = 'profile' | 'zameen' | 'crop' | 'expense' | 'income';
+type ThemeName = 'light' | 'dark';
+
+type AppColors = {
+  accent: string;
+  accentSoft: string;
+  background: string;
+  border: string;
+  card: string;
+  cardAlt: string;
+  chip: string;
+  danger: string;
+  dangerText: string;
+  dangerSoft: string;
+  gold: string;
+  glowOne: string;
+  glowTwo: string;
+  input: string;
+  muted: string;
+  nav: string;
+  navActive: string;
+  primary: string;
+  primaryText: string;
+  success: string;
+  successSoft: string;
+  text: string;
+  warning: string;
+  warningSoft: string;
+};
+
+type ThemeContextValue = {
+  colors: AppColors;
+  themeName: ThemeName;
+  setThemeName: (themeName: ThemeName) => void;
+};
+
+const THEME_STORAGE_KEY = 'zamindar-plus-mobile-theme';
+
+const themes: Record<ThemeName, AppColors> = {
+  light: {
+    accent: '#168ba0',
+    accentSoft: '#e5f5f8',
+    background: '#eef8f3',
+    border: '#cfe1da',
+    card: '#ffffff',
+    cardAlt: '#f7fffb',
+    chip: '#ffffff',
+    danger: '#b63d48',
+    dangerText: '#ffffff',
+    dangerSoft: '#ffe8eb',
+    gold: '#d69c32',
+    glowOne: '#c2fff0',
+    glowTwo: '#ffe5a8',
+    input: '#f9fbfa',
+    muted: '#60766d',
+    nav: '#f9fffc',
+    navActive: '#dff8ef',
+    primary: '#0c927b',
+    primaryText: '#ffffff',
+    success: '#08795e',
+    successSoft: '#dff7ea',
+    text: '#10231e',
+    warning: '#a76000',
+    warningSoft: '#fff4d6',
+  },
+  dark: {
+    accent: '#54c9d7',
+    accentSoft: '#14383d',
+    background: '#071310',
+    border: '#27443b',
+    card: '#10251f',
+    cardAlt: '#0c1d19',
+    chip: '#132d26',
+    danger: '#ff7d8b',
+    dangerText: '#ffffff',
+    dangerSoft: '#3c171f',
+    gold: '#f0bd62',
+    glowOne: '#1b6656',
+    glowTwo: '#6e5520',
+    input: '#071b17',
+    muted: '#a6bbb2',
+    nav: '#091b17',
+    navActive: '#12372d',
+    primary: '#17b890',
+    primaryText: '#05211a',
+    success: '#63dda0',
+    successSoft: '#14392a',
+    text: '#eefaf4',
+    warning: '#f0bd62',
+    warningSoft: '#3f2d12',
+  },
+};
+
+const ThemeContext = createContext<ThemeContextValue>({
+  colors: themes.light,
+  themeName: 'light',
+  setThemeName: () => {},
+});
+
+function useTheme() {
+  return useContext(ThemeContext);
+}
 
 const emptyFarmData: FarmData = {
   summary: null,
@@ -91,7 +202,6 @@ const addModes: Array<{key: AddMode; label: string}> = [
 function App() {
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor="#0f2d27" />
       <AppContent />
     </SafeAreaProvider>
   );
@@ -99,14 +209,24 @@ function App() {
 
 function AppContent() {
   const insets = useSafeAreaInsets();
+  const systemScheme = useColorScheme();
   const [isBooting, setIsBooting] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [farmData, setFarmData] = useState<FarmData>(emptyFarmData);
   const [activeTab, setActiveTab] = useState<Tab>('home');
+  const [themeName, setThemeName] = useState<ThemeName>(
+    systemScheme === 'dark' ? 'dark' : 'light',
+  );
+  const [hasLoadedTheme, setHasLoadedTheme] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const colors = themes[themeName];
+  const themeContextValue = useMemo(
+    () => ({colors, themeName, setThemeName}),
+    [colors, themeName],
+  );
 
   const showNotice = useCallback((message: string) => {
     setNotice(message);
@@ -117,6 +237,35 @@ function AppContent() {
     const data = await loadFarmData();
     setFarmData(data);
   }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    AsyncStorage.getItem(THEME_STORAGE_KEY)
+      .then(savedTheme => {
+        if (
+          isActive &&
+          (savedTheme === 'light' || savedTheme === 'dark')
+        ) {
+          setThemeName(savedTheme);
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setHasLoadedTheme(true);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (hasLoadedTheme) {
+      AsyncStorage.setItem(THEME_STORAGE_KEY, themeName).catch(() => {});
+    }
+  }, [hasLoadedTheme, themeName]);
 
   useEffect(() => {
     let isActive = true;
@@ -189,38 +338,73 @@ function AppContent() {
   }
 
   if (isBooting) {
-    return <SplashScreen />;
+    return (
+      <ThemeContext.Provider value={themeContextValue}>
+        <StatusBar
+          barStyle={themeName === 'dark' ? 'light-content' : 'dark-content'}
+          backgroundColor={colors.background}
+        />
+        <SplashScreen />
+      </ThemeContext.Provider>
+    );
   }
 
   if (!user) {
     return (
-      <AuthScreen
-        error={error}
-        notice={notice}
-        onAuthenticated={handleAuthenticated}
-        onError={setError}
-        onNotice={showNotice}
-      />
+      <ThemeContext.Provider value={themeContextValue}>
+        <StatusBar
+          barStyle={themeName === 'dark' ? 'light-content' : 'dark-content'}
+          backgroundColor={colors.background}
+        />
+        <AuthScreen
+          error={error}
+          notice={notice}
+          onAuthenticated={handleAuthenticated}
+          onError={setError}
+          onNotice={showNotice}
+        />
+      </ThemeContext.Provider>
     );
   }
 
   return (
-    <SafeAreaView style={styles.shell}>
-      <View pointerEvents="none" style={styles.shellGlowOne} />
-      <View pointerEvents="none" style={styles.shellGlowTwo} />
-      <View style={styles.topBar}>
+    <ThemeContext.Provider value={themeContextValue}>
+    <StatusBar
+      barStyle={themeName === 'dark' ? 'light-content' : 'dark-content'}
+      backgroundColor={colors.nav}
+    />
+    <SafeAreaView style={[styles.shell, {backgroundColor: colors.background}]}>
+      <View
+        pointerEvents="none"
+        style={[
+          styles.shellGlowOne,
+          {backgroundColor: colors.glowOne},
+        ]}
+      />
+      <View
+        pointerEvents="none"
+        style={[
+          styles.shellGlowTwo,
+          {backgroundColor: colors.glowTwo},
+        ]}
+      />
+      <View style={[styles.topBar, {backgroundColor: colors.nav}]}>
         <View style={styles.brandCluster}>
           <View style={styles.brandMiniMark}>
             <Text style={styles.brandMiniText}>Z+</Text>
           </View>
           <View>
-            <Text style={styles.brandText}>Zamindar Plus</Text>
-            <Text style={styles.brandSubText}>Mobile farm cockpit</Text>
+            <Text style={[styles.brandText, {color: colors.text}]}>
+              Zamindar Plus
+            </Text>
+            <Text style={[styles.brandSubText, {color: colors.muted}]}>
+              Mobile farm cockpit
+            </Text>
           </View>
         </View>
         <Pressable
           accessibilityRole="button"
-          style={styles.avatarButton}
+          style={[styles.avatarButton, {backgroundColor: colors.gold}]}
           onPress={() => setSettingsOpen(true)}>
           <Text style={styles.avatarText}>{user.firstName.slice(0, 1)}</Text>
         </Pressable>
@@ -237,43 +421,56 @@ function AppContent() {
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
         }>
-        {activeTab === 'home' ? (
-          <HomeScreen
-            farmData={farmData}
-            user={user}
-            onNavigate={setActiveTab}
-          />
-        ) : null}
+        <FadeInView key={activeTab}>
+          {activeTab === 'home' ? (
+            <HomeScreen
+              farmData={farmData}
+              user={user}
+              onNavigate={setActiveTab}
+            />
+          ) : null}
 
-        {activeTab === 'add' ? (
-          <AddScreen
-            farmData={farmData}
-            onCreated={async message => {
-              await refreshFarmData();
-              showNotice(message);
-            }}
-            onError={setError}
-          />
-        ) : null}
+          {activeTab === 'add' ? (
+            <AddScreen
+              farmData={farmData}
+              onCreated={async message => {
+                await refreshFarmData();
+                showNotice(message);
+              }}
+              onError={setError}
+            />
+          ) : null}
 
-        {activeTab === 'records' ? <RecordsScreen farmData={farmData} /> : null}
-        {activeTab === 'reports' ? <ReportsScreen farmData={farmData} /> : null}
-        {activeTab === 'ai' ? <AiScreen /> : null}
+          {activeTab === 'records' ? <RecordsScreen farmData={farmData} /> : null}
+          {activeTab === 'reports' ? <ReportsScreen farmData={farmData} /> : null}
+          {activeTab === 'ai' ? <AiScreen /> : null}
+        </FadeInView>
       </ScrollView>
 
-      <View style={[styles.bottomNav, {paddingBottom: Math.max(insets.bottom, 8)}]}>
+      <View
+        style={[
+          styles.bottomNav,
+          {
+            backgroundColor: colors.nav,
+            borderTopColor: colors.border,
+            paddingBottom: Math.max(insets.bottom, 8),
+          },
+        ]}>
         {tabs.map(tab => (
           <Pressable
             accessibilityRole="button"
             key={tab.key}
             style={[
               styles.tabButton,
-              activeTab === tab.key ? styles.tabButtonActive : null,
+              activeTab === tab.key
+                ? [styles.tabButtonActive, {backgroundColor: colors.navActive}]
+                : null,
             ]}
             onPress={() => setActiveTab(tab.key)}>
             <Text
               style={[
                 styles.tabIcon,
+                {color: activeTab === tab.key ? colors.primary : colors.muted},
                 activeTab === tab.key ? styles.tabIconActive : null,
               ]}>
               {tab.icon}
@@ -281,6 +478,7 @@ function AppContent() {
             <Text
               style={[
                 styles.tabLabel,
+                {color: activeTab === tab.key ? colors.primary : colors.muted},
                 activeTab === tab.key ? styles.tabLabelActive : null,
               ]}>
               {tab.label}
@@ -296,16 +494,21 @@ function AppContent() {
         onSignOut={handleSignOut}
       />
     </SafeAreaView>
+    </ThemeContext.Provider>
   );
 }
 
 function SplashScreen() {
+  const {colors} = useTheme();
+
   return (
-    <SafeAreaView style={styles.splash}>
+    <SafeAreaView style={[styles.splash, {backgroundColor: colors.background}]}>
       <PulseMark label="Z+" />
-      <Text style={styles.splashTitle}>Zamindar Plus</Text>
-      <Text style={styles.splashText}>Opening your farm ledger...</Text>
-      <ActivityIndicator color="#f8d57a" size="large" />
+      <Text style={[styles.splashTitle, {color: colors.text}]}>Zamindar Plus</Text>
+      <Text style={[styles.splashText, {color: colors.muted}]}>
+        Opening your farm ledger...
+      </Text>
+      <ActivityIndicator color={colors.gold} size="large" />
     </SafeAreaView>
   );
 }
@@ -323,6 +526,7 @@ function AuthScreen({
   onError: (message: string) => void;
   onNotice: (message: string) => void;
 }) {
+  const {colors} = useTheme();
   const [mode, setMode] = useState<AuthMode>('login');
   const [isSaving, setIsSaving] = useState(false);
   const [loginForm, setLoginForm] = useState({email: '', password: ''});
@@ -398,7 +602,7 @@ function AuthScreen({
   }
 
   return (
-    <SafeAreaView style={styles.authScreen}>
+    <SafeAreaView style={[styles.authScreen, {backgroundColor: colors.background}]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.authKeyboard}>
@@ -419,8 +623,16 @@ function AuthScreen({
             </View>
           </View>
 
-          <View style={styles.authCard}>
-            <View style={styles.modeSwitch}>
+          <View
+            style={[
+              styles.authCard,
+              {backgroundColor: colors.card, borderColor: colors.border},
+            ]}>
+            <View
+              style={[
+                styles.modeSwitch,
+                {backgroundColor: colors.cardAlt, borderColor: colors.border},
+              ]}>
               <SegmentButton
                 active={mode === 'login'}
                 label="Sign in"
@@ -444,7 +656,7 @@ function AuthScreen({
 
             {mode === 'login' ? (
               <>
-                <Text style={styles.formTitle}>Welcome back</Text>
+                <Text style={[styles.formTitle, {color: colors.text}]}>Welcome back</Text>
                 <TextField
                   label="Email"
                   value={loginForm.email}
@@ -470,14 +682,18 @@ function AuthScreen({
                   onPress={handleLogin}
                 />
                 <Pressable onPress={() => setMode('forgot')}>
-                  <Text style={styles.linkText}>Forgot password?</Text>
+                  <Text style={[styles.linkText, {color: colors.primary}]}>
+                    Forgot password?
+                  </Text>
                 </Pressable>
               </>
             ) : null}
 
             {mode === 'signup' ? (
               <>
-                <Text style={styles.formTitle}>Create a farmer account</Text>
+                <Text style={[styles.formTitle, {color: colors.text}]}>
+                  Create a farmer account
+                </Text>
                 <View style={styles.twoColumn}>
                   <TextField
                     label="First name"
@@ -539,8 +755,10 @@ function AuthScreen({
 
             {mode === 'verify' ? (
               <>
-                <Text style={styles.formTitle}>Verify your account</Text>
-                <Text style={styles.helperText}>
+                <Text style={[styles.formTitle, {color: colors.text}]}>
+                  Verify your account
+                </Text>
+                <Text style={[styles.helperText, {color: colors.muted}]}>
                   Enter the 6-digit code sent to your email.
                 </Text>
                 <TextField
@@ -559,8 +777,10 @@ function AuthScreen({
 
             {mode === 'forgot' ? (
               <>
-                <Text style={styles.formTitle}>Reset password</Text>
-                <Text style={styles.helperText}>
+                <Text style={[styles.formTitle, {color: colors.text}]}>
+                  Reset password
+                </Text>
+                <Text style={[styles.helperText, {color: colors.muted}]}>
                   We will email a reset code if the account exists.
                 </Text>
                 <TextField
@@ -580,7 +800,9 @@ function AuthScreen({
 
             {mode === 'reset' ? (
               <>
-                <Text style={styles.formTitle}>Set new password</Text>
+                <Text style={[styles.formTitle, {color: colors.text}]}>
+                  Set new password
+                </Text>
                 <TextField
                   label="Reset code"
                   value={resetForm.code}
@@ -607,7 +829,7 @@ function AuthScreen({
               </>
             ) : null}
 
-            <Text style={styles.apiHint}>API: {API_URL}</Text>
+            <Text style={[styles.apiHint, {color: colors.muted}]}>API: {API_URL}</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -624,6 +846,7 @@ function HomeScreen({
   user: User;
   onNavigate: (tab: Tab) => void;
 }) {
+  const {colors} = useTheme();
   const summary = farmData.summary;
   const recentTransactions = [...farmData.expenses, ...farmData.income]
     .sort((left, right) => {
@@ -661,7 +884,7 @@ function HomeScreen({
             </Text>
           </View>
           <View style={styles.livePill}>
-            <Text style={styles.liveDot}>●</Text>
+            <Text style={styles.liveDot}>ON</Text>
             <Text style={styles.livePillText}>Live</Text>
           </View>
         </View>
@@ -691,8 +914,14 @@ function HomeScreen({
       </View>
 
       {!hasAnyRecord ? (
-        <View style={styles.onboardingCard}>
-          <Text style={styles.cardTitle}>Start in three simple steps</Text>
+        <View
+          style={[
+            styles.onboardingCard,
+            {backgroundColor: colors.card, borderColor: colors.border},
+          ]}>
+          <Text style={[styles.cardTitle, {color: colors.text}]}>
+            Start in three simple steps
+          </Text>
           <StepLine number="1" text="Create a profile for your farm book." />
           <StepLine number="2" text="Add zameen under that profile." />
           <StepLine number="3" text="Add crops, then record expense and income." />
@@ -726,8 +955,10 @@ function HomeScreen({
       <DashboardChart reports={farmData.monthlyReports} />
 
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Fast actions</Text>
-        <Text style={styles.sectionHint}>Most-used work in one tap</Text>
+        <Text style={[styles.sectionTitle, {color: colors.text}]}>Fast actions</Text>
+        <Text style={[styles.sectionHint, {color: colors.muted}]}>
+          Most-used work in one tap
+        </Text>
       </View>
       <View style={styles.quickGrid}>
         {[
@@ -738,19 +969,32 @@ function HomeScreen({
         ].map(([title, subtitle, tab]) => (
           <Pressable
             key={title}
-            style={styles.quickCard}
+            style={[
+              styles.quickCard,
+              {backgroundColor: colors.card, borderColor: colors.border},
+            ]}
             onPress={() => onNavigate(tab as Tab)}>
-            <Text style={styles.quickTitle}>{title}</Text>
-            <Text style={styles.quickSubtitle}>{subtitle}</Text>
+            <Text style={[styles.quickTitle, {color: colors.primary}]}>{title}</Text>
+            <Text style={[styles.quickSubtitle, {color: colors.muted}]}>
+              {subtitle}
+            </Text>
           </Pressable>
         ))}
       </View>
 
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Latest movement</Text>
-        <Text style={styles.sectionHint}>Newest cash entries first</Text>
+        <Text style={[styles.sectionTitle, {color: colors.text}]}>
+          Latest movement
+        </Text>
+        <Text style={[styles.sectionHint, {color: colors.muted}]}>
+          Newest cash entries first
+        </Text>
       </View>
-      <View style={styles.timelineCard}>
+      <View
+        style={[
+          styles.timelineCard,
+          {backgroundColor: colors.card, borderColor: colors.border},
+        ]}>
         {recentTransactions.length === 0 ? (
           <EmptyText text="Your latest expense and income entries will appear here." />
         ) : (
@@ -787,12 +1031,13 @@ function AddScreen({
   onCreated: (message: string) => Promise<void>;
   onError: (message: string) => void;
 }) {
+  const {colors} = useTheme();
   const [mode, setMode] = useState<AddMode>('profile');
 
   return (
     <View>
-      <Text style={styles.pageTitle}>Quick add</Text>
-      <Text style={styles.pageText}>
+      <Text style={[styles.pageTitle, {color: colors.text}]}>Quick add</Text>
+      <Text style={[styles.pageText, {color: colors.muted}]}>
         Add daily records without opening separate complex screens.
       </Text>
       <ScrollView
@@ -802,7 +1047,15 @@ function AddScreen({
         {addModes.map(addMode => (
           <Pressable
             key={addMode.key}
-            style={[styles.chip, mode === addMode.key ? styles.chipActive : null]}
+            style={[
+              styles.chip,
+              {
+                backgroundColor:
+                  mode === addMode.key ? colors.primary : colors.chip,
+                borderColor:
+                  mode === addMode.key ? colors.primary : colors.border,
+              },
+            ]}
             onPress={() => {
               onError('');
               setMode(addMode.key);
@@ -810,7 +1063,10 @@ function AddScreen({
             <Text
               style={[
                 styles.chipText,
-                mode === addMode.key ? styles.chipTextActive : null,
+                {
+                  color:
+                    mode === addMode.key ? colors.primaryText : colors.muted,
+                },
               ]}>
               {addMode.label}
             </Text>
@@ -1343,10 +1599,12 @@ function IncomeForm({
 }
 
 function RecordsScreen({farmData}: {farmData: FarmData}) {
+  const {colors} = useTheme();
+
   return (
     <View>
-      <Text style={styles.pageTitle}>Records</Text>
-      <Text style={styles.pageText}>
+      <Text style={[styles.pageTitle, {color: colors.text}]}>Records</Text>
+      <Text style={[styles.pageText, {color: colors.muted}]}>
         A simple overview from profile to zameen, crop, kharcha, and aamdani.
       </Text>
       <RecordSection title="Profiles">
@@ -1359,7 +1617,7 @@ function RecordsScreen({farmData}: {farmData: FarmData}) {
               title={profile.profileName}
               meta={[profile.chakAreaName, profile.villageName, profile.city]
                 .filter(Boolean)
-                .join(' • ')}
+                .join(' - ')}
             />
           ))
         )}
@@ -1372,7 +1630,7 @@ function RecordsScreen({farmData}: {farmData: FarmData}) {
             <RecordCard
               key={record.id}
               title={record.zameenName}
-              meta={`${record.totalAreaValue} ${record.totalAreaUnit} • ${
+              meta={`${record.totalAreaValue} ${record.totalAreaUnit} - ${
                 record.ownershipType ?? 'Ownership not set'
               }`}
             />
@@ -1387,7 +1645,7 @@ function RecordsScreen({farmData}: {farmData: FarmData}) {
             <RecordCard
               key={crop.id}
               title={crop.cropName}
-              meta={`${crop.cropAreaValue} ${crop.cropAreaUnit} • ${crop.status}`}
+              meta={`${crop.cropAreaValue} ${crop.cropAreaUnit} - ${crop.status}`}
             />
           ))
         )}
@@ -1423,10 +1681,12 @@ function RecordsScreen({farmData}: {farmData: FarmData}) {
 }
 
 function ReportsScreen({farmData}: {farmData: FarmData}) {
+  const {colors} = useTheme();
+
   return (
     <View>
-      <Text style={styles.pageTitle}>Reports</Text>
-      <Text style={styles.pageText}>
+      <Text style={[styles.pageTitle, {color: colors.text}]}>Reports</Text>
+      <Text style={[styles.pageText, {color: colors.muted}]}>
         Compact profit, cash movement, and crop performance for quick decisions.
       </Text>
       <View style={styles.statsGrid}>
@@ -1480,6 +1740,7 @@ function ReportsScreen({farmData}: {farmData: FarmData}) {
 }
 
 function AiScreen() {
+  const {colors} = useTheme();
   const [messages, setMessages] = useState<AiChatHistoryMessage[]>([
     {
       role: 'assistant',
@@ -1539,13 +1800,18 @@ function AiScreen() {
             style={[
               styles.chatBubble,
               chatMessage.role === 'user'
-                ? styles.chatBubbleUser
-                : styles.chatBubbleAssistant,
+                ? [styles.chatBubbleUser, {backgroundColor: colors.primary}]
+                : [
+                    styles.chatBubbleAssistant,
+                    {backgroundColor: colors.card, borderColor: colors.border},
+                  ],
             ]}>
             <Text
               style={[
                 styles.chatText,
-                chatMessage.role === 'user' ? styles.chatTextUser : null,
+                chatMessage.role === 'user'
+                  ? [styles.chatTextUser, {color: colors.primaryText}]
+                  : {color: colors.text},
               ]}>
               {chatMessage.text}
             </Text>
@@ -1553,16 +1819,24 @@ function AiScreen() {
         ))}
       </View>
 
-      <View style={styles.chatComposer}>
+      <View
+        style={[
+          styles.chatComposer,
+          {backgroundColor: colors.card, borderColor: colors.border},
+        ]}>
         <TextInput
-          style={styles.chatInput}
+          style={[styles.chatInput, {color: colors.text}]}
           value={message}
           placeholder="Ask about your farm ledger..."
-          placeholderTextColor="#7d9289"
+          placeholderTextColor={colors.muted}
           onChangeText={setMessage}
         />
-        <Pressable style={styles.sendButton} onPress={handleSend}>
-          <Text style={styles.sendButtonText}>{isSending ? '...' : 'Send'}</Text>
+        <Pressable
+          style={[styles.sendButton, {backgroundColor: colors.primary}]}
+          onPress={handleSend}>
+          <Text style={[styles.sendButtonText, {color: colors.primaryText}]}>
+            {isSending ? '...' : 'Send'}
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -1580,42 +1854,88 @@ function SettingsModal({
   onClose: () => void;
   onSignOut: () => void;
 }) {
+  const {colors, setThemeName, themeName} = useTheme();
+
   return (
     <Modal animationType="slide" visible={visible} onRequestClose={onClose}>
-      <SafeAreaView style={styles.settingsScreen}>
+      <SafeAreaView
+        style={[styles.settingsScreen, {backgroundColor: colors.background}]}>
         <View style={styles.settingsHeader}>
-          <Text style={styles.pageTitle}>Settings</Text>
-          <Pressable style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>Close</Text>
+          <Text style={[styles.pageTitle, {color: colors.text}]}>Settings</Text>
+          <Pressable
+            style={[
+              styles.closeButton,
+              {backgroundColor: colors.card, borderColor: colors.border},
+            ]}
+            onPress={onClose}>
+            <Text style={[styles.closeButtonText, {color: colors.primary}]}>
+              Close
+            </Text>
           </Pressable>
         </View>
-        <View style={styles.settingsCard}>
-          <Text style={styles.cardTitle}>
+        <View
+          style={[
+            styles.settingsCard,
+            {backgroundColor: colors.card, borderColor: colors.border},
+          ]}>
+          <Text style={[styles.cardTitle, {color: colors.text}]}>
             {user.firstName} {user.lastName}
           </Text>
-          <Text style={styles.pageText}>{user.email}</Text>
-          <View style={styles.settingsRow}>
-            <Text style={styles.settingsLabel}>Role</Text>
-            <Text style={styles.settingsValue}>{user.role}</Text>
+          <Text style={[styles.pageText, {color: colors.muted}]}>{user.email}</Text>
+          <View
+            style={[
+              styles.modeSwitch,
+              {backgroundColor: colors.cardAlt, borderColor: colors.border},
+            ]}>
+            <SegmentButton
+              active={themeName === 'light'}
+              label="Light"
+              onPress={() => setThemeName('light')}
+            />
+            <SegmentButton
+              active={themeName === 'dark'}
+              label="Dark"
+              onPress={() => setThemeName('dark')}
+            />
           </View>
-          <View style={styles.settingsRow}>
-            <Text style={styles.settingsLabel}>Area unit</Text>
-            <Text style={styles.settingsValue}>{user.preferredAreaUnit}</Text>
+          <View style={[styles.settingsRow, {borderTopColor: colors.border}]}>
+            <Text style={[styles.settingsLabel, {color: colors.muted}]}>Role</Text>
+            <Text style={[styles.settingsValue, {color: colors.text}]}>
+              {user.role}
+            </Text>
           </View>
-          <View style={styles.settingsRow}>
-            <Text style={styles.settingsLabel}>Currency</Text>
-            <Text style={styles.settingsValue}>{user.preferredCurrency}</Text>
+          <View style={[styles.settingsRow, {borderTopColor: colors.border}]}>
+            <Text style={[styles.settingsLabel, {color: colors.muted}]}>
+              Area unit
+            </Text>
+            <Text style={[styles.settingsValue, {color: colors.text}]}>
+              {user.preferredAreaUnit}
+            </Text>
           </View>
-          <View style={styles.settingsRow}>
-            <Text style={styles.settingsLabel}>Google</Text>
-            <Text style={styles.settingsValue}>
+          <View style={[styles.settingsRow, {borderTopColor: colors.border}]}>
+            <Text style={[styles.settingsLabel, {color: colors.muted}]}>
+              Currency
+            </Text>
+            <Text style={[styles.settingsValue, {color: colors.text}]}>
+              {user.preferredCurrency}
+            </Text>
+          </View>
+          <View style={[styles.settingsRow, {borderTopColor: colors.border}]}>
+            <Text style={[styles.settingsLabel, {color: colors.muted}]}>Google</Text>
+            <Text style={[styles.settingsValue, {color: colors.text}]}>
               {user.googleConnected ? 'Connected' : 'Not connected'}
             </Text>
           </View>
         </View>
-        <View style={styles.settingsCard}>
-          <Text style={styles.cardTitle}>Mobile v1 focus</Text>
-          <Text style={styles.pageText}>
+        <View
+          style={[
+            styles.settingsCard,
+            {backgroundColor: colors.card, borderColor: colors.border},
+          ]}>
+          <Text style={[styles.cardTitle, {color: colors.text}]}>
+            Mobile v1 focus
+          </Text>
+          <Text style={[styles.pageText, {color: colors.muted}]}>
             This app keeps the phone experience simple: quick add, records,
             reports, and Zamindar AI. Advanced admin controls remain better on
             desktop for now.
@@ -1624,6 +1944,31 @@ function SettingsModal({
         <PrimaryButton label="Sign out" danger onPress={onSignOut} />
       </SafeAreaView>
     </Modal>
+  );
+}
+
+function FadeInView({children}: {children: React.ReactNode}) {
+  const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    progress.setValue(0);
+    Animated.timing(progress, {
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  }, [progress]);
+
+  const translateY = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [14, 0],
+  });
+
+  return (
+    <Animated.View style={{opacity: progress, transform: [{translateY}]}}>
+      {children}
+    </Animated.View>
   );
 }
 
@@ -1693,6 +2038,7 @@ function DashboardChart({
   reports: FarmData['monthlyReports'];
   expanded?: boolean;
 }) {
+  const {colors} = useTheme();
   const visibleReports = reports.slice(0, expanded ? 8 : 5);
   const maxValue = Math.max(
     ...visibleReports.map(report =>
@@ -1702,11 +2048,20 @@ function DashboardChart({
   );
 
   return (
-    <View style={[styles.reportCard, expanded ? styles.reportCardExpanded : null]}>
+    <View
+      style={[
+        styles.reportCard,
+        {backgroundColor: colors.card, borderColor: colors.border},
+        expanded ? styles.reportCardExpanded : null,
+      ]}>
       <View style={styles.reportHeader}>
         <View>
-          <Text style={styles.cardTitle}>Monthly movement</Text>
-          <Text style={styles.cardSubtitle}>Income and expense by month</Text>
+          <Text style={[styles.cardTitle, {color: colors.text}]}>
+            Monthly movement
+          </Text>
+          <Text style={[styles.cardSubtitle, {color: colors.muted}]}>
+            Income and expense by month
+          </Text>
         </View>
         <View style={styles.legendRow}>
           <Text style={styles.legendIncome}>Income</Text>
@@ -1719,12 +2074,20 @@ function DashboardChart({
       ) : (
         visibleReports.map(report => (
           <View key={`${report.year}-${report.month}`} style={styles.chartRow}>
-            <View style={styles.chartMonth}>
-              <Text style={styles.chartMonthText}>{formatReportMonth(report.month)}</Text>
-              <Text style={styles.chartYearText}>{report.year}</Text>
+            <View
+              style={[
+                styles.chartMonth,
+                {backgroundColor: colors.cardAlt, borderColor: colors.border},
+              ]}>
+              <Text style={[styles.chartMonthText, {color: colors.text}]}>
+                {formatReportMonth(report.month)}
+              </Text>
+              <Text style={[styles.chartYearText, {color: colors.muted}]}>
+                {report.year}
+              </Text>
             </View>
             <View style={styles.chartBars}>
-              <View style={styles.barTrack}>
+              <View style={[styles.barTrack, {backgroundColor: colors.cardAlt}]}>
                 <View
                   style={[
                     styles.barFill,
@@ -1733,7 +2096,7 @@ function DashboardChart({
                   ]}
                 />
               </View>
-              <View style={styles.barTrack}>
+              <View style={[styles.barTrack, {backgroundColor: colors.cardAlt}]}>
                 <View
                   style={[
                     styles.barFill,
@@ -1743,7 +2106,9 @@ function DashboardChart({
                 />
               </View>
             </View>
-            <Text style={styles.chartValue}>{formatCurrency(report.netProfit)}</Text>
+            <Text style={[styles.chartValue, {color: colors.text}]}>
+              {formatCurrency(report.netProfit)}
+            </Text>
           </View>
         ))
       )}
@@ -1764,17 +2129,26 @@ function TransactionRow({
   status: string;
   tone: 'income' | 'expense';
 }) {
+  const {colors} = useTheme();
   const isIncome = tone === 'income';
 
   return (
-    <View style={styles.transactionRow}>
+    <View
+      style={[
+        styles.transactionRow,
+        {backgroundColor: colors.cardAlt, borderColor: colors.border},
+      ]}>
       <View style={[styles.transactionStripe, isIncome ? styles.incomeStripe : styles.expenseStripe]} />
       <View style={styles.transactionMain}>
-        <Text style={styles.recordTitle}>{title}</Text>
-        <Text style={styles.recordMeta}>{formatCurrency(amount)}</Text>
+        <Text style={[styles.recordTitle, {color: colors.text}]}>{title}</Text>
+        <Text style={[styles.recordMeta, {color: colors.muted}]}>
+          {formatCurrency(amount)}
+        </Text>
       </View>
       <View style={styles.transactionSide}>
-        <Text style={styles.transactionDate}>{formatDate(date)}</Text>
+        <Text style={[styles.transactionDate, {color: colors.text}]}>
+          {formatDate(date)}
+        </Text>
         <Text
           style={[
             styles.statusPill,
@@ -1794,18 +2168,27 @@ function CropProfitRow({
   report: FarmData['cropProfitability'][number];
   maxValue: number;
 }) {
+  const {colors} = useTheme();
   const profitWidth = Math.max((Math.abs(report.netProfit) / maxValue) * 100, 5);
 
   return (
-    <View style={styles.cropProfitRow}>
+    <View
+      style={[
+        styles.cropProfitRow,
+        {backgroundColor: colors.card, borderColor: colors.border},
+      ]}>
       <View style={styles.cropProfitHeader}>
         <View>
-          <Text style={styles.recordTitle}>{report.cropName}</Text>
-          <Text style={styles.recordMeta}>{report.zameenName}</Text>
+          <Text style={[styles.recordTitle, {color: colors.text}]}>
+            {report.cropName}
+          </Text>
+          <Text style={[styles.recordMeta, {color: colors.muted}]}>
+            {report.zameenName}
+          </Text>
         </View>
         <Text style={styles.cropProfitValue}>{formatCurrency(report.netProfit)}</Text>
       </View>
-      <View style={styles.profitTrack}>
+      <View style={[styles.profitTrack, {backgroundColor: colors.cardAlt}]}>
         <View
           style={[
             styles.profitFill,
@@ -1833,16 +2216,25 @@ function TextField({
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'number-pad' | 'phone-pad' | 'numbers-and-punctuation';
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 }) {
+  const {colors} = useTheme();
+
   return (
     <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text style={[styles.fieldLabel, {color: colors.muted}]}>{label}</Text>
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          {
+            backgroundColor: colors.input,
+            borderColor: colors.border,
+            color: colors.text,
+          },
+        ]}
         value={value}
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
-        placeholderTextColor="#7d9289"
+        placeholderTextColor={colors.muted}
         onChangeText={onChangeText}
       />
     </View>
@@ -1860,17 +2252,26 @@ function PrimaryButton({
   danger?: boolean;
   onPress: () => void;
 }) {
+  const {colors} = useTheme();
+
   return (
     <Pressable
       accessibilityRole="button"
       disabled={disabled}
       style={[
         styles.primaryButton,
+        {backgroundColor: danger ? colors.danger : colors.primary},
         danger ? styles.dangerButton : null,
         disabled ? styles.primaryButtonDisabled : null,
       ]}
       onPress={onPress}>
-      <Text style={styles.primaryButtonText}>{label}</Text>
+      <Text
+        style={[
+          styles.primaryButtonText,
+          {color: danger ? colors.dangerText : colors.primaryText},
+        ]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -1884,13 +2285,24 @@ function SegmentButton({
   label: string;
   onPress: () => void;
 }) {
+  const {colors} = useTheme();
+
   return (
     <Pressable
-      style={[styles.segmentButton, active ? styles.segmentButtonActive : null]}
+      style={[
+        styles.segmentButton,
+        active
+          ? [
+              styles.segmentButtonActive,
+              {backgroundColor: colors.card, borderColor: colors.border},
+            ]
+          : null,
+      ]}
       onPress={onPress}>
       <Text
         style={[
           styles.segmentButtonText,
+          {color: active ? colors.primary : colors.muted},
           active ? styles.segmentButtonTextActive : null,
         ]}>
         {label}
@@ -1910,9 +2322,11 @@ function ChipRow({
   options: string[];
   onChange: (value: string) => void;
 }) {
+  const {colors} = useTheme();
+
   return (
     <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text style={[styles.fieldLabel, {color: colors.muted}]}>{label}</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -1920,12 +2334,18 @@ function ChipRow({
         {options.map(option => (
           <Pressable
             key={option}
-            style={[styles.chip, value === option ? styles.chipActive : null]}
+            style={[
+              styles.chip,
+              {
+                backgroundColor: value === option ? colors.primary : colors.chip,
+                borderColor: value === option ? colors.primary : colors.border,
+              },
+            ]}
             onPress={() => onChange(option)}>
             <Text
               style={[
                 styles.chipText,
-                value === option ? styles.chipTextActive : null,
+                {color: value === option ? colors.primaryText : colors.muted},
               ]}>
               {option}
             </Text>
@@ -1949,13 +2369,15 @@ function Selector({
   emptyText: string;
   onChange: (value: string) => void;
 }) {
+  const {colors} = useTheme();
+
   if (options.length === 0) {
     return <Banner tone="warning" message={emptyText} />;
   }
 
   return (
     <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text style={[styles.fieldLabel, {color: colors.muted}]}>{label}</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -1963,12 +2385,23 @@ function Selector({
         {options.map(option => (
           <Pressable
             key={option.value}
-            style={[styles.chip, value === option.value ? styles.chipActive : null]}
+            style={[
+              styles.chip,
+              {
+                backgroundColor:
+                  value === option.value ? colors.primary : colors.chip,
+                borderColor:
+                  value === option.value ? colors.primary : colors.border,
+              },
+            ]}
             onPress={() => onChange(option.value)}>
             <Text
               style={[
                 styles.chipText,
-                value === option.value ? styles.chipTextActive : null,
+                {
+                  color:
+                    value === option.value ? colors.primaryText : colors.muted,
+                },
               ]}>
               {option.label}
             </Text>
@@ -1988,10 +2421,16 @@ function FormCard({
   subtitle: string;
   children: React.ReactNode;
 }) {
+  const {colors} = useTheme();
+
   return (
-    <View style={styles.formCard}>
-      <Text style={styles.cardTitle}>{title}</Text>
-      <Text style={styles.cardSubtitle}>{subtitle}</Text>
+    <View
+      style={[
+        styles.formCard,
+        {backgroundColor: colors.card, borderColor: colors.border},
+      ]}>
+      <Text style={[styles.cardTitle, {color: colors.text}]}>{title}</Text>
+      <Text style={[styles.cardSubtitle, {color: colors.muted}]}>{subtitle}</Text>
       {children}
     </View>
   );
@@ -2006,17 +2445,23 @@ function StatCard({
   value: string;
   tone: 'green' | 'red' | 'gold' | 'blue';
 }) {
-  const toneStyle = {
-    green: styles.statCardGreen,
-    red: styles.statCardRed,
-    gold: styles.statCardGold,
-    blue: styles.statCardBlue,
+  const {colors} = useTheme();
+  const toneColor = {
+    green: colors.success,
+    red: colors.danger,
+    gold: colors.gold,
+    blue: colors.accent,
   }[tone];
 
   return (
-    <View style={[styles.statCard, toneStyle]}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
+    <View
+      style={[
+        styles.statCard,
+        {backgroundColor: colors.card, borderColor: colors.border},
+      ]}>
+      <View style={[styles.statAccent, {backgroundColor: toneColor}]} />
+      <Text style={[styles.statLabel, {color: colors.muted}]}>{label}</Text>
+      <Text style={[styles.statValue, {color: colors.text}]}>{value}</Text>
     </View>
   );
 }
@@ -2028,46 +2473,67 @@ function RecordSection({
   title: string;
   children: React.ReactNode;
 }) {
+  const {colors} = useTheme();
+
   return (
     <View style={styles.recordSection}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={[styles.sectionTitle, {color: colors.text}]}>{title}</Text>
       {children}
     </View>
   );
 }
 
 function RecordCard({title, meta}: {title: string; meta?: string}) {
+  const {colors} = useTheme();
+
   return (
-    <View style={styles.recordCard}>
-      <Text style={styles.recordTitle}>{title}</Text>
-      {meta ? <Text style={styles.recordMeta}>{meta}</Text> : null}
+    <View
+      style={[
+        styles.recordCard,
+        {backgroundColor: colors.card, borderColor: colors.border},
+      ]}>
+      <Text style={[styles.recordTitle, {color: colors.text}]}>{title}</Text>
+      {meta ? (
+        <Text style={[styles.recordMeta, {color: colors.muted}]}>{meta}</Text>
+      ) : null}
     </View>
   );
 }
 
 function EmptyText({text}: {text: string}) {
-  return <Text style={styles.emptyText}>{text}</Text>;
+  const {colors} = useTheme();
+
+  return <Text style={[styles.emptyText, {color: colors.muted}]}>{text}</Text>;
 }
 
 function StepLine({number, text}: {number: string; text: string}) {
+  const {colors} = useTheme();
+
   return (
     <View style={styles.stepLine}>
-      <Text style={styles.stepNumber}>{number}</Text>
-      <Text style={styles.stepText}>{text}</Text>
+      <Text style={[styles.stepNumber, {backgroundColor: colors.primary}]}>
+        {number}
+      </Text>
+      <Text style={[styles.stepText, {color: colors.text}]}>{text}</Text>
     </View>
   );
 }
 
 function Banner({tone, message}: {tone: 'success' | 'error' | 'warning'; message: string}) {
+  const {colors} = useTheme();
+  const toneStyle = {
+    success: {backgroundColor: colors.successSoft, color: colors.success},
+    error: {backgroundColor: colors.dangerSoft, color: colors.danger},
+    warning: {backgroundColor: colors.warningSoft, color: colors.warning},
+  }[tone];
+
   return (
     <View
       style={[
         styles.banner,
-        tone === 'success' ? styles.bannerSuccess : null,
-        tone === 'error' ? styles.bannerError : null,
-        tone === 'warning' ? styles.bannerWarning : null,
+        {backgroundColor: toneStyle.backgroundColor},
       ]}>
-      <Text style={styles.bannerText}>{message}</Text>
+      <Text style={[styles.bannerText, {color: toneStyle.color}]}>{message}</Text>
     </View>
   );
 }
@@ -2260,6 +2726,9 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     position: 'absolute',
     right: 0,
+    shadowColor: '#0b2d27',
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
   },
   tabButton: {
     alignItems: 'center',
@@ -2355,12 +2824,19 @@ const styles = StyleSheet.create({
   },
   authCard: {
     backgroundColor: '#ffffff',
+    borderColor: '#d7e6df',
+    borderWidth: 1,
     borderRadius: 28,
     gap: 14,
     padding: 18,
+    shadowColor: '#082f29',
+    shadowOpacity: 0.16,
+    shadowRadius: 24,
   },
   modeSwitch: {
     backgroundColor: '#edf6f1',
+    borderColor: '#d7e6df',
+    borderWidth: 1,
     borderRadius: 18,
     flexDirection: 'row',
     padding: 4,
@@ -2617,22 +3093,17 @@ const styles = StyleSheet.create({
     flexBasis: '47%',
     flexGrow: 1,
     minHeight: 104,
+    overflow: 'hidden',
     padding: 16,
     shadowColor: '#0f2d27',
     shadowOpacity: 0.06,
     shadowRadius: 12,
   },
-  statCardGreen: {
-    backgroundColor: '#dbf8e9',
-  },
-  statCardRed: {
-    backgroundColor: '#ffebee',
-  },
-  statCardGold: {
-    backgroundColor: '#fff2cf',
-  },
-  statCardBlue: {
-    backgroundColor: '#e5f3ff',
+  statAccent: {
+    borderRadius: 999,
+    height: 5,
+    marginBottom: 14,
+    width: 48,
   },
   statLabel: {
     color: '#52685f',
@@ -2696,20 +3167,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  chipActive: {
-    backgroundColor: '#0c927b',
-    borderColor: '#0c927b',
-  },
   chipText: {
     color: '#49635a',
     fontSize: 13,
     fontWeight: '900',
   },
-  chipTextActive: {
-    color: '#ffffff',
-  },
   formCard: {
     backgroundColor: '#ffffff',
+    borderColor: '#d7e6df',
+    borderWidth: 1,
     borderRadius: 26,
     gap: 12,
     marginTop: 8,
@@ -2965,6 +3431,8 @@ const styles = StyleSheet.create({
   chatBubbleAssistant: {
     alignSelf: 'flex-start',
     backgroundColor: '#ffffff',
+    borderColor: '#d7e6df',
+    borderWidth: 1,
   },
   chatBubbleUser: {
     alignSelf: 'flex-end',
@@ -2982,6 +3450,8 @@ const styles = StyleSheet.create({
   chatComposer: {
     alignItems: 'center',
     backgroundColor: '#ffffff',
+    borderColor: '#d7e6df',
+    borderWidth: 1,
     borderRadius: 22,
     flexDirection: 'row',
     gap: 10,
@@ -3018,6 +3488,8 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     backgroundColor: '#ffffff',
+    borderColor: '#d7e6df',
+    borderWidth: 1,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -3028,6 +3500,8 @@ const styles = StyleSheet.create({
   },
   settingsCard: {
     backgroundColor: '#ffffff',
+    borderColor: '#d7e6df',
+    borderWidth: 1,
     borderRadius: 24,
     gap: 12,
     marginBottom: 14,
@@ -3052,15 +3526,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginBottom: 10,
     padding: 12,
-  },
-  bannerSuccess: {
-    backgroundColor: '#dff7ea',
-  },
-  bannerError: {
-    backgroundColor: '#ffe8eb',
-  },
-  bannerWarning: {
-    backgroundColor: '#fff4d6',
   },
   bannerText: {
     color: '#263b34',
