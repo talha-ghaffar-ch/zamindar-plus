@@ -16,6 +16,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "seed:users": "npm run build && node dist/src/scripts/seed-users.js",
+    "seed:demo": "npm run build && node dist/src/scripts/seed-demo-data.js",
     "test": "npm run build && node test/smoke-test.mjs"
   },
   "dependencies": {
