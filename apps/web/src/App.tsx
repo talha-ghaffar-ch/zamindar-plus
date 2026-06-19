@@ -8,11 +8,13 @@ import {
   LandPlot,
   LayoutDashboard,
   LogOut,
+  Moon,
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
   ShieldCheck,
   Sprout,
+  Sun,
   UsersRound,
   Wheat,
   type LucideIcon,
@@ -168,6 +170,16 @@ function App() {
   }
 
   const toastViewport = <ToastViewport toasts={toasts} onClose={closeToast} />;
+  const globalThemeToggle = (
+    <ThemeToggle
+      theme={theme}
+      onToggle={() =>
+        setTheme((currentTheme) =>
+          currentTheme === 'light' ? 'dark' : 'light',
+        )
+      }
+    />
+  );
 
   function renderActivePage(user: User) {
     if (activePage === 'Dashboard') {
@@ -237,6 +249,7 @@ function App() {
   if (isCheckingSession) {
     return (
       <MotionConfig reducedMotion="user">
+        {globalThemeToggle}
         <motion.main
           animate={{ opacity: 1 }}
           className="auth-screen"
@@ -259,6 +272,7 @@ function App() {
   if (!currentUser) {
     return (
       <MotionConfig reducedMotion="user">
+        {globalThemeToggle}
         <motion.div
           animate={{ opacity: 1 }}
           initial={{ opacity: 0 }}
@@ -278,6 +292,7 @@ function App() {
 
   return (
     <MotionConfig reducedMotion="user">
+    {globalThemeToggle}
     <div className={isSidebarCollapsed ? 'app-shell sidebar-collapsed' : 'app-shell'}>
       <aside className="sidebar">
         <div className="brand">
@@ -367,6 +382,32 @@ function PageTransition({
         {children}
       </motion.div>
     </AnimatePresence>
+  );
+}
+
+function ThemeToggle({
+  onToggle,
+  theme,
+}: {
+  onToggle: () => void;
+  theme: ThemePreference;
+}) {
+  const isDark = theme === 'dark';
+
+  return (
+    <button
+      aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+      aria-pressed={isDark}
+      className="global-theme-toggle"
+      type="button"
+      onClick={onToggle}
+    >
+      <span className="global-theme-toggle-track" aria-hidden="true">
+        <Sun className="global-theme-toggle-icon sun" size={13} />
+        <Moon className="global-theme-toggle-icon moon" size={13} />
+        <span className="global-theme-toggle-thumb" />
+      </span>
+    </button>
   );
 }
 

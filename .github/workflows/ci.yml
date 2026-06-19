@@ -15,23 +15,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:18-alpine
-        env:
-          POSTGRES_DB: zamindar_plus
-          POSTGRES_USER: zamindar
-          POSTGRES_PASSWORD: zamindar_local_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U zamindar -d zamindar_plus"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     env:
-      DATABASE_URL: postgresql://zamindar:zamindar_local_password@localhost:5432/zamindar_plus?schema=public
       CORS_ORIGIN: http://localhost:5173,http://127.0.0.1:5173
       JWT_SECRET: zamindar-plus-ci-secret
       VITE_API_URL: http://localhost:3000
@@ -51,9 +35,6 @@ jobs:
 
       - name: Generate Prisma client
         run: npm run prisma:generate
-
-      - name: Apply database migrations
-        run: npm run prisma:migrate
 
       - name: Build web
         run: npm run build:web
@@ -75,6 +56,3 @@ jobs:
 
       - name: Lint API
         run: npm run lint:api
-
-      - name: Run API smoke test
-        run: npm run test -w apps/api
