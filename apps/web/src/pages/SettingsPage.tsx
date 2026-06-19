@@ -14,9 +14,11 @@ import {
   Image,
   KeyRound,
   Mail,
+  Moon,
   Palette,
   ShieldCheck,
   Smartphone,
+  Sun,
   UserRound,
 } from 'lucide-react';
 import { FieldLabel } from '../components/FieldLabel';
@@ -63,10 +65,14 @@ declare global {
 
 type SettingsPageProps = {
   currentUser: User;
+  theme: ThemePreference;
   onUserUpdated: (user: User) => void;
   onAccountDeleted: () => void;
   onNotify: (message: string) => void;
+  onThemeChange: (theme: ThemePreference) => void;
 };
+
+type ThemePreference = 'light' | 'dark';
 
 const GOOGLE_SCRIPT_ID = 'google-identity-services-script';
 let settingsInitializedGoogleClientId = '';
@@ -264,9 +270,11 @@ function readImageFile(file: File) {
 
 export function SettingsPage({
   currentUser,
+  theme,
   onUserUpdated,
   onAccountDeleted,
   onNotify,
+  onThemeChange,
 }: SettingsPageProps) {
   const [form, setForm] = useState(buildForm(currentUser));
   const googleButtonRef = useRef<HTMLDivElement>(null);
@@ -701,6 +709,43 @@ export function SettingsPage({
           </div>
 
           <div className="settings-two-column">
+            <div className="theme-switch-card">
+              <div>
+                <p className="eyebrow">Theme</p>
+                <h3>Display mode</h3>
+                <p className="muted">
+                  Choose the color scheme that feels best for daily farm work.
+                </p>
+              </div>
+
+              <div className="theme-toggle" role="group" aria-label="Theme mode">
+                <button
+                  aria-pressed={theme === 'light'}
+                  className={theme === 'light' ? 'theme-option active' : 'theme-option'}
+                  type="button"
+                  onClick={() => {
+                    onThemeChange('light');
+                    onNotify('Light theme enabled');
+                  }}
+                >
+                  <Sun size={17} aria-hidden="true" />
+                  Light
+                </button>
+                <button
+                  aria-pressed={theme === 'dark'}
+                  className={theme === 'dark' ? 'theme-option active' : 'theme-option'}
+                  type="button"
+                  onClick={() => {
+                    onThemeChange('dark');
+                    onNotify('Dark theme enabled');
+                  }}
+                >
+                  <Moon size={17} aria-hidden="true" />
+                  Dark
+                </button>
+              </div>
+            </div>
+
             <label>
               <FieldLabel required>Preferred area unit</FieldLabel>
               <select

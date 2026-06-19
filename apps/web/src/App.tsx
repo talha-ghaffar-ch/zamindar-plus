@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
+import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import {
   BarChart3,
   CircleDollarSign,
@@ -52,12 +53,32 @@ const mainNavItems: Array<{ label: string; icon: LucideIcon }> = [
 const helpNavItem = { label: 'Help', icon: HelpCircle };
 const adminNavItem = { label: 'Admin', icon: ShieldCheck };
 const settingsNavItem = { label: 'Settings', icon: Settings };
+const THEME_STORAGE_KEY = 'zamindar-plus-theme';
+
+type ThemePreference = 'light' | 'dark';
+
+function readStoredTheme(): ThemePreference {
+  if (typeof window === 'undefined') {
+    return 'light';
+  }
+
+  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+
+  if (storedTheme === 'dark' || storedTheme === 'light') {
+    return storedTheme;
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
+}
 
 function App() {
   const [activePage, setActivePage] = useState('Dashboard');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [theme, setTheme] = useState<ThemePreference>(readStoredTheme);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const showToast = useCallback((message: string) => {
@@ -75,6 +96,11 @@ function App() {
       currentToasts.filter((toast) => toast.id !== id),
     );
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   useEffect(() => {
     let isActive = true;
@@ -143,10 +169,80 @@ function App() {
 
   const toastViewport = <ToastViewport toasts={toasts} onClose={closeToast} />;
 
+  function renderActivePage(user: User) {
+    if (activePage === 'Dashboard') {
+      return <DashboardPage currentUser={user} onNavigate={setActivePage} />;
+    }
+
+    if (activePage === 'Settings') {
+      return (
+        <SettingsPage
+          currentUser={user}
+          theme={theme}
+          onAccountDeleted={handleAccountDeleted}
+          onNotify={showToast}
+          onThemeChange={setTheme}
+          onUserUpdated={setCurrentUser}
+        />
+      );
+    }
+
+    if (activePage === 'Profiles') {
+      return <ProfilesPage onNotify={showToast} />;
+    }
+
+    if (activePage === 'Zameen') {
+      return <ZameenPage onNotify={showToast} />;
+    }
+
+    if (activePage === 'Crops') {
+      return <CropsPage onNotify={showToast} />;
+    }
+
+    if (activePage === 'Expenses') {
+      return <ExpensesPage onNotify={showToast} />;
+    }
+
+    if (activePage === 'Income') {
+      return <IncomePage onNotify={showToast} />;
+    }
+
+    if (activePage === 'Reports') {
+      return <ReportsPage onNotify={showToast} />;
+    }
+
+    if (activePage === 'Zamindar AI') {
+      return <ZamindarAiPage />;
+    }
+
+    if (activePage === 'Admin') {
+      return <AdminPage currentUser={user} onNotify={showToast} />;
+    }
+
+    if (activePage === 'Help') {
+      return <HelpPage onNavigate={setActivePage} />;
+    }
+
+    return (
+      <section className="page-header">
+        <div>
+          <p className="eyebrow">Workspace</p>
+          <h1>Section unavailable</h1>
+        </div>
+        <p className="muted">Choose a section from the sidebar.</p>
+      </section>
+    );
+  }
+
   if (isCheckingSession) {
     return (
-      <>
-        <main className="auth-screen">
+      <MotionConfig reducedMotion="user">
+        <motion.main
+          animate={{ opacity: 1 }}
+          className="auth-screen"
+          initial={{ opacity: 0 }}
+          transition={{ duration: 0.22 }}
+        >
           <section className="auth-panel">
             <div className="loading-mark" aria-hidden="true">
               <Sprout size={28} />
@@ -154,18 +250,24 @@ function App() {
             <p className="eyebrow">Zamindar Plus</p>
             <h1>Opening workspace...</h1>
           </section>
-        </main>
+        </motion.main>
         {toastViewport}
-      </>
+      </MotionConfig>
     );
   }
 
   if (!currentUser) {
     return (
-      <>
-        <AuthPage onAuthenticated={handleAuthenticated} onNotify={showToast} />
+      <MotionConfig reducedMotion="user">
+        <motion.div
+          animate={{ opacity: 1 }}
+          initial={{ opacity: 0 }}
+          transition={{ duration: 0.22 }}
+        >
+          <AuthPage onAuthenticated={handleAuthenticated} onNotify={showToast} />
+        </motion.div>
         {toastViewport}
-      </>
+      </MotionConfig>
     );
   }
 
@@ -175,6 +277,7 @@ function App() {
       : [...mainNavItems, helpNavItem, settingsNavItem];
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className={isSidebarCollapsed ? 'app-shell sidebar-collapsed' : 'app-shell'}>
       <aside className="sidebar">
         <div className="brand">
@@ -234,45 +337,36 @@ function App() {
       </aside>
 
       <main className="workspace">
-        {activePage === 'Dashboard' ? (
-          <DashboardPage currentUser={currentUser} onNavigate={setActivePage} />
-        ) : activePage === 'Settings' ? (
-          <SettingsPage
-            currentUser={currentUser}
-            onAccountDeleted={handleAccountDeleted}
-            onNotify={showToast}
-            onUserUpdated={setCurrentUser}
-          />
-        ) : activePage === 'Profiles' ? (
-          <ProfilesPage onNotify={showToast} />
-        ) : activePage === 'Zameen' ? (
-          <ZameenPage onNotify={showToast} />
-        ) : activePage === 'Crops' ? (
-          <CropsPage onNotify={showToast} />
-        ) : activePage === 'Expenses' ? (
-          <ExpensesPage onNotify={showToast} />
-        ) : activePage === 'Income' ? (
-          <IncomePage onNotify={showToast} />
-        ) : activePage === 'Reports' ? (
-          <ReportsPage onNotify={showToast} />
-        ) : activePage === 'Zamindar AI' ? (
-          <ZamindarAiPage />
-        ) : activePage === 'Admin' ? (
-          <AdminPage currentUser={currentUser} onNotify={showToast} />
-        ) : activePage === 'Help' ? (
-          <HelpPage onNavigate={setActivePage} />
-        ) : (
-          <section className="page-header">
-            <div>
-              <p className="eyebrow">Workspace</p>
-              <h1>Section unavailable</h1>
-            </div>
-            <p className="muted">Choose a section from the sidebar.</p>
-          </section>
-        )}
+        <PageTransition pageKey={activePage}>
+          {renderActivePage(currentUser)}
+        </PageTransition>
       </main>
       {toastViewport}
     </div>
+    </MotionConfig>
+  );
+}
+
+function PageTransition({
+  children,
+  pageKey,
+}: {
+  children: ReactNode;
+  pageKey: string;
+}) {
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        className="page-motion"
+        exit={{ opacity: 0, y: -8, filter: 'blur(3px)' }}
+        initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }}
+        key={pageKey}
+        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
   );
 }
 

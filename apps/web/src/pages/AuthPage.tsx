@@ -345,7 +345,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
           type: 'standard',
           shape: 'pill',
           text: mode === 'login' ? 'signin_with' : 'signup_with',
-          width: Math.round(buttonElement.getBoundingClientRect().width || 392),
+          width: Math.round(buttonElement.getBoundingClientRect().width || 340),
         });
         readyTimer = window.setTimeout(() => {
           if (!isCancelled) {
