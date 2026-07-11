@@ -35,6 +35,13 @@ export const quantityUnits = [
   'Tray',
 ] as const;
 
+// Option sets mirrored exactly from the website for full parity.
+export const farmerTypes = ['Land Owner', 'Tenant Farmer', 'Manager'] as const;
+export const ownershipTypes = ['Owned', 'Lease', 'Shared'] as const;
+export const cropStatuses = ['Active', 'Completed'] as const;
+export const expensePaymentStatuses = ['Paid', 'Unpaid'] as const;
+export const incomePaymentStatuses = ['Received', 'Pending'] as const;
+
 const areaToSquareFeet: Record<(typeof areaUnits)[number], number> = {
   Acre: 43560,
   Killa: 43560,
