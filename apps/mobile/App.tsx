@@ -11,7 +11,7 @@ export default function App() {
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <StatusBar
-          barStyle="light-content"
+          barStyle="dark-content"
           backgroundColor={theme.colors.background}
         />
         <AuthProvider>

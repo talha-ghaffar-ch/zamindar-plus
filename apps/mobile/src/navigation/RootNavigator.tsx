@@ -1,5 +1,5 @@
 import React from 'react';
-import {DarkTheme, NavigationContainer} from '@react-navigation/native';
+import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {
@@ -45,10 +45,10 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const navTheme = {
-  ...DarkTheme,
+  ...DefaultTheme,
   colors: {
-    ...DarkTheme.colors,
-    primary: theme.colors.primaryBright,
+    ...DefaultTheme.colors,
+    primary: theme.colors.primary,
     background: theme.colors.background,
     card: theme.colors.surface,
     text: theme.colors.text,
@@ -74,16 +74,17 @@ function AppTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.colors.primaryBright,
+        tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.border,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 8,
+          height: 66,
+          paddingBottom: 9,
+          paddingTop: 9,
+          ...theme.shadow.soft,
         },
-        tabBarLabelStyle: {fontSize: 11, fontWeight: '600'},
+        tabBarLabelStyle: {fontSize: 11, fontWeight: '800'},
       }}>
       <Tab.Screen name="Home" component={HomeStack} options={{tabBarIcon: renderHomeIcon}} />
       <Tab.Screen

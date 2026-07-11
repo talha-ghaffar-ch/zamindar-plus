@@ -33,7 +33,7 @@ export function Fab({onPress, icon, bottom = 24}: Props) {
         onPress();
       }}
       style={[styles.wrap, {bottom}]}>
-      <Animated.View style={[styles.fab, theme.shadow.glow, animatedStyle]}>
+      <Animated.View style={[styles.fab, theme.shadow.brand, animatedStyle]}>
         {icon}
       </Animated.View>
     </Pressable>

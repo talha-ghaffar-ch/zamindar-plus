@@ -12,10 +12,11 @@ type Props = {
   children: React.ReactNode;
   onPress?: () => void;
   elevated?: boolean;
+  padded?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
-export function Card({children, onPress, elevated, style}: Props) {
+export function Card({children, onPress, elevated, padded = true, style}: Props) {
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{scale: scale.value}],
@@ -25,8 +26,8 @@ export function Card({children, onPress, elevated, style}: Props) {
     <View
       style={[
         styles.card,
-        {backgroundColor: elevated ? theme.colors.cardElevated : theme.colors.card},
-        elevated && theme.shadow.card,
+        padded && styles.padded,
+        elevated ? theme.shadow.card : theme.shadow.soft,
         style,
       ]}>
       {children}
@@ -40,10 +41,10 @@ export function Card({children, onPress, elevated, style}: Props) {
   return (
     <Pressable
       onPressIn={() => {
-        scale.value = withTiming(0.98, {duration: 90});
+        scale.value = withTiming(0.985, {duration: 90});
       }}
       onPressOut={() => {
-        scale.value = withTiming(1, {duration: 140});
+        scale.value = withTiming(1, {duration: 150});
       }}
       onPress={() => {
         haptics.selection();
@@ -56,9 +57,10 @@ export function Card({children, onPress, elevated, style}: Props) {
 
 const styles = StyleSheet.create({
   card: {
+    backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.lg,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    padding: theme.spacing.lg,
   },
+  padded: {padding: theme.spacing.lg},
 });

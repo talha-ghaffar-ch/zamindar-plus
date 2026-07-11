@@ -15,6 +15,7 @@ import Animated, {
 import {theme} from '../theme';
 import {haptics} from '../haptics';
 import {AppText} from './AppText';
+import {Gradient} from './Gradient';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type Size = 'md' | 'lg';
@@ -48,7 +49,8 @@ export function Button({
   }));
 
   const isDisabled = disabled || loading;
-  const palette = variantStyles[variant];
+  const v = variants[variant];
+  const isPrimary = variant === 'primary';
 
   return (
     <Pressable
@@ -57,7 +59,7 @@ export function Button({
         scale.value = withTiming(0.97, {duration: 90});
       }}
       onPressOut={() => {
-        scale.value = withTiming(1, {duration: 140});
+        scale.value = withTiming(1, {duration: 150});
       }}
       onPress={() => {
         haptics.light();
@@ -68,17 +70,25 @@ export function Button({
         style={[
           styles.base,
           size === 'lg' ? styles.lg : styles.md,
-          {backgroundColor: palette.bg, borderColor: palette.border},
+          !isPrimary && {backgroundColor: v.bg, borderColor: v.border},
+          isPrimary && theme.shadow.brand,
           isDisabled && styles.disabled,
           animatedStyle,
           style,
         ]}>
+        {isPrimary ? (
+          <Gradient
+            colors={theme.gradients.primary}
+            style={StyleSheet.absoluteFill}
+            borderRadius={theme.radius.md}
+          />
+        ) : null}
         {loading ? (
-          <ActivityIndicator color={palette.text} />
+          <ActivityIndicator color={v.text} />
         ) : (
           <View style={styles.content}>
             {icon}
-            <AppText variant="bodyStrong" color={palette.text}>
+            <AppText variant="bodyStrong" color={v.text} style={styles.label}>
               {title}
             </AppText>
           </View>
@@ -88,29 +98,18 @@ export function Button({
   );
 }
 
-const variantStyles: Record<
-  Variant,
-  {bg: string; text: string; border: string}
-> = {
-  primary: {
-    bg: theme.colors.primary,
-    text: theme.colors.onPrimary,
-    border: theme.colors.primary,
-  },
+const variants: Record<Variant, {bg: string; text: string; border: string}> = {
+  primary: {bg: 'transparent', text: '#FFFFFF', border: 'transparent'},
   secondary: {
-    bg: theme.colors.cardElevated,
-    text: theme.colors.text,
+    bg: theme.colors.softStrong,
+    text: theme.colors.primary,
     border: theme.colors.border,
   },
-  ghost: {
-    bg: 'transparent',
-    text: theme.colors.text,
-    border: 'transparent',
-  },
+  ghost: {bg: 'transparent', text: theme.colors.primary, border: 'transparent'},
   danger: {
-    bg: theme.colors.danger,
-    text: '#FFFFFF',
-    border: theme.colors.danger,
+    bg: theme.palette.roseSoft,
+    text: theme.colors.dangerInk,
+    border: 'rgba(184,68,85,0.32)',
   },
 };
 
@@ -121,13 +120,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+    overflow: 'hidden',
   },
   md: {height: 46, paddingHorizontal: theme.spacing.lg},
-  lg: {height: 54, paddingHorizontal: theme.spacing.xl},
-  content: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  disabled: {opacity: 0.5},
+  lg: {height: 52, paddingHorizontal: theme.spacing.xl},
+  content: {flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm},
+  label: {fontWeight: '800'},
+  disabled: {opacity: 0.55},
 });
