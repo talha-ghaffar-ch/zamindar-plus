@@ -1,7 +1,10 @@
 import React, {useState} from 'react';
-import {StyleSheet, View} from 'react-native';
+import {Pressable, StyleSheet, View} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {
+  ChevronRight,
+  HelpCircle,
   Languages,
   Link2,
   LogOut,
@@ -24,6 +27,7 @@ import {haptics} from '../haptics';
 import * as api from '../api';
 
 export function SettingsScreen() {
+  const navigation = useNavigation<any>();
   const {user, signOut, refreshUser} = useAuth();
   const [busy, setBusy] = useState<'google' | 'signout' | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -147,6 +151,19 @@ export function SettingsScreen() {
         />
       </Card>
 
+      <SectionHeader title="Support" />
+      <Card padded={false}>
+        <Pressable onPress={() => navigation.navigate('Help')} style={styles.helpRow}>
+          <View style={styles.rowIcon}>
+            <HelpCircle color={theme.colors.primary} size={18} />
+          </View>
+          <AppText variant="bodyStrong" style={styles.helpText}>
+            Help & tips
+          </AppText>
+          <ChevronRight color={theme.colors.textMuted} size={18} />
+        </Pressable>
+      </Card>
+
       {error ? (
         <AppText variant="small" color={theme.colors.danger} style={styles.error}>
           {error}
@@ -212,6 +229,13 @@ const styles = StyleSheet.create({
   rowText: {flex: 1},
   divider: {height: 1, backgroundColor: theme.colors.hairline},
   googleBtn: {marginTop: theme.spacing.md},
+  helpRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    padding: theme.spacing.lg,
+  },
+  helpText: {flex: 1},
   error: {marginTop: theme.spacing.lg},
   signout: {marginTop: theme.spacing.xxl},
 });

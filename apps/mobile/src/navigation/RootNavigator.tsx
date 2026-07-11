@@ -84,7 +84,7 @@ function AppTabs() {
           paddingTop: 9,
           ...theme.shadow.soft,
         },
-        tabBarLabelStyle: {fontSize: 11, fontWeight: '800'},
+        tabBarLabelStyle: {fontSize: 11, fontFamily: 'Manrope-ExtraBold'},
       }}>
       <Tab.Screen name="Home" component={HomeStack} options={{tabBarIcon: renderHomeIcon}} />
       <Tab.Screen

@@ -4,6 +4,7 @@ import {RecordsScreen} from '../screens/records/RecordsScreen';
 import {ProfileDetailScreen} from '../screens/records/ProfileDetailScreen';
 import {ZameenDetailScreen} from '../screens/records/ZameenDetailScreen';
 import {CropDetailScreen} from '../screens/records/CropDetailScreen';
+import {LedgerScreen} from '../screens/records/LedgerScreen';
 import type {RecordsStackParamList} from './types';
 
 const Stack = createNativeStackNavigator<RecordsStackParamList>();
@@ -15,6 +16,7 @@ export function RecordsStack() {
       <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />
       <Stack.Screen name="ZameenDetail" component={ZameenDetailScreen} />
       <Stack.Screen name="CropDetail" component={CropDetailScreen} />
+      <Stack.Screen name="Ledger" component={LedgerScreen} />
     </Stack.Navigator>
   );
 }

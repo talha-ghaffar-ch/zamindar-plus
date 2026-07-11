@@ -2,10 +2,12 @@ import React from 'react';
 import {RefreshControl, ScrollView, StyleSheet, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {MapPin, Layers} from 'lucide-react-native';
+import {Layers, MapPin, TrendingDown, TrendingUp} from 'lucide-react-native';
 import {Screen} from '../../components/Screen';
 import {AppText} from '../../components/AppText';
+import {Card} from '../../components/Card';
 import {ListItemCard} from '../../components/ListItemCard';
+import {SectionHeader} from '../../components/SectionHeader';
 import {Skeleton} from '../../components/Skeleton';
 import {EmptyState} from '../../components/EmptyState';
 import {useFarmData} from '../../context/FarmDataContext';
@@ -16,7 +18,6 @@ export function RecordsScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RecordsStackParamList>>();
   const {data, status, refreshing, refresh} = useFarmData();
-
   const profiles = data?.profiles ?? [];
 
   return (
@@ -28,26 +29,43 @@ export function RecordsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={refresh}
-            tintColor={theme.colors.primaryBright}
-            colors={[theme.colors.primaryBright]}
+            tintColor={theme.colors.primary}
+            colors={[theme.colors.primary]}
           />
         }>
         <AppText variant="h1" style={styles.title}>
           Records
         </AppText>
         <AppText variant="body" color={theme.colors.textSecondary} style={styles.sub}>
-          Your farm profiles, land, and crops.
+          Your farm profiles, land, crops and ledgers.
         </AppText>
 
+        <View style={styles.ledgerRow}>
+          <LedgerCard
+            label="All expenses"
+            tint={theme.palette.roseSoft}
+            color={theme.colors.expense}
+            icon={<TrendingDown color={theme.colors.expense} size={20} />}
+            onPress={() => navigation.navigate('Ledger', {kind: 'expense'})}
+          />
+          <LedgerCard
+            label="All income"
+            tint={theme.palette.greenSoft}
+            color={theme.colors.income}
+            icon={<TrendingUp color={theme.colors.income} size={20} />}
+            onPress={() => navigation.navigate('Ledger', {kind: 'income'})}
+          />
+        </View>
+
+        <SectionHeader title="Farm profiles" />
         {status === 'loading' ? (
-          <View style={styles.gap}>
-            <Skeleton height={78} radius={20} style={styles.skel} />
-            <Skeleton height={78} radius={20} style={styles.skel} />
-            <Skeleton height={78} radius={20} style={styles.skel} />
+          <View>
+            <Skeleton height={78} radius={12} style={styles.skel} />
+            <Skeleton height={78} radius={12} style={styles.skel} />
           </View>
         ) : profiles.length === 0 ? (
           <EmptyState
-            icon={<Layers color={theme.colors.primaryBright} size={26} />}
+            icon={<Layers color={theme.colors.primary} size={26} />}
             title="No farm profiles yet"
             message="Create a profile from the Add tab to start tracking your zameen and crops."
           />
@@ -68,7 +86,7 @@ export function RecordsScreen() {
                 metaColor={theme.colors.textSecondary}
                 leading={
                   <View style={styles.iconWrap}>
-                    <MapPin color={theme.colors.primaryBright} size={18} />
+                    <MapPin color={theme.colors.primary} size={18} />
                   </View>
                 }
                 onPress={() =>
@@ -83,20 +101,54 @@ export function RecordsScreen() {
   );
 }
 
+function LedgerCard({
+  label,
+  tint,
+  color,
+  icon,
+  onPress,
+}: {
+  label: string;
+  tint: string;
+  color: string;
+  icon: React.ReactNode;
+  onPress: () => void;
+}) {
+  return (
+    <Card onPress={onPress} style={styles.ledgerCard}>
+      <View style={[styles.ledgerIcon, {backgroundColor: tint}]}>{icon}</View>
+      <AppText variant="bodyStrong" style={styles.ledgerLabel}>
+        {label}
+      </AppText>
+      <AppText variant="small" color={color}>
+        View all →
+      </AppText>
+    </Card>
+  );
+}
+
 const styles = StyleSheet.create({
   content: {padding: theme.spacing.xl, paddingBottom: theme.spacing.huge},
   title: {marginBottom: 2},
   sub: {marginBottom: theme.spacing.xl},
-  gap: {marginTop: theme.spacing.sm},
-  skel: {marginBottom: theme.spacing.md},
+  ledgerRow: {flexDirection: 'row', gap: theme.spacing.md, marginBottom: theme.spacing.xl},
+  ledgerCard: {flex: 1},
+  ledgerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  ledgerLabel: {marginBottom: 2},
   iconWrap: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: theme.colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.softStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  skel: {marginBottom: theme.spacing.md},
 });

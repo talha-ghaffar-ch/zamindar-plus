@@ -11,6 +11,7 @@ export type RecordsStackParamList = {
   ProfileDetail: {profileId: string};
   ZameenDetail: {zameenId: string};
   CropDetail: {cropId: string};
+  Ledger: {kind: 'expense' | 'income'};
 };
 
 export type AppTabParamList = {

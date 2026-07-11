@@ -82,17 +82,31 @@ export const radius = {
   pill: 999,
 } as const;
 
+// Bundled fonts (android/app/src/main/assets/fonts) — matches the website:
+// Manrope for body, Plus Jakarta Sans for headings.
+export const fonts = {
+  regular: 'Manrope-Regular',
+  medium: 'Manrope-Medium',
+  semibold: 'Manrope-SemiBold',
+  bold: 'Manrope-Bold',
+  extrabold: 'Manrope-ExtraBold',
+  headingBold: 'PlusJakartaSans-Bold',
+  heading: 'PlusJakartaSans-ExtraBold',
+} as const;
+
+// With named per-weight files the weight comes from fontFamily, so fontWeight
+// is intentionally omitted.
 export const typography = {
-  display: {fontSize: 34, lineHeight: 38, fontWeight: '800', letterSpacing: -0.4},
-  h1: {fontSize: 28, lineHeight: 32, fontWeight: '800', letterSpacing: -0.3},
-  h2: {fontSize: 22, lineHeight: 27, fontWeight: '800', letterSpacing: -0.2},
-  h3: {fontSize: 18, lineHeight: 23, fontWeight: '800'},
-  numeric: {fontSize: 28, lineHeight: 32, fontWeight: '800', letterSpacing: -0.5},
-  bodyStrong: {fontSize: 15, lineHeight: 22, fontWeight: '700'},
-  body: {fontSize: 15, lineHeight: 22, fontWeight: '500'},
-  small: {fontSize: 13, lineHeight: 18, fontWeight: '700'},
-  label: {fontSize: 11, lineHeight: 14, fontWeight: '900', letterSpacing: 0.4},
-  caption: {fontSize: 11, lineHeight: 15, fontWeight: '800', letterSpacing: 0.3},
+  display: {fontFamily: fonts.heading, fontSize: 34, lineHeight: 40, letterSpacing: -0.4},
+  h1: {fontFamily: fonts.heading, fontSize: 28, lineHeight: 34, letterSpacing: -0.3},
+  h2: {fontFamily: fonts.heading, fontSize: 22, lineHeight: 28, letterSpacing: -0.2},
+  h3: {fontFamily: fonts.headingBold, fontSize: 18, lineHeight: 24},
+  numeric: {fontFamily: fonts.heading, fontSize: 28, lineHeight: 34, letterSpacing: -0.5},
+  bodyStrong: {fontFamily: fonts.bold, fontSize: 15, lineHeight: 22},
+  body: {fontFamily: fonts.medium, fontSize: 15, lineHeight: 22},
+  small: {fontFamily: fonts.semibold, fontSize: 13, lineHeight: 18},
+  label: {fontFamily: fonts.extrabold, fontSize: 11, lineHeight: 14, letterSpacing: 0.4},
+  caption: {fontFamily: fonts.extrabold, fontSize: 11, lineHeight: 15, letterSpacing: 0.3},
 } satisfies Record<string, TextStyle>;
 
 export const shadow = {
