@@ -16,6 +16,8 @@ type Props = TextInputProps & {
   leftIcon?: React.ReactNode;
   rightSlot?: React.ReactNode;
   containerStyle?: StyleProp<ViewStyle>;
+  /** Tighter height/padding — used on long forms (signup) to fit without scroll. */
+  dense?: boolean;
 };
 
 export function Input({
@@ -25,6 +27,7 @@ export function Input({
   rightSlot,
   containerStyle,
   style,
+  dense,
   ...rest
 }: Props) {
   const [focused, setFocused] = useState(false);
@@ -38,11 +41,14 @@ export function Input({
   return (
     <View style={[styles.wrapper, containerStyle]}>
       {label ? (
-        <AppText variant="small" color={theme.colors.textSecondary} style={styles.label}>
+        <AppText
+          variant="small"
+          color={theme.colors.textSecondary}
+          style={[styles.label, dense && styles.labelDense]}>
           {label}
         </AppText>
       ) : null}
-      <View style={[styles.field, {borderColor}]}>
+      <View style={[styles.field, dense && styles.fieldDense, {borderColor}]}>
         {leftIcon ? <View style={styles.leftIcon}>{leftIcon}</View> : null}
         <TextInput
           placeholderTextColor={theme.colors.textMuted}
@@ -55,7 +61,7 @@ export function Input({
             setFocused(false);
             rest.onBlur?.(e);
           }}
-          style={[styles.input, style]}
+          style={[styles.input, dense && styles.inputDense, style]}
           {...rest}
         />
         {rightSlot ? <View style={styles.rightSlot}>{rightSlot}</View> : null}
@@ -72,6 +78,7 @@ export function Input({
 const styles = StyleSheet.create({
   wrapper: {width: '100%'},
   label: {marginBottom: 6, marginLeft: 2},
+  labelDense: {marginBottom: 3},
   field: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -81,6 +88,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     minHeight: 52,
   },
+  fieldDense: {minHeight: 46},
   leftIcon: {marginRight: theme.spacing.sm},
   rightSlot: {marginLeft: theme.spacing.sm},
   input: {
@@ -89,5 +97,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     paddingVertical: 14,
   },
+  inputDense: {paddingVertical: 9},
   error: {marginTop: 5, marginLeft: 2},
 });

@@ -61,7 +61,6 @@ export function LoginScreen() {
     <AuthScaffold
       title="Sign in"
       subtitle="Open your farm dashboard and continue from your latest records."
-      chips
       tabs={{
         active: 'login',
         onChange: mode => {

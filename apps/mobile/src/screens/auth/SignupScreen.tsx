@@ -120,9 +120,9 @@ export function SignupScreen() {
 
   return (
     <AuthScaffold
+      compactHero
       title="Create account"
-      subtitle="Create a farmer account connected to the shared backend."
-      chips
+      subtitle="Start your farm ledger in a couple of minutes."
       tabs={{
         active: 'signup',
         onChange: mode => {
@@ -140,17 +140,10 @@ export function SignupScreen() {
         disabled={loading !== null}
       />
 
-      <View style={styles.divider}>
-        <View style={styles.line} />
-        <AppText variant="caption" color={theme.colors.textMuted}>
-          OR SIGN UP WITH EMAIL
-        </AppText>
-        <View style={styles.line} />
-      </View>
-
-      <View style={styles.row}>
+      <View style={[styles.row, styles.firstField]}>
         <Input
           label="First name"
+          dense
           value={firstName}
           onChangeText={t => {
             setFirstName(t);
@@ -160,6 +153,7 @@ export function SignupScreen() {
         />
         <Input
           label="Last name"
+          dense
           value={lastName}
           onChangeText={t => {
             setLastName(t);
@@ -171,6 +165,7 @@ export function SignupScreen() {
 
       <Input
         label="Email"
+        dense
         placeholder="you@example.com"
         autoCapitalize="none"
         keyboardType="email-address"
@@ -184,6 +179,7 @@ export function SignupScreen() {
       />
       <Input
         label="Password"
+        dense
         placeholder="At least 8 characters"
         secureTextEntry={!showPassword}
         value={password}
@@ -205,6 +201,7 @@ export function SignupScreen() {
       />
       <Input
         label="Phone (optional)"
+        dense
         keyboardType="phone-pad"
         value={phone}
         onChangeText={setPhone}
@@ -240,16 +237,10 @@ export function SignupScreen() {
 }
 
 const styles = StyleSheet.create({
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-    marginVertical: theme.spacing.lg,
-  },
-  line: {flex: 1, height: 1, backgroundColor: theme.colors.border},
+  firstField: {marginTop: theme.spacing.lg},
   row: {flexDirection: 'row', gap: theme.spacing.md},
   half: {flex: 1},
-  gap: {marginTop: theme.spacing.md},
+  gap: {marginTop: theme.spacing.sm},
   error: {marginTop: theme.spacing.md},
   submit: {marginTop: theme.spacing.lg},
   successIcon: {
