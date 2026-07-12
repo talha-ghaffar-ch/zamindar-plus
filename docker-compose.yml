@@ -1,0 +1,30 @@
+# Local development database for Zamindar Plus.
+#
+#   docker compose up -d     # start PostgreSQL in the background
+#   docker compose down      # stop it (data is kept in the named volume)
+#   docker compose down -v   # stop and delete all data
+#
+# These credentials match the default DATABASE_URL in apps/backend/.env.example.
+# For the PRODUCTION stack (API + web + Caddy on EC2), see docker-compose.prod.yml.
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: zamindar-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: zamindar_plus
+    ports:
+      - "5432:5432"
+    volumes:
+      - zamindar_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d zamindar_plus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  zamindar_pgdata:

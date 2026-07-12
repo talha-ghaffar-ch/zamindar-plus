@@ -2,12 +2,15 @@ import React, {useState} from 'react';
 import {Pressable, StyleSheet, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {ArrowLeft, MailCheck} from 'lucide-react-native';
-import {Screen} from '../../components/Screen';
+import {Eye, EyeOff, Lock, Mail, MailCheck, Phone} from 'lucide-react-native';
+import {AuthScaffold} from '../../components/AuthScaffold';
 import {AppText} from '../../components/AppText';
 import {Button} from '../../components/Button';
+import {AuthSubmitButton} from '../../components/AuthSubmitButton';
+import {GoogleIcon} from '../../components/GoogleIcon';
 import {Input} from '../../components/Input';
 import {ChipGroup} from '../../components/ChipGroup';
+import {useAuth} from '../../context/AuthContext';
 import {theme} from '../../theme';
 import {haptics} from '../../haptics';
 import {farmerTypes} from '../../domain';
@@ -17,25 +20,31 @@ import type {AuthStackParamList} from '../../navigation/types';
 export function SignupScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const {signInWithGoogle} = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState('');
   const [farmerType, setFarmerType] = useState<string>(farmerTypes[0]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<'password' | 'google' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
-  const valid =
+  const ready =
     firstName.trim().length >= 2 &&
     lastName.trim().length >= 2 &&
     /\S+@\S+\.\S+/.test(email) &&
     password.length >= 8;
 
   const onSubmit = async () => {
+    if (!ready) {
+      setError('Fill in your name, a valid email, and an 8+ character password.');
+      return;
+    }
     setError(null);
-    setLoading(true);
+    setLoading('password');
     try {
       await api.signup({
         firstName: firstName.trim(),
@@ -51,81 +60,111 @@ export function SignupScreen() {
       haptics.error();
       setError((e as Error).message);
     } finally {
-      setLoading(false);
+      setLoading(null);
+    }
+  };
+
+  const onGoogle = async () => {
+    setError(null);
+    setLoading('google');
+    try {
+      await signInWithGoogle();
+      haptics.success();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(null);
     }
   };
 
   if (sent) {
     return (
-      <Screen scroll>
-        <View style={styles.successWrap}>
-          <View style={styles.successIcon}>
-            <MailCheck color={theme.colors.primaryBright} size={34} />
-          </View>
-          <AppText variant="h1" center style={styles.title}>
-            Check your inbox
-          </AppText>
-          <AppText variant="body" color={theme.colors.textSecondary} center>
-            We sent a verification link to {email.trim()}. Verify your email,
-            then sign in.
-          </AppText>
-          <Button
-            title="Enter verification code"
-            onPress={() =>
-              navigation.navigate('VerifyEmail', {email: email.trim()})
-            }
-            style={styles.successBtn}
-          />
-          <Button
-            title="Back to sign in"
-            variant="ghost"
-            onPress={() => navigation.navigate('Login')}
-            style={styles.successBtnGhost}
-          />
-          <Pressable
-            onPress={async () => {
-              try {
-                await api.resendVerification(email.trim());
-                haptics.success();
-              } catch {
-                // surfaced elsewhere; keep quiet on the success screen
-              }
-            }}
-            hitSlop={8}
-            style={styles.resend}>
-            <AppText variant="small" color={theme.colors.primaryBright}>
-              Resend email
-            </AppText>
-          </Pressable>
+      <AuthScaffold
+        eyebrow="Almost there"
+        title="Check your inbox"
+        subtitle={`We sent a verification code to ${email.trim()}. Verify your email, then sign in.`}
+        onBack={() => navigation.navigate('Login')}>
+        <View style={styles.successIcon}>
+          <MailCheck color={theme.colors.primaryBright} size={32} />
         </View>
-      </Screen>
+        <Button
+          title="Enter verification code"
+          onPress={() =>
+            navigation.navigate('VerifyEmail', {email: email.trim()})
+          }
+        />
+        <Button
+          title="Back to sign in"
+          variant="ghost"
+          onPress={() => navigation.navigate('Login')}
+          style={styles.gap}
+        />
+        <Pressable
+          onPress={async () => {
+            try {
+              await api.resendVerification(email.trim());
+              haptics.success();
+            } catch {
+              // surfaced elsewhere; keep quiet on the success screen
+            }
+          }}
+          hitSlop={8}
+          style={styles.resend}>
+          <AppText variant="small" color={theme.colors.primary}>
+            Resend email
+          </AppText>
+        </Pressable>
+      </AuthScaffold>
     );
   }
 
   return (
-    <Screen scroll dismissKeyboardOnTap>
-      <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.back}>
-        <ArrowLeft color={theme.colors.textSecondary} size={22} />
-      </Pressable>
+    <AuthScaffold
+      title="Create account"
+      subtitle="Create a farmer account connected to the shared backend."
+      chips
+      tabs={{
+        active: 'signup',
+        onChange: mode => {
+          if (mode === 'login') {
+            navigation.navigate('Login');
+          }
+        },
+      }}>
+      <Button
+        title="Sign up with Google"
+        variant="secondary"
+        icon={<GoogleIcon />}
+        onPress={onGoogle}
+        loading={loading === 'google'}
+        disabled={loading !== null}
+      />
 
-      <AppText variant="display" style={styles.heading}>
-        Create account
-      </AppText>
-      <AppText variant="body" color={theme.colors.textSecondary} style={styles.sub}>
-        Start keeping your farm ledger in order.
-      </AppText>
+      <View style={styles.divider}>
+        <View style={styles.line} />
+        <AppText variant="caption" color={theme.colors.textMuted}>
+          OR SIGN UP WITH EMAIL
+        </AppText>
+        <View style={styles.line} />
+      </View>
 
       <View style={styles.row}>
         <Input
           label="First name"
           value={firstName}
-          onChangeText={setFirstName}
+          onChangeText={t => {
+            setFirstName(t);
+            setError(null);
+          }}
           containerStyle={styles.half}
         />
         <Input
           label="Last name"
           value={lastName}
-          onChangeText={setLastName}
+          onChangeText={t => {
+            setLastName(t);
+            setError(null);
+          }}
           containerStyle={styles.half}
         />
       </View>
@@ -136,15 +175,32 @@ export function SignupScreen() {
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={t => {
+          setEmail(t);
+          setError(null);
+        }}
+        leftIcon={<Mail color={theme.colors.textMuted} size={18} />}
         containerStyle={styles.gap}
       />
       <Input
         label="Password"
         placeholder="At least 8 characters"
-        secureTextEntry
+        secureTextEntry={!showPassword}
         value={password}
-        onChangeText={setPassword}
+        onChangeText={t => {
+          setPassword(t);
+          setError(null);
+        }}
+        leftIcon={<Lock color={theme.colors.textMuted} size={18} />}
+        rightSlot={
+          <Pressable onPress={() => setShowPassword(v => !v)} hitSlop={8}>
+            {showPassword ? (
+              <EyeOff color={theme.colors.textMuted} size={18} />
+            ) : (
+              <Eye color={theme.colors.textMuted} size={18} />
+            )}
+          </Pressable>
+        }
         containerStyle={styles.gap}
       />
       <Input
@@ -152,6 +208,7 @@ export function SignupScreen() {
         keyboardType="phone-pad"
         value={phone}
         onChangeText={setPhone}
+        leftIcon={<Phone color={theme.colors.textMuted} size={18} />}
         containerStyle={styles.gap}
       />
 
@@ -170,40 +227,42 @@ export function SignupScreen() {
         </AppText>
       ) : null}
 
-      <Button
-        title="Create account"
+      <AuthSubmitButton
+        title={loading === 'password' ? 'Creating…' : 'Create account'}
         onPress={onSubmit}
-        loading={loading}
-        disabled={!valid || loading}
+        ready={ready}
+        loading={loading === 'password'}
+        disabled={loading !== null}
         style={styles.submit}
       />
-    </Screen>
+    </AuthScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  back: {marginTop: theme.spacing.sm, marginBottom: theme.spacing.md},
-  heading: {marginBottom: theme.spacing.sm},
-  sub: {marginBottom: theme.spacing.xl},
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    marginVertical: theme.spacing.lg,
+  },
+  line: {flex: 1, height: 1, backgroundColor: theme.colors.border},
   row: {flexDirection: 'row', gap: theme.spacing.md},
   half: {flex: 1},
-  gap: {marginTop: theme.spacing.lg},
-  error: {marginTop: theme.spacing.lg},
-  submit: {marginTop: theme.spacing.xl},
-  successWrap: {alignItems: 'center', marginTop: theme.spacing.huge},
+  gap: {marginTop: theme.spacing.md},
+  error: {marginTop: theme.spacing.md},
+  submit: {marginTop: theme.spacing.lg},
   successIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 26,
+    width: 72,
+    height: 72,
+    borderRadius: 24,
     backgroundColor: theme.colors.surfaceAlt,
     borderWidth: 1,
     borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'center',
     marginBottom: theme.spacing.xl,
   },
-  title: {marginBottom: theme.spacing.md},
-  successBtn: {marginTop: theme.spacing.xxl},
-  successBtnGhost: {marginTop: theme.spacing.xs},
-  resend: {marginTop: theme.spacing.lg},
+  resend: {marginTop: theme.spacing.lg, alignSelf: 'center'},
 });

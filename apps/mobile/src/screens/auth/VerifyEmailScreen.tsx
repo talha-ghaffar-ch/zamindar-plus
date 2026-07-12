@@ -2,10 +2,11 @@ import React, {useState} from 'react';
 import {Pressable, StyleSheet, View} from 'react-native';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {ArrowLeft, MailCheck, ShieldCheck} from 'lucide-react-native';
-import {Screen} from '../../components/Screen';
+import {MailCheck, ShieldCheck} from 'lucide-react-native';
+import {AuthScaffold} from '../../components/AuthScaffold';
 import {AppText} from '../../components/AppText';
 import {Button} from '../../components/Button';
+import {AuthSubmitButton} from '../../components/AuthSubmitButton';
 import {Input} from '../../components/Input';
 import {theme} from '../../theme';
 import {haptics} from '../../haptics';
@@ -23,8 +24,10 @@ export function VerifyEmailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
+  const ready = code.trim().length >= 6;
+
   const onVerify = async () => {
-    if (code.trim().length < 6) {
+    if (!ready) {
       setError('Enter the 6-digit code from your email.');
       return;
     }
@@ -44,65 +47,56 @@ export function VerifyEmailScreen() {
 
   if (done) {
     return (
-      <Screen scroll>
-        <View style={styles.center}>
-          <View style={styles.icon}>
-            <MailCheck color={theme.colors.primaryBright} size={32} />
-          </View>
-          <AppText variant="h1" center style={styles.title}>
-            Email verified
-          </AppText>
-          <AppText variant="body" color={theme.colors.textSecondary} center>
-            Your account is verified. You can sign in now.
-          </AppText>
-          <Button
-            title="Go to sign in"
-            onPress={() => navigation.navigate('Login')}
-            style={styles.cta}
-          />
+      <AuthScaffold
+        eyebrow="All set"
+        title="Email verified"
+        subtitle="Your account is verified. You can sign in now.">
+        <View style={styles.icon}>
+          <MailCheck color={theme.colors.primaryBright} size={32} />
         </View>
-      </Screen>
+        <Button
+          title="Go to sign in"
+          onPress={() => navigation.navigate('Login')}
+        />
+      </AuthScaffold>
     );
   }
 
   return (
-    <Screen scroll dismissKeyboardOnTap>
-      <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.back}>
-        <ArrowLeft color={theme.colors.textSecondary} size={22} />
-      </Pressable>
-
+    <AuthScaffold
+      eyebrow="Verify account"
+      title="Verify your email"
+      subtitle={`Enter the 6-digit code we emailed${email ? ` to ${email}` : ''}.`}
+      onBack={() => navigation.goBack()}>
       <View style={styles.icon}>
         <ShieldCheck color={theme.colors.primaryBright} size={30} />
       </View>
-      <AppText variant="h1" style={styles.heading}>
-        Verify your email
-      </AppText>
-      <AppText variant="body" color={theme.colors.textSecondary} style={styles.sub}>
-        Enter the 6-digit code we emailed{email ? ` to ${email}` : ''}.
-      </AppText>
-
       <Input
         label="Verification code"
         placeholder="123456"
         keyboardType="number-pad"
         maxLength={6}
         value={code}
-        onChangeText={setCode}
+        onChangeText={t => {
+          setCode(t);
+          setError(null);
+        }}
       />
       {error ? (
-        <AppText variant="small" color={theme.colors.danger} style={styles.error}>
+        <AppText
+          variant="small"
+          color={theme.colors.danger}
+          style={styles.error}>
           {error}
         </AppText>
       ) : null}
-
-      <Button
-        title="Verify"
+      <AuthSubmitButton
+        title={loading ? 'Verifying…' : 'Verify'}
         onPress={onVerify}
+        ready={ready}
         loading={loading}
-        disabled={loading}
         style={styles.submit}
       />
-
       {email ? (
         <Pressable
           onPress={async () => {
@@ -110,26 +104,24 @@ export function VerifyEmailScreen() {
               await api.resendVerification(email);
               haptics.success();
             } catch {
-              // stays quiet; user can retry
+              // stays quiet; the user can retry
             }
           }}
           hitSlop={8}
           style={styles.resend}>
-          <AppText variant="small" color={theme.colors.primaryBright}>
+          <AppText variant="small" color={theme.colors.primary}>
             Resend code
           </AppText>
         </Pressable>
       ) : null}
-    </Screen>
+    </AuthScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  back: {marginTop: theme.spacing.sm, marginBottom: theme.spacing.xl},
-  center: {alignItems: 'center', marginTop: theme.spacing.huge},
   icon: {
-    width: 68,
-    height: 68,
+    width: 64,
+    height: 64,
     borderRadius: 22,
     backgroundColor: theme.colors.surfaceAlt,
     borderWidth: 1,
@@ -138,11 +130,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: theme.spacing.lg,
   },
-  heading: {marginBottom: theme.spacing.sm},
-  title: {marginBottom: theme.spacing.md},
-  sub: {marginBottom: theme.spacing.xl},
   error: {marginTop: theme.spacing.md},
-  submit: {marginTop: theme.spacing.xl},
+  submit: {marginTop: theme.spacing.lg},
   resend: {marginTop: theme.spacing.lg, alignSelf: 'center'},
-  cta: {marginTop: theme.spacing.xxl},
 });
