@@ -98,32 +98,50 @@ installing new native libraries: `npm start -- --reset-cache`.
 > **Back up the keystore and its password.** If lost, you can never ship an update to the
 > same app listing.
 
-### Windows only: enable long paths first (one-time, admin)
+### Windows only: build from a short folder path
 
-The New Architecture generates C++ codegen paths longer than Windows' default 260-char
-limit (e.g. `react-native-gesture-handler`'s shadow-node codegen), which breaks the
-**release** CMake build (`ninja: Filename longer than 260 characters`). The debug build
-stays just under the limit, so on-device development works without this — but for the
-release APK, enable long paths once in an **elevated** PowerShell, then reboot or restart
-the Gradle daemon (`./gradlew --stop`):
+The New Architecture generates C++ codegen object paths longer than Windows'
+260-char `MAX_PATH` (e.g. `react-native-gesture-handler`'s shadow-node codegen),
+which breaks the **release** CMake build (`ninja: Filename longer than 260
+characters`). The debug build stays just under the limit, so on-device
+development needs no workaround — this only affects the release APK.
 
-```powershell
-Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name LongPathsEnabled -Value 1 -Type DWord
+`LongPathsEnabled=1` in the registry is **not** enough on its own: the NDK's
+`ninja` has its own hard 260-char check on the *relative* codegen path, and
+junctions / `subst` don't help because CMake resolves them back to the real
+(long) path. The reliable fix is to build from a **short repo folder** so the
+worst-case codegen path (~265 chars from `E:\zamindar-plus\...`) drops under
+260. A folder name of ≤ 7 characters is enough.
+
+Easiest: build from a clone at a short path (leaves your working copy untouched):
+
+```bash
+git clone <this-repo> C:/z
+cd C:/z && npm ci
+cp <your-repo>/apps/mobile/android/app/zamindar-release.keystore C:/z/apps/mobile/android/app/
+# ~/.gradle/gradle.properties (ZAMINDAR_UPLOAD_* signing props) is read globally
 ```
+
+(Alternatively, rename the repo folder itself to something short like `C:\z`.)
 
 ### Build
 
 ```bash
-# from apps/mobile/android
-./gradlew :app:assembleRelease -PreactNativeArchitectures=arm64-v8a   # arm64 (most phones)
-# OR, universal APK for any device (larger, slower):
-./gradlew :app:assembleRelease
+# from <short-path>/apps/mobile/android
+./gradlew :app:assembleRelease -PreactNativeArchitectures=arm64-v8a -Pkotlin.incremental=false
+# add ,armeabi-v7a only for very old 32-bit phones — arm64-v8a covers ~all modern devices
 ```
 
-Output: `android/app/build/outputs/apk/release/app-release.apk`
+Output: `android/app/build/outputs/apk/release/app-release.apk` (copy it back to
+your working copy if you built from a clone).
 
-The release APK bundles the JS (Hermes bytecode) and points at production — it needs no
-Metro server.
+The release APK bundles the JS as **Hermes bytecode** and points at production —
+it runs standalone on any device with **no Metro server and no laptop**.
+
+> RN 0.86 ships the host `hermesc` in the separate `hermes-compiler` npm package
+> (hoisted to the monorepo root `node_modules`). `app/build.gradle` sets
+> `react.hermesCommand` explicitly to point at it — without that, `assembleRelease`
+> fails with "Couldn't determine Hermesc location".
 
 ---
 

@@ -50,6 +50,12 @@ react {
     //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
     // hermesFlags = ["-O", "-output-source-map"]
 
+    //   RN 0.86 ships the host hermesc in the separate `hermes-compiler` npm package.
+    //   The plugin only auto-detects it under <reactRoot>/node_modules, but in this
+    //   monorepo hermes-compiler is hoisted to the repo-root node_modules, so point
+    //   hermesCommand at the hoisted binary explicitly (works on Windows/macOS/Linux).
+    hermesCommand = file("../../../../node_modules/hermes-compiler/hermesc/%OS-BIN%/" + (System.getProperty("os.name").toLowerCase().startsWith("windows") ? "hermesc.exe" : "hermesc")).toString()
+
     /* Autolinking */
     autolinkLibrariesWithApp()
 }
