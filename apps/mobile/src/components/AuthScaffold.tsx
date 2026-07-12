@@ -29,17 +29,17 @@ type Tabs = {
 
 type Props = {
   eyebrow?: string;
-  title: string;
-  subtitle: string;
+  title?: string;
+  subtitle?: string;
   tabs?: Tabs;
   onBack?: () => void;
-  /** Smaller hero so long forms (signup) fit without scrolling. */
+  /** Smaller hero so long forms fit without scrolling. */
   compactHero?: boolean;
   children: React.ReactNode;
 };
 
 export function AuthScaffold({
-  eyebrow = 'Secure access',
+  eyebrow,
   title,
   subtitle,
   tabs,
@@ -111,21 +111,27 @@ export function AuthScaffold({
             </Animated.View>
 
             <View style={styles.card}>
-              <AppText
-                variant="caption"
-                color={theme.colors.primary}
-                style={styles.eyebrow}>
-                {eyebrow.toUpperCase()}
-              </AppText>
-              <AppText variant="h1" style={styles.title}>
-                {title}
-              </AppText>
-              <AppText
-                variant="body"
-                color={theme.colors.textSecondary}
-                style={styles.subtitle}>
-                {subtitle}
-              </AppText>
+              {eyebrow ? (
+                <AppText
+                  variant="caption"
+                  color={theme.colors.primary}
+                  style={styles.eyebrow}>
+                  {eyebrow.toUpperCase()}
+                </AppText>
+              ) : null}
+              {title ? (
+                <AppText variant="h1" style={styles.title}>
+                  {title}
+                </AppText>
+              ) : null}
+              {subtitle ? (
+                <AppText
+                  variant="body"
+                  color={theme.colors.textSecondary}
+                  style={styles.subtitle}>
+                  {subtitle}
+                </AppText>
+              ) : null}
 
               {tabs ? (
                 <View style={styles.segment}>
@@ -224,14 +230,14 @@ const styles = StyleSheet.create({
   flex: {flex: 1},
   scroll: {
     flexGrow: 1,
-    justifyContent: 'center',
     paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
   },
   hero: {alignItems: 'center', marginBottom: theme.spacing.lg},
   heroTitle: {
     fontFamily: fonts.heading,
-    fontSize: 42,
+    fontSize: 40,
     lineHeight: 42,
     color: '#FFFFFF',
     letterSpacing: -0.5,

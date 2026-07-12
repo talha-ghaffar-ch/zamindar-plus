@@ -13,7 +13,6 @@ import {useAuth} from '../context/AuthContext';
 import {FarmDataProvider} from '../context/FarmDataContext';
 import {SplashScreen} from '../screens/SplashScreen';
 import {LoginScreen} from '../screens/auth/LoginScreen';
-import {SignupScreen} from '../screens/auth/SignupScreen';
 import {ForgotPasswordScreen} from '../screens/auth/ForgotPasswordScreen';
 import {VerifyEmailScreen} from '../screens/auth/VerifyEmailScreen';
 import {ResetPasswordScreen} from '../screens/auth/ResetPasswordScreen';
@@ -61,7 +60,6 @@ function AuthStack() {
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Signup" component={SignupScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
