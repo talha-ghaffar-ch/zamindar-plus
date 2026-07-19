@@ -1,8 +1,30 @@
 # Zamindar Plus
 
+![Zamindar Plus — every acre, every rupee, one ledger](docs/banner.png)
+
 Zamindar Plus is a farm ledger platform for managing profiles, zameen (land),
 crops, expenses, income, reports, and account settings — with email
 verification, password reset, and Google sign-in.
+
+## Screenshots
+
+_Captured from the live production deployment and a physical Android device._
+
+**Web — farm command center**
+
+![Zamindar Plus web dashboard](docs/screenshots/web-dashboard.png)
+
+**Web — Zamindar AI assistant (Gemini-powered)**
+
+![Zamindar AI farm ledger assistant](docs/screenshots/web-ai-assistant.png)
+
+**Android app — home & reports**
+
+<p>
+  <img src="docs/screenshots/mobile-home.png" width="340" alt="Mobile home — financial pulse" />
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/mobile-reports.png" width="340" alt="Mobile reports — crop profitability" />
+</p>
 
 ## Stack
 
