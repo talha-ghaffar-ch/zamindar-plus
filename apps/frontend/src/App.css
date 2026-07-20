@@ -2812,6 +2812,106 @@ tbody tr:hover {
   letter-spacing: 0.04em;
 }
 
+.ai-message-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ai-action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-action-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(100, 121, 114, 0.22);
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.ai-action-dot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--green);
+}
+
+.ai-action-dot.ai-action-updated {
+  background: var(--cyan);
+}
+
+.ai-action-dot.ai-action-deleted {
+  background: #d9534f;
+}
+
+.ai-action-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ai-action-check {
+  flex: 0 0 auto;
+  border: 1px solid var(--cyan);
+  border-radius: 999px;
+  padding: 5px 14px;
+  color: var(--cyan);
+  background: transparent;
+  font: inherit;
+  font-weight: 720;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    color 140ms ease;
+}
+
+.ai-action-check:hover {
+  color: #ffffff;
+  background: var(--cyan);
+}
+
+.ai-suggestion-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 14px 12px;
+}
+
+.ai-suggestion-chip {
+  border: 1px solid rgba(100, 121, 114, 0.26);
+  border-radius: 999px;
+  padding: 8px 14px;
+  color: var(--ink);
+  background: rgba(238, 247, 242, 0.7);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 680;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.ai-suggestion-chip:hover:not(:disabled) {
+  border-color: var(--cyan);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.ai-suggestion-chip:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .ai-chat-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 52px;
@@ -3356,6 +3456,20 @@ textarea:focus-visible {
 :root[data-theme="dark"] .legal-panel {
   border-color: var(--line);
   background: var(--panel);
+}
+
+:root[data-theme="dark"] .ai-action-chip,
+:root[data-theme="dark"] .ai-suggestion-chip {
+  border-color: var(--line);
+  background: var(--field-bg);
+}
+
+:root[data-theme="dark"] .ai-action-label {
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .ai-suggestion-chip {
+  color: var(--ink);
 }
 
 :root[data-theme="dark"] .auth-screen::before {

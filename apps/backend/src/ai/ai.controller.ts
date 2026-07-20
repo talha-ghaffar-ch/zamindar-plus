@@ -1,4 +1,5 @@
 import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { CurrentUserId } from '../auth/current-user-id.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AiService } from './ai.service';
 import { ChatMessageDto } from './dto/chat-message.dto';
@@ -10,7 +11,10 @@ export class AiController {
 
   @Post('chat')
   @HttpCode(200)
-  chat(@Body() chatMessageDto: ChatMessageDto) {
-    return this.aiService.chat(chatMessageDto);
+  chat(
+    @CurrentUserId() userId: string,
+    @Body() chatMessageDto: ChatMessageDto,
+  ) {
+    return this.aiService.chat(userId, chatMessageDto);
   }
 }

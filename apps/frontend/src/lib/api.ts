@@ -137,8 +137,23 @@ export type ResetPasswordPayload = {
   password: string;
 };
 
+export type AiActionEntity =
+  | 'profile'
+  | 'zameen'
+  | 'crop'
+  | 'expense'
+  | 'income';
+
+export type AiAction = {
+  type: 'created' | 'updated' | 'deleted';
+  entity: AiActionEntity;
+  id: string;
+  label: string;
+};
+
 export type AiChatResponse = {
   reply: string;
+  actions?: AiAction[];
 };
 
 export type AiChatHistoryMessage = {

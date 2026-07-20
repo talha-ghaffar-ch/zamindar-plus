@@ -224,7 +224,7 @@ function App() {
     }
 
     if (activePage === 'Zamindar AI') {
-      return <ZamindarAiPage />;
+      return <ZamindarAiPage onNavigate={setActivePage} />;
     }
 
     if (activePage === 'Admin') {
