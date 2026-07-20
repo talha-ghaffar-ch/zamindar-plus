@@ -299,7 +299,7 @@ function App() {
           </div>
           <div className="brand-copy">
             <strong>Zamindar Plus</strong>
-            <span>Farm ledger platform</span>
+            <span>Har Kheti Ka Smart Hisab</span>
           </div>
           <button
             aria-label={isSidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}

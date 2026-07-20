@@ -47,7 +47,7 @@ export function SplashScreen() {
         Zamindar Plus
       </AppText>
       <AppText variant="small" color={theme.colors.textSecondary}>
-        Your farm, in perfect order
+        Har Kheti Ka Smart Hisab
       </AppText>
       <View style={styles.dots}>
         <Dot index={0} />

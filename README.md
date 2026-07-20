@@ -1,6 +1,8 @@
 # Zamindar Plus
 
-![Zamindar Plus — every acre, every rupee, one ledger](docs/banner.png)
+**Har Kheti Ka Smart Hisab**
+
+![Zamindar Plus — Har Kheti Ka Smart Hisab](docs/banner.png)
 
 Zamindar Plus is a farm ledger platform for managing profiles, zameen (land),
 crops, expenses, income, reports, and account settings — with email
