@@ -21,6 +21,7 @@ import {RecordsStack} from './RecordsStack';
 import {AddScreen} from '../screens/AddScreen';
 import {ReportsScreen} from '../screens/ReportsScreen';
 import {AiScreen} from '../screens/AiScreen';
+import {useI18n} from '../i18n/useT';
 import {theme} from '../theme';
 
 type TabIconProps = {color: string; size: number};
@@ -68,6 +69,8 @@ function AuthStack() {
 }
 
 function AppTabs() {
+  const {t} = useI18n();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -84,22 +87,30 @@ function AppTabs() {
         },
         tabBarLabelStyle: {fontSize: 11, fontFamily: 'Manrope-ExtraBold'},
       }}>
-      <Tab.Screen name="Home" component={HomeStack} options={{tabBarIcon: renderHomeIcon}} />
+      <Tab.Screen
+        name="Home"
+        component={HomeStack}
+        options={{tabBarIcon: renderHomeIcon, tabBarLabel: t('mobile.home')}}
+      />
       <Tab.Screen
         name="Records"
         component={RecordsStack}
-        options={{tabBarIcon: renderRecordsIcon}}
+        options={{tabBarIcon: renderRecordsIcon, tabBarLabel: t('mobile.records')}}
       />
-      <Tab.Screen name="Add" component={AddScreen} options={{tabBarIcon: renderAddIcon}} />
+      <Tab.Screen
+        name="Add"
+        component={AddScreen}
+        options={{tabBarIcon: renderAddIcon, tabBarLabel: t('mobile.add')}}
+      />
       <Tab.Screen
         name="Reports"
         component={ReportsScreen}
-        options={{tabBarIcon: renderReportsIcon}}
+        options={{tabBarIcon: renderReportsIcon, tabBarLabel: t('mobile.reports')}}
       />
       <Tab.Screen
         name="Assistant"
         component={AiScreen}
-        options={{tabBarIcon: renderAssistantIcon}}
+        options={{tabBarIcon: renderAssistantIcon, tabBarLabel: t('mobile.assistant')}}
       />
     </Tab.Navigator>
   );

@@ -1,6 +1,8 @@
 import React, {useState} from 'react';
 import {Modal, Pressable, ScrollView, StyleSheet, View} from 'react-native';
 import {X} from 'lucide-react-native';
+import type {TranslationKey} from '@zamindar/shared';
+import {useI18n} from '../i18n/useT';
 import {theme} from '../theme';
 import {haptics} from '../haptics';
 import * as api from '../api';
@@ -36,6 +38,8 @@ type Props = {
 };
 
 export function EditRecordModal({target, onClose, onSaved}: Props) {
+  const {t} = useI18n();
+
   return (
     <Modal
       visible={!!target}
@@ -47,7 +51,7 @@ export function EditRecordModal({target, onClose, onSaved}: Props) {
         <View style={styles.sheet}>
           <View style={styles.handle} />
           <View style={styles.header}>
-            <AppText variant="h3">{target ? titleFor(target.type) : ''}</AppText>
+            <AppText variant="h3">{target ? t(titleKeyFor(target.type)) : ''}</AppText>
             <Pressable onPress={onClose} hitSlop={10}>
               <X color={theme.colors.textSecondary} size={22} />
             </Pressable>
@@ -71,14 +75,14 @@ export function EditRecordModal({target, onClose, onSaved}: Props) {
   );
 }
 
-function titleFor(type: EditTarget['type']) {
+function titleKeyFor(type: EditTarget['type']): TranslationKey {
   return {
-    profile: 'Edit profile',
-    zameen: 'Edit zameen',
-    crop: 'Edit crop',
-    expense: 'Edit expense',
-    income: 'Edit income',
-  }[type];
+    profile: 'profiles.editTitle',
+    zameen: 'zameen.editTitle',
+    crop: 'crops.editTitle',
+    expense: 'expenses.editTitle',
+    income: 'income.editTitle',
+  }[type] as TranslationKey;
 }
 
 function EditBody({target, onClose, onSaved}: {target: EditTarget} & Omit<Props, 'target'>) {
@@ -126,6 +130,7 @@ function Err({error}: {error: string | null}) {
 }
 
 function ProfileBody({data, onClose, onSaved}: {data: api.Profile} & Omit<Props, 'target'>) {
+  const {t} = useI18n();
   const [profileName, setProfileName] = useState(data.profileName);
   const [city, setCity] = useState(data.city ?? '');
   const [chakAreaName, setChak] = useState(data.chakAreaName ?? '');
@@ -133,13 +138,13 @@ function ProfileBody({data, onClose, onSaved}: {data: api.Profile} & Omit<Props,
   const {saving, error, save} = useSaver(onClose, onSaved);
   return (
     <View>
-      <Input label="Profile name" value={profileName} onChangeText={setProfileName} />
-      <Input label="City" value={city} onChangeText={setCity} containerStyle={styles.gap} />
-      <Input label="Chak / area" value={chakAreaName} onChangeText={setChak} containerStyle={styles.gap} />
-      <Input label="Village" value={villageName} onChangeText={setVillage} containerStyle={styles.gap} />
+      <Input label={t('profiles.name')} value={profileName} onChangeText={setProfileName} />
+      <Input label={t('profiles.city')} value={city} onChangeText={setCity} containerStyle={styles.gap} />
+      <Input label={t('mobile.chakArea')} value={chakAreaName} onChangeText={setChak} containerStyle={styles.gap} />
+      <Input label={t('profiles.village')} value={villageName} onChangeText={setVillage} containerStyle={styles.gap} />
       <Err error={error} />
       <Button
-        title="Save changes"
+        title={t('common.saveChanges')}
         loading={saving}
         disabled={profileName.trim().length < 2 || saving}
         style={styles.save}
@@ -159,6 +164,7 @@ function ProfileBody({data, onClose, onSaved}: {data: api.Profile} & Omit<Props,
 }
 
 function ZameenBody({data, onClose, onSaved}: {data: api.Zameen} & Omit<Props, 'target'>) {
+  const {t} = useI18n();
   const [zameenName, setName] = useState(data.zameenName);
   const [areaValue, setArea] = useState(String(data.totalAreaValue));
   const [areaUnit, setUnit] = useState(data.totalAreaUnit);
@@ -166,17 +172,17 @@ function ZameenBody({data, onClose, onSaved}: {data: api.Zameen} & Omit<Props, '
   const {saving, error, save} = useSaver(onClose, onSaved);
   return (
     <View>
-      <Input label="Zameen name" value={zameenName} onChangeText={setName} />
-      <Input label="Area" keyboardType="numeric" value={areaValue} onChangeText={setArea} containerStyle={styles.gap} />
+      <Input label={t('zameen.name')} value={zameenName} onChangeText={setName} />
+      <Input label={t('zameen.colArea')} keyboardType="numeric" value={areaValue} onChangeText={setArea} containerStyle={styles.gap} />
       <View style={styles.gap}>
-        <ChipGroup label="Unit" options={areaUnits} value={areaUnit} onChange={setUnit} />
+        <ChipGroup label={t('mobile.unit')} options={areaUnits} value={areaUnit} onChange={setUnit} />
       </View>
       <View style={styles.gap}>
-        <ChipGroup label="Ownership" options={ownershipTypes} value={ownershipType} onChange={setOwnership} />
+        <ChipGroup label={t('mobile.ownership')} options={ownershipTypes} value={ownershipType} onChange={setOwnership} />
       </View>
       <Err error={error} />
       <Button
-        title="Save changes"
+        title={t('common.saveChanges')}
         loading={saving}
         disabled={zameenName.trim().length < 2 || Number(areaValue) <= 0 || saving}
         style={styles.save}
@@ -198,6 +204,7 @@ function ZameenBody({data, onClose, onSaved}: {data: api.Zameen} & Omit<Props, '
 }
 
 function CropBody({data, onClose, onSaved}: {data: api.Crop} & Omit<Props, 'target'>) {
+  const {t} = useI18n();
   const [cropName, setName] = useState(data.cropName);
   const [areaValue, setArea] = useState(String(data.cropAreaValue));
   const [areaUnit, setUnit] = useState(data.cropAreaUnit);
@@ -210,21 +217,21 @@ function CropBody({data, onClose, onSaved}: {data: api.Crop} & Omit<Props, 'targ
     : ([cropName, ...cropNames] as readonly string[]);
   return (
     <View>
-      <ChipGroup label="Crop" options={cropOptions} value={cropName} onChange={setName} />
-      <Input label="Area" keyboardType="numeric" value={areaValue} onChangeText={setArea} containerStyle={styles.gap} />
+      <ChipGroup label={t('crops.colCrop')} options={cropOptions} value={cropName} onChange={setName} />
+      <Input label={t('zameen.colArea')} keyboardType="numeric" value={areaValue} onChangeText={setArea} containerStyle={styles.gap} />
       <View style={styles.gap}>
-        <ChipGroup label="Unit" options={areaUnits} value={areaUnit} onChange={setUnit} />
+        <ChipGroup label={t('mobile.unit')} options={areaUnits} value={areaUnit} onChange={setUnit} />
       </View>
       <View style={styles.row}>
-        <Input label="Start month" keyboardType="numeric" value={startMonth} onChangeText={setMonth} containerStyle={styles.half} />
-        <Input label="Start year" keyboardType="numeric" value={startYear} onChangeText={setYear} containerStyle={styles.half} />
+        <Input label={t('mobile.startMonth')} keyboardType="numeric" value={startMonth} onChangeText={setMonth} containerStyle={styles.half} />
+        <Input label={t('mobile.startYear')} keyboardType="numeric" value={startYear} onChangeText={setYear} containerStyle={styles.half} />
       </View>
       <View style={styles.gap}>
-        <ChipGroup label="Status" options={cropStatuses} value={status} onChange={setStatus} />
+        <ChipGroup label={t('crops.status')} options={cropStatuses} value={status} onChange={setStatus} />
       </View>
       <Err error={error} />
       <Button
-        title="Save changes"
+        title={t('common.saveChanges')}
         loading={saving}
         disabled={Number(areaValue) <= 0 || saving}
         style={styles.save}
@@ -248,6 +255,7 @@ function CropBody({data, onClose, onSaved}: {data: api.Crop} & Omit<Props, 'targ
 }
 
 function ExpenseBody({data, onClose, onSaved}: {data: api.Expense} & Omit<Props, 'target'>) {
+  const {t} = useI18n();
   const [category, setCategory] = useState(data.expenseCategory);
   const [description, setDescription] = useState(data.description);
   const [amount, setAmount] = useState(String(data.amount));
@@ -259,16 +267,16 @@ function ExpenseBody({data, onClose, onSaved}: {data: api.Expense} & Omit<Props,
     : ([category, ...expenseCategories] as readonly string[]);
   return (
     <View>
-      <ChipGroup label="Category" options={catOptions} value={category} onChange={setCategory} />
-      <Input label="Description" value={description} onChangeText={setDescription} containerStyle={styles.gap} />
+      <ChipGroup label={t('expenses.category')} options={catOptions} value={category} onChange={setCategory} />
+      <Input label={t('expenses.description')} value={description} onChangeText={setDescription} containerStyle={styles.gap} />
       <Input label="Amount (Rs)" keyboardType="numeric" value={amount} onChangeText={setAmount} containerStyle={styles.gap} />
       <Input label="Date (DD/MM/YYYY)" value={date} onChangeText={setDate} containerStyle={styles.gap} />
       <View style={styles.gap}>
-        <ChipGroup label="Status" options={expensePaymentStatuses} value={paymentStatus} onChange={setStatus} />
+        <ChipGroup label={t('crops.status')} options={expensePaymentStatuses} value={paymentStatus} onChange={setStatus} />
       </View>
       <Err error={error} />
       <Button
-        title="Save changes"
+        title={t('common.saveChanges')}
         loading={saving}
         disabled={description.trim().length === 0 || Number(amount) <= 0 || saving}
         style={styles.save}
@@ -292,6 +300,7 @@ function ExpenseBody({data, onClose, onSaved}: {data: api.Expense} & Omit<Props,
 }
 
 function IncomeBody({data, onClose, onSaved}: {data: api.Income} & Omit<Props, 'target'>) {
+  const {t} = useI18n();
   const [quantity, setQuantity] = useState(data.quantity != null ? String(data.quantity) : '');
   const [quantityUnit, setQUnit] = useState(data.quantityUnit ?? quantityUnits[0]);
   const [rate, setRate] = useState(data.rate != null ? String(data.rate) : '');
@@ -303,21 +312,21 @@ function IncomeBody({data, onClose, onSaved}: {data: api.Income} & Omit<Props, '
   return (
     <View>
       <View style={styles.row}>
-        <Input label="Quantity" keyboardType="numeric" value={quantity} onChangeText={setQuantity} containerStyle={styles.half} />
-        <Input label="Rate" keyboardType="numeric" value={rate} onChangeText={setRate} containerStyle={styles.half} />
+        <Input label={t('income.quantity')} keyboardType="numeric" value={quantity} onChangeText={setQuantity} containerStyle={styles.half} />
+        <Input label={t('income.rate')} keyboardType="numeric" value={rate} onChangeText={setRate} containerStyle={styles.half} />
       </View>
       <View style={styles.gap}>
-        <ChipGroup label="Quantity unit" options={quantityUnits} value={quantityUnit} onChange={setQUnit} />
+        <ChipGroup label={t('income.quantityUnit')} options={quantityUnits} value={quantityUnit} onChange={setQUnit} />
       </View>
       <Input label="Total amount (Rs)" keyboardType="numeric" value={totalAmount} onChangeText={setTotal} containerStyle={styles.gap} />
-      <Input label="Buyer" value={buyerName} onChangeText={setBuyer} containerStyle={styles.gap} />
+      <Input label={t('mobile.buyer')} value={buyerName} onChangeText={setBuyer} containerStyle={styles.gap} />
       <Input label="Date (DD/MM/YYYY)" value={date} onChangeText={setDate} containerStyle={styles.gap} />
       <View style={styles.gap}>
-        <ChipGroup label="Status" options={incomePaymentStatuses} value={paymentStatus} onChange={setStatus} />
+        <ChipGroup label={t('crops.status')} options={incomePaymentStatuses} value={paymentStatus} onChange={setStatus} />
       </View>
       <Err error={error} />
       <Button
-        title="Save changes"
+        title={t('common.saveChanges')}
         loading={saving}
         disabled={Number(totalAmount) <= 0 || saving}
         style={styles.save}

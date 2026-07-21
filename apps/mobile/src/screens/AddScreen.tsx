@@ -8,6 +8,8 @@ import {Button} from '../components/Button';
 import {ChipGroup} from '../components/ChipGroup';
 import {OptionChips} from '../components/OptionChips';
 import {useFarmData} from '../context/FarmDataContext';
+import type {TranslationKey} from '@zamindar/shared';
+import {useI18n} from '../i18n/useT';
 import {theme} from '../theme';
 import {haptics} from '../haptics';
 import * as api from '../api';
@@ -27,15 +29,16 @@ import {
 
 type AddType = 'profile' | 'zameen' | 'crop' | 'expense' | 'income';
 
-const TYPES: {key: AddType; label: string}[] = [
-  {key: 'profile', label: 'Profile'},
-  {key: 'zameen', label: 'Zameen'},
-  {key: 'crop', label: 'Crop'},
-  {key: 'expense', label: 'Expense'},
-  {key: 'income', label: 'Income'},
+const TYPES: {key: AddType; labelKey: TranslationKey}[] = [
+  {key: 'profile', labelKey: 'zameen.profile'},
+  {key: 'zameen', labelKey: 'crops.zameen'},
+  {key: 'crop', labelKey: 'crops.colCrop'},
+  {key: 'expense', labelKey: 'dashboard.expense'},
+  {key: 'income', labelKey: 'dashboard.income'},
 ];
 
 export function AddScreen() {
+  const {t} = useI18n();
   const {data, reload} = useFarmData();
   const [type, setType] = useState<AddType>('profile');
   const [saved, setSaved] = useState<string | null>(null);
@@ -75,13 +78,13 @@ export function AddScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.typeRow}>
-          {TYPES.map(t => (
+          {TYPES.map(item => (
             <TypePill
-              key={t.key}
-              label={t.label}
-              active={t.key === type}
+              key={item.key}
+              label={t(item.labelKey)}
+              active={item.key === type}
               onPress={() => {
-                setType(t.key);
+                setType(item.key);
                 setSaved(null);
               }}
             />
@@ -173,6 +176,7 @@ function FormError({error}: {error: string | null}) {
 // --- Profile ----------------------------------------------------------------
 
 function ProfileForm({onSaved}: {onSaved: (m: string) => void}) {
+  const {t} = useI18n();
   const [profileName, setProfileName] = useState('');
   const [city, setCity] = useState('');
   const [chakAreaName, setChakAreaName] = useState('');
@@ -192,7 +196,7 @@ function ProfileForm({onSaved}: {onSaved: (m: string) => void}) {
 
   return (
     <View>
-      <Input label="Profile name" value={profileName} onChangeText={setProfileName} />
+      <Input label={t('profiles.name')} value={profileName} onChangeText={setProfileName} />
       <Input label="City (optional)" value={city} onChangeText={setCity} containerStyle={styles.gap} />
       <Input
         label="Chak / area (optional)"
@@ -208,7 +212,7 @@ function ProfileForm({onSaved}: {onSaved: (m: string) => void}) {
       />
       <FormError error={error} />
       <Button
-        title="Save profile"
+        title={t('mobile.saveProfile')}
         onPress={submit}
         loading={saving}
         disabled={profileName.trim().length < 2 || saving}
@@ -227,6 +231,7 @@ function ZameenForm({
   profiles: {label: string; value: string}[];
   onSaved: (m: string) => void;
 }) {
+  const {t} = useI18n();
   const [profileId, setProfileId] = useState<string | null>(
     profiles[0]?.value ?? null,
   );
@@ -256,26 +261,26 @@ function ZameenForm({
   return (
     <View>
       <OptionChips
-        label="Profile"
+        label={t('zameen.profile')}
         options={profiles}
         value={profileId}
         onChange={setProfileId}
-        emptyText="Add a profile first."
+        emptyText={t('mobile.addProfileFirst')}
       />
-      <Input label="Zameen name" value={zameenName} onChangeText={setZameenName} containerStyle={styles.gap} />
+      <Input label={t('zameen.name')} value={zameenName} onChangeText={setZameenName} containerStyle={styles.gap} />
       <Input
-        label="Area"
+        label={t('zameen.colArea')}
         keyboardType="numeric"
         value={areaValue}
         onChangeText={setAreaValue}
         containerStyle={styles.gap}
       />
       <View style={styles.gap}>
-        <ChipGroup label="Unit" options={areaUnits} value={areaUnit} onChange={setAreaUnit} />
+        <ChipGroup label={t('mobile.unit')} options={areaUnits} value={areaUnit} onChange={setAreaUnit} />
       </View>
       <View style={styles.gap}>
         <ChipGroup
-          label="Ownership"
+          label={t('mobile.ownership')}
           options={ownershipTypes}
           value={ownershipType}
           onChange={setOwnershipType}
@@ -283,7 +288,7 @@ function ZameenForm({
       </View>
       <FormError error={error} />
       <Button
-        title="Save zameen"
+        title={t('mobile.saveZameen')}
         onPress={submit}
         loading={saving}
         disabled={!valid || saving}
@@ -302,6 +307,7 @@ function CropForm({
   zameen: {label: string; value: string}[];
   onSaved: (m: string) => void;
 }) {
+  const {t} = useI18n();
   const [zameenId, setZameenId] = useState<string | null>(zameen[0]?.value ?? null);
   const [cropName, setCropName] = useState<string>(cropNames[0]);
   const [areaValue, setAreaValue] = useState('');
@@ -333,35 +339,35 @@ function CropForm({
   return (
     <View>
       <OptionChips
-        label="Zameen"
+        label={t('crops.zameen')}
         options={zameen}
         value={zameenId}
         onChange={setZameenId}
-        emptyText="Add a zameen first."
+        emptyText={t('mobile.addZameenFirst')}
       />
       <View style={styles.gap}>
-        <ChipGroup label="Crop" options={cropNames} value={cropName} onChange={setCropName} />
+        <ChipGroup label={t('crops.colCrop')} options={cropNames} value={cropName} onChange={setCropName} />
       </View>
       <Input
-        label="Area"
+        label={t('zameen.colArea')}
         keyboardType="numeric"
         value={areaValue}
         onChangeText={setAreaValue}
         containerStyle={styles.gap}
       />
       <View style={styles.gap}>
-        <ChipGroup label="Unit" options={areaUnits} value={areaUnit} onChange={setAreaUnit} />
+        <ChipGroup label={t('mobile.unit')} options={areaUnits} value={areaUnit} onChange={setAreaUnit} />
       </View>
       <View style={styles.row}>
         <Input
-          label="Start month"
+          label={t('mobile.startMonth')}
           keyboardType="numeric"
           value={startMonth}
           onChangeText={setStartMonth}
           containerStyle={styles.half}
         />
         <Input
-          label="Start year"
+          label={t('mobile.startYear')}
           keyboardType="numeric"
           value={startYear}
           onChangeText={setStartYear}
@@ -369,11 +375,11 @@ function CropForm({
         />
       </View>
       <View style={styles.gap}>
-        <ChipGroup label="Status" options={cropStatuses} value={status} onChange={setStatus} />
+        <ChipGroup label={t('crops.status')} options={cropStatuses} value={status} onChange={setStatus} />
       </View>
       <FormError error={error} />
       <Button
-        title="Save crop"
+        title={t('mobile.saveCrop')}
         onPress={submit}
         loading={saving}
         disabled={!valid || saving}
@@ -392,6 +398,7 @@ function ExpenseForm({
   crops: {label: string; value: string}[];
   onSaved: (m: string) => void;
 }) {
+  const {t} = useI18n();
   const [cropId, setCropId] = useState<string | null>(crops[0]?.value ?? null);
   const [category, setCategory] = useState<string>(expenseCategories[0]);
   const [description, setDescription] = useState('');
@@ -421,21 +428,21 @@ function ExpenseForm({
   return (
     <View>
       <OptionChips
-        label="Crop"
+        label={t('crops.colCrop')}
         options={crops}
         value={cropId}
         onChange={setCropId}
-        emptyText="Add a crop first."
+        emptyText={t('mobile.addCropFirst')}
       />
       <View style={styles.gap}>
         <ChipGroup
-          label="Category"
+          label={t('expenses.category')}
           options={expenseCategories}
           value={category}
           onChange={setCategory}
         />
       </View>
-      <Input label="Description" value={description} onChangeText={setDescription} containerStyle={styles.gap} />
+      <Input label={t('expenses.description')} value={description} onChangeText={setDescription} containerStyle={styles.gap} />
       <Input
         label="Amount (Rs)"
         keyboardType="numeric"
@@ -451,7 +458,7 @@ function ExpenseForm({
       />
       <View style={styles.gap}>
         <ChipGroup
-          label="Status"
+          label={t('crops.status')}
           options={expensePaymentStatuses}
           value={paymentStatus}
           onChange={setPaymentStatus}
@@ -459,7 +466,7 @@ function ExpenseForm({
       </View>
       <FormError error={error} />
       <Button
-        title="Save expense"
+        title={t('mobile.saveExpense')}
         onPress={submit}
         loading={saving}
         disabled={!valid || saving}
@@ -478,6 +485,7 @@ function IncomeForm({
   crops: {label: string; value: string}[];
   onSaved: (m: string) => void;
 }) {
+  const {t} = useI18n();
   const [cropId, setCropId] = useState<string | null>(crops[0]?.value ?? null);
   const [quantity, setQuantity] = useState('');
   const [quantityUnit, setQuantityUnit] = useState<string>(quantityUnits[0]);
@@ -511,11 +519,11 @@ function IncomeForm({
   return (
     <View>
       <OptionChips
-        label="Crop"
+        label={t('crops.colCrop')}
         options={crops}
         value={cropId}
         onChange={setCropId}
-        emptyText="Add a crop first."
+        emptyText={t('mobile.addCropFirst')}
       />
       <View style={styles.row}>
         <Input
@@ -535,7 +543,7 @@ function IncomeForm({
       </View>
       <View style={styles.gap}>
         <ChipGroup
-          label="Quantity unit"
+          label={t('income.quantityUnit')}
           options={quantityUnits}
           value={quantityUnit}
           onChange={setQuantityUnit}
@@ -562,7 +570,7 @@ function IncomeForm({
       />
       <View style={styles.gap}>
         <ChipGroup
-          label="Status"
+          label={t('crops.status')}
           options={incomePaymentStatuses}
           value={paymentStatus}
           onChange={setPaymentStatus}
@@ -570,7 +578,7 @@ function IncomeForm({
       </View>
       <FormError error={error} />
       <Button
-        title="Save income"
+        title={t('mobile.saveIncome')}
         onPress={submit}
         loading={saving}
         disabled={!valid || saving}
