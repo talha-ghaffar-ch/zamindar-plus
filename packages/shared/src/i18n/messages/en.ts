@@ -36,6 +36,9 @@ export const en = {
     open: 'Open',
     of: 'of',
     andMore: 'and {count} more',
+    loginSuccess: 'Signed in successfully',
+    signedOut: 'Signed out successfully',
+    accountDeleted: 'Account deleted successfully',
   },
 
   nav: {

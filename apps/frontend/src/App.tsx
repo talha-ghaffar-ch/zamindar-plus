@@ -8,13 +8,11 @@ import {
   LandPlot,
   LayoutDashboard,
   LogOut,
-  Moon,
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
   ShieldCheck,
   Sprout,
-  Sun,
   UsersRound,
   Wheat,
   type LucideIcon,
@@ -30,7 +28,7 @@ import {
   type User,
 } from './lib/api';
 import type { TranslationKey } from '@zamindar/shared';
-import { normalizeLocale } from '@zamindar/shared';
+import { LOCALE_LIST, normalizeLocale } from '@zamindar/shared';
 import { useI18n } from './i18n/useT';
 import { ToastViewport, type ToastMessage } from './components/ToastViewport';
 import { AuthPage } from './pages/AuthPage';
@@ -184,34 +182,25 @@ function App() {
     setCurrentUser(authResponse.user);
     applyUserLocale(authResponse.user);
     setActivePage('Dashboard');
-    showToast('Account login successful');
+    showToast(t('common.loginSuccess'));
   }
 
   function handleLogout() {
     clearAuthToken();
     setCurrentUser(null);
     setActivePage('Dashboard');
-    showToast('Signed out successfully');
+    showToast(t('common.signedOut'));
   }
 
   function handleAccountDeleted() {
     clearAuthToken();
     setCurrentUser(null);
     setActivePage('Dashboard');
-    showToast('Account deleted successfully');
+    showToast(t('common.accountDeleted'));
   }
 
   const toastViewport = <ToastViewport toasts={toasts} onClose={closeToast} />;
-  const globalThemeToggle = (
-    <ThemeToggle
-      theme={theme}
-      onToggle={() =>
-        setTheme((currentTheme) =>
-          currentTheme === 'light' ? 'dark' : 'light',
-        )
-      }
-    />
-  );
+  const globalLanguageToggle = <GlobalLanguageToggle />;
 
   function renderActivePage(user: User) {
     if (activePage === 'Dashboard') {
@@ -281,7 +270,7 @@ function App() {
   if (isCheckingSession) {
     return (
       <MotionConfig reducedMotion="user">
-        {globalThemeToggle}
+        {globalLanguageToggle}
         <motion.main
           animate={{ opacity: 1 }}
           className="auth-screen"
@@ -304,7 +293,7 @@ function App() {
   if (!currentUser) {
     return (
       <MotionConfig reducedMotion="user">
-        {globalThemeToggle}
+        {globalLanguageToggle}
         <motion.div
           animate={{ opacity: 1 }}
           initial={{ opacity: 0 }}
@@ -324,7 +313,7 @@ function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-    {globalThemeToggle}
+    {globalLanguageToggle}
     <div className={isSidebarCollapsed ? 'app-shell sidebar-collapsed' : 'app-shell'}>
       <aside className="sidebar">
         <div className="brand">
@@ -419,30 +408,33 @@ function PageTransition({
   );
 }
 
-function ThemeToggle({
-  onToggle,
-  theme,
-}: {
-  onToggle: () => void;
-  theme: ThemePreference;
-}) {
-  const { t } = useI18n();
-  const isDark = theme === 'dark';
+function GlobalLanguageToggle() {
+  const { locale, setLocale, t } = useI18n();
 
   return (
-    <button
-      aria-label={isDark ? t('theme.switchToLight') : t('theme.switchToDark')}
-      aria-pressed={isDark}
-      className="global-theme-toggle"
-      type="button"
-      onClick={onToggle}
+    <div
+      aria-label={t('language.title')}
+      className="global-language-toggle"
+      role="group"
     >
-      <span className="global-theme-toggle-track" aria-hidden="true">
-        <Sun className="global-theme-toggle-icon sun" size={13} />
-        <Moon className="global-theme-toggle-icon moon" size={13} />
-        <span className="global-theme-toggle-thumb" />
-      </span>
-    </button>
+      {LOCALE_LIST.map((meta) => (
+        <button
+          aria-pressed={meta.code === locale}
+          className={
+            meta.code === locale
+              ? 'global-language-option active'
+              : 'global-language-option'
+          }
+          key={meta.code}
+          lang={meta.htmlLang}
+          title={meta.label}
+          type="button"
+          onClick={() => setLocale(meta.code)}
+        >
+          {meta.shortLabel}
+        </button>
+      ))}
+    </div>
   );
 }
 

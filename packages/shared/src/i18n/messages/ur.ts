@@ -34,6 +34,9 @@ export const ur: Messages = {
     open: 'کھولیں',
     of: 'میں سے',
     andMore: 'اور {count} مزید',
+    loginSuccess: 'کامیابی سے سائن اِن ہو گئے',
+    signedOut: 'کامیابی سے سائن آؤٹ ہو گئے',
+    accountDeleted: 'اکاؤنٹ کامیابی سے حذف ہو گیا',
   },
 
   nav: {

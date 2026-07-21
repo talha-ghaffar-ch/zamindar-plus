@@ -38,7 +38,10 @@ export const LOCALES: Record<Locale, LocaleMeta> = {
     label: 'Urdu',
     nativeLabel: 'اردو',
     shortLabel: 'اردو',
-    dir: 'rtl',
+    // Urdu text is right-to-left, but the app layout deliberately stays LTR so
+    // switching language never rearranges the interface. Urdu words still read
+    // right-to-left inside each line via the Unicode bidi algorithm.
+    dir: 'ltr',
     htmlLang: 'ur',
     intlLocale: 'ur-PK',
   },

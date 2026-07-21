@@ -34,6 +34,9 @@ export const roman: Messages = {
     open: 'Kholein',
     of: 'mein se',
     andMore: 'aur {count} mazeed',
+    loginSuccess: 'Kamyabi se sign in ho gaye',
+    signedOut: 'Kamyabi se sign out ho gaye',
+    accountDeleted: 'Account kamyabi se delete ho gaya',
   },
 
   nav: {

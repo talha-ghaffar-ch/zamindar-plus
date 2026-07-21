@@ -4169,18 +4169,14 @@ textarea:focus-visible {
 :root[data-locale="ur"] li,
 :root[data-locale="ur"] label,
 :root[data-locale="ur"] .muted,
-:root[data-locale="ur"] .nav-button span,
 :root[data-locale="ur"] .ai-message p {
-  line-height: 2.15;
+  line-height: 1.9;
 }
 
-:root[data-locale="ur"] h1 {
-  line-height: 1.95;
-}
-
+:root[data-locale="ur"] h1,
 :root[data-locale="ur"] h2,
 :root[data-locale="ur"] h3 {
-  line-height: 1.9;
+  line-height: 1.75;
 }
 
 /* Uppercasing and letter-spacing break connected Urdu script. */
@@ -4189,42 +4185,6 @@ textarea:focus-visible {
 :root[data-locale="ur"] .nav-button span {
   text-transform: none;
   letter-spacing: 0;
-}
-
-/* --- Right-to-left layout --- */
-/* The app shell is a CSS grid; dir=rtl places the sidebar column on the right
-   and mirrors inline flow automatically. These rules fix the details that
-   physical properties would otherwise leave pointing the wrong way. */
-
-[dir="rtl"] .nav-button,
-[dir="rtl"] .logout-button,
-[dir="rtl"] .sidebar-user,
-[dir="rtl"] .brand {
-  text-align: right;
-}
-
-[dir="rtl"] .ai-message-user {
-  justify-self: start;
-}
-
-[dir="rtl"] .ai-message-assistant {
-  justify-self: end;
-}
-
-[dir="rtl"] .ai-action-chip,
-[dir="rtl"] .ai-suggestion-row,
-[dir="rtl"] .detail-list div {
-  text-align: right;
-}
-
-/* Keep numeric / currency / date cells left-to-right even inside RTL text. */
-[dir="rtl"] .metric-value,
-[dir="rtl"] .stat-value,
-[dir="rtl"] .amount,
-[dir="rtl"] time,
-[dir="rtl"] .tag {
-  direction: ltr;
-  unicode-bidi: isolate;
 }
 
 /* --- Language switcher (Settings) --- */
@@ -4305,4 +4265,64 @@ textarea:focus-visible {
 :root[data-theme="dark"] .language-option {
   border-color: var(--line);
   background: var(--field-bg);
+}
+
+/* --- Global language switcher (replaces the old theme toggle) --- */
+.global-language-toggle {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 50;
+  display: flex;
+  gap: 2px;
+  border: 1px solid color-mix(in srgb, var(--line) 72%, var(--cyan));
+  border-radius: 999px;
+  padding: 3px;
+  background: color-mix(in srgb, var(--panel-solid) 86%, transparent);
+  box-shadow: 0 14px 32px rgba(16, 33, 29, 0.14);
+  backdrop-filter: blur(14px);
+}
+
+.global-language-option {
+  min-width: 42px;
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 760;
+  line-height: 1.4;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background 160ms ease;
+}
+
+.global-language-option:hover {
+  color: var(--ink);
+}
+
+.global-language-option.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--green), var(--cyan));
+}
+
+:root[data-theme="dark"] .global-language-toggle {
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--panel-solid) 78%, transparent);
+}
+
+@media (max-width: 640px) {
+  .global-language-toggle {
+    top: 10px;
+    right: 10px;
+  }
+
+  .global-language-option {
+    min-width: 36px;
+    padding: 4px 8px;
+    font-size: 0.72rem;
+  }
 }
