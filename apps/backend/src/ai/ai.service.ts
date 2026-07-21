@@ -21,9 +21,9 @@ const MAX_LIST_ITEMS = 60;
 // Providers occasionally return 5xx when the model is briefly overloaded.
 const LLM_MAX_ATTEMPTS = 4;
 const LLM_RETRY_BASE_MS = 700;
-// Per-minute limits clear in seconds and are worth waiting out; anything
+// Per-minute limits clear in seconds and are worth waiting out once; anything
 // longer is a daily quota, where the user should get an answer instead.
-const LLM_MAX_RATE_LIMIT_WAIT_MS = 15_000;
+const LLM_MAX_RATE_LIMIT_WAIT_MS = 22_000;
 
 const AREA_UNIT_ALIASES: Record<string, string> = {
   acre: 'Acre',
@@ -197,6 +197,9 @@ export class AiService {
     input: Parameters<LlmProvider['complete']>[0],
   ) {
     let lastError: unknown;
+    // Waiting out a per-minute window is worth doing once; repeating it would
+    // leave the user staring at a spinner for a minute.
+    let hasWaitedOutRateLimit = false;
 
     for (let attempt = 0; attempt < LLM_MAX_ATTEMPTS; attempt += 1) {
       try {
@@ -212,6 +215,7 @@ export class AiService {
         // daily quota, where waiting would just stall the user's request.
         const waitsOutRateLimit =
           error.isRateLimit &&
+          !hasWaitedOutRateLimit &&
           error.retryAfterMs !== undefined &&
           error.retryAfterMs <= LLM_MAX_RATE_LIMIT_WAIT_MS;
 
@@ -220,6 +224,10 @@ export class AiService {
           attempt === LLM_MAX_ATTEMPTS - 1
         ) {
           throw error;
+        }
+
+        if (waitsOutRateLimit) {
+          hasWaitedOutRateLimit = true;
         }
 
         const delayMs = waitsOutRateLimit
