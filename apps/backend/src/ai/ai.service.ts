@@ -8,12 +8,19 @@ import { ReportsService } from '../reports/reports.service';
 import { ZameenService } from '../zameen/zameen.service';
 import { AGENT_FUNCTION_DECLARATIONS } from './agent-tools';
 import { ChatMessageDto } from './dto/chat-message.dto';
+import {
+  createLlmProvider,
+  LlmRequestError,
+  type AgentToolCall,
+  type ConversationMessage,
+  type LlmProvider,
+} from './providers';
 
 const MAX_TOOL_ROUNDS = 8;
 const MAX_LIST_ITEMS = 60;
-// Gemini occasionally returns 503 when the model is briefly overloaded.
-const GEMINI_MAX_ATTEMPTS = 4;
-const GEMINI_RETRY_BASE_MS = 700;
+// Providers occasionally return 5xx when the model is briefly overloaded.
+const LLM_MAX_ATTEMPTS = 4;
+const LLM_RETRY_BASE_MS = 700;
 
 const AREA_UNIT_ALIASES: Record<string, string> = {
   acre: 'Acre',
@@ -54,34 +61,21 @@ export type AgentAction = {
 
 type ToolArgs = Record<string, unknown>;
 
-type GeminiFunctionCall = {
-  name: string;
-  args?: ToolArgs;
-};
-
-type GeminiPart = {
-  text?: string;
-  functionCall?: GeminiFunctionCall;
-};
-
-type GeminiResponse = {
-  candidates?: Array<{
-    content?: {
-      parts?: GeminiPart[];
-    };
-  }>;
-};
-
-type RequestPart = Record<string, unknown>;
-
-type RequestContent = {
-  role: 'user' | 'model';
-  parts: RequestPart[];
-};
-
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
+  private provider: LlmProvider | null | undefined;
+
+  /** Built once from environment config; null when no provider is configured. */
+  private getProvider(): LlmProvider | null {
+    if (this.provider === undefined) {
+      this.provider = createLlmProvider();
+      if (this.provider) {
+        this.logger.log(`Zamindar AI provider: ${this.provider.name}`);
+      }
+    }
+    return this.provider;
+  }
 
   constructor(
     private readonly prisma: PrismaService,
@@ -94,84 +88,72 @@ export class AiService {
   ) {}
 
   async chat(userId: string, chatMessageDto: ChatMessageDto) {
-    const apiKey = process.env.GEMINI_API_KEY?.trim();
     const actions: AgentAction[] = [];
+    const provider = this.getProvider();
 
-    if (!apiKey) {
+    if (!provider) {
       return {
         reply:
-          'Zamindar AI is not configured on this server yet. Please ask the administrator to set the Gemini API key.',
+          'Zamindar AI is not configured on this server yet. Please ask the administrator to set up an AI provider.',
         actions,
       };
     }
 
-    const model = process.env.GEMINI_MODEL?.trim() || 'gemini-flash-latest';
     const systemPrompt =
       (await this.buildSystemPrompt(userId)) +
       this.languageInstruction(chatMessageDto.language);
 
-    const history = (chatMessageDto.history ?? []).map(
-      (message): RequestContent => ({
-        role: message.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: message.text }],
-      }),
+    const history: ConversationMessage[] = (chatMessageDto.history ?? []).map(
+      (message): ConversationMessage =>
+        message.role === 'assistant'
+          ? { role: 'assistant', text: message.text }
+          : { role: 'user', text: message.text },
     );
 
-    // Gemini requires the conversation to open on a user turn, but the client
-    // history starts with the assistant greeting; drop any leading model turns.
-    while (history.length > 0 && history[0].role === 'model') {
+    // The conversation must open on a user turn, but the client history starts
+    // with the assistant greeting; drop any leading assistant turns.
+    while (history.length > 0 && history[0].role === 'assistant') {
       history.shift();
     }
 
-    const contents: RequestContent[] = [
+    const messages: ConversationMessage[] = [
       ...history,
-      { role: 'user', parts: [{ text: chatMessageDto.message }] },
+      { role: 'user', text: chatMessageDto.message },
     ];
 
     try {
       for (let round = 0; round <= MAX_TOOL_ROUNDS; round += 1) {
-        const response = await this.callGemini(
-          apiKey,
-          model,
+        const turn = await this.completeWithRetry(provider, {
           systemPrompt,
-          contents,
-        );
-        const parts = response.candidates?.[0]?.content?.parts ?? [];
-        const functionCalls = parts
-          .map((part) => part.functionCall)
-          .filter((call): call is GeminiFunctionCall => Boolean(call?.name));
+          messages,
+          tools: AGENT_FUNCTION_DECLARATIONS,
+        });
 
-        if (functionCalls.length === 0 || round === MAX_TOOL_ROUNDS) {
-          const reply = parts
-            .map((part) => part.text ?? '')
-            .join('')
-            .trim();
-
+        if (turn.toolCalls.length === 0 || round === MAX_TOOL_ROUNDS) {
           return {
             reply:
-              reply ||
+              turn.text ||
               'Sorry, I could not finish that request. Please try again.',
             actions,
           };
         }
 
-        contents.push({
-          role: 'model',
-          parts: parts,
+        messages.push({
+          role: 'assistant',
+          text: turn.text,
+          toolCalls: turn.toolCalls,
+          raw: turn.raw,
         });
 
-        const responseParts: RequestPart[] = [];
-        for (const call of functionCalls) {
+        for (const call of turn.toolCalls) {
           const result = await this.executeTool(userId, call, actions);
-          responseParts.push({
-            functionResponse: {
-              name: call.name,
-              response: result,
-            },
+          messages.push({
+            role: 'tool',
+            toolCallId: call.id,
+            name: call.name,
+            result,
           });
         }
-
-        contents.push({ role: 'user', parts: responseParts });
       }
 
       return {
@@ -184,11 +166,12 @@ export class AiService {
 
       // A typed code lets the client show a properly translated explanation
       // instead of a generic failure string.
-      const errorCode = message.includes('status 429')
-        ? 'RATE_LIMITED'
-        : /status 5\d\d/.test(message)
-          ? 'UNAVAILABLE'
-          : 'FAILED';
+      const errorCode =
+        error instanceof LlmRequestError && error.isRateLimit
+          ? 'RATE_LIMITED'
+          : error instanceof LlmRequestError && error.status >= 500
+            ? 'UNAVAILABLE'
+            : 'FAILED';
 
       return {
         reply:
@@ -201,63 +184,40 @@ export class AiService {
     }
   }
 
-  private async callGemini(
-    apiKey: string,
-    model: string,
-    systemPrompt: string,
-    contents: RequestContent[],
-  ): Promise<GeminiResponse> {
-    let lastError: Error | null = null;
+  /**
+   * A 5xx means the model is briefly overloaded and a short backoff usually
+   * clears it. A 429 is a quota that needs a long wait, so retrying only burns
+   * more of it — fail fast and let the user know.
+   */
+  private async completeWithRetry(
+    provider: LlmProvider,
+    input: Parameters<LlmProvider['complete']>[0],
+  ) {
+    let lastError: unknown;
 
-    for (let attempt = 0; attempt < GEMINI_MAX_ATTEMPTS; attempt += 1) {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            systemInstruction: {
-              parts: [{ text: systemPrompt }],
-            },
-            contents,
-            tools: [{ functionDeclarations: AGENT_FUNCTION_DECLARATIONS }],
-            generationConfig: {
-              // Low temperature keeps tool calling and instruction-following
-              // reliable; this agent needs precision, not creativity.
-              temperature: 0.15,
-              maxOutputTokens: 1024,
-            },
-          }),
-        },
-      );
+    for (let attempt = 0; attempt < LLM_MAX_ATTEMPTS; attempt += 1) {
+      try {
+        return await provider.complete(input);
+      } catch (error) {
+        lastError = error;
 
-      if (response.ok) {
-        return (await response.json()) as GeminiResponse;
+        const isTransient =
+          error instanceof LlmRequestError && error.isTransient;
+        if (!isTransient || attempt === LLM_MAX_ATTEMPTS - 1) {
+          throw error;
+        }
+
+        const delayMs = LLM_RETRY_BASE_MS * 2 ** attempt;
+        this.logger.warn(
+          `${provider.name} returned ${error.status}; retrying in ${delayMs}ms (attempt ${attempt + 1}/${LLM_MAX_ATTEMPTS})`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
-
-      const errorText = await response.text().catch(() => '');
-      lastError = new Error(
-        `Gemini request failed with status ${response.status}: ${errorText.slice(0, 300)}`,
-      );
-
-      // 5xx means the model is briefly overloaded — a short backoff usually
-      // clears it. A 429 is a per-minute quota that needs ~a minute to reset,
-      // so retrying only burns more quota; fail fast and tell the user to wait.
-      const isTransient = [500, 502, 503, 504].includes(response.status);
-      if (!isTransient || attempt === GEMINI_MAX_ATTEMPTS - 1) {
-        break;
-      }
-
-      const delayMs = GEMINI_RETRY_BASE_MS * 2 ** attempt;
-      this.logger.warn(
-        `Gemini returned ${response.status}; retrying in ${delayMs}ms (attempt ${attempt + 1}/${GEMINI_MAX_ATTEMPTS})`,
-      );
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
-    throw lastError ?? new Error('Gemini request failed.');
+    throw lastError instanceof Error
+      ? lastError
+      : new Error('AI request failed.');
   }
 
   private async buildSystemPrompt(userId: string) {
@@ -426,7 +386,7 @@ ${snapshotLines.join('\n')}`;
 
   private async executeTool(
     userId: string,
-    call: GeminiFunctionCall,
+    call: AgentToolCall,
     actions: AgentAction[],
   ): Promise<Record<string, unknown>> {
     try {
