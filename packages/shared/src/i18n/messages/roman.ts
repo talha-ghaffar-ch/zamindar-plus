@@ -140,6 +140,35 @@ export const roman: Messages = {
     aiName: 'Zamindar AI',
   },
 
+  records: {
+    total: 'Kul',
+    number: 'No.',
+    actions: 'Amal',
+    updated: 'Record kamyabi se tabdeel ho gaya',
+    deleted: 'Record kamyabi se delete ho gaya',
+  },
+
+  profiles: {
+    eyebrow: 'Profiles',
+    title: 'Kheti profiles',
+    createTitle: 'Naya profile banayein',
+    editTitle: 'Profile tabdeel karein',
+    createButton: 'Profile banayein',
+    updateButton: 'Profile update karein',
+    created: 'Profile kamyabi se ban gaya',
+    name: 'Profile ka naam',
+    city: 'Shehar',
+    area: 'Chak / Ilaqa',
+    village: 'Gaon',
+    columnProfile: 'Profile',
+    loading: 'Profiles load ho rahe hain…',
+    empty: 'Abhi koi profile nahi.',
+    loadFailed: 'Profiles load nahi ho sake.',
+    saveFailed: 'Profile save nahi ho saka.',
+    deleteFailed: 'Profile delete nahi ho saka.',
+    confirmDelete: 'Kya profile "{name}" delete kar dein?',
+  },
+
   validation: {
     required: 'Ye khana lazmi hai.',
     minLength: 'Kam az kam {count} characters likhein.',

@@ -140,6 +140,35 @@ export const ur: Messages = {
     aiName: 'زمیندار AI',
   },
 
+  records: {
+    total: 'کل',
+    number: 'نمبر',
+    actions: 'کارروائی',
+    updated: 'ریکارڈ کامیابی سے تبدیل ہو گیا',
+    deleted: 'ریکارڈ کامیابی سے حذف ہو گیا',
+  },
+
+  profiles: {
+    eyebrow: 'پروفائلز',
+    title: 'کھیتی کے پروفائل',
+    createTitle: 'نیا پروفائل بنائیں',
+    editTitle: 'پروفائل میں ترمیم کریں',
+    createButton: 'پروفائل بنائیں',
+    updateButton: 'پروفائل تبدیل کریں',
+    created: 'پروفائل کامیابی سے بن گیا',
+    name: 'پروفائل کا نام',
+    city: 'شہر',
+    area: 'چک / علاقہ',
+    village: 'گاؤں',
+    columnProfile: 'پروفائل',
+    loading: 'پروفائل لوڈ ہو رہے ہیں…',
+    empty: 'ابھی کوئی پروفائل نہیں۔',
+    loadFailed: 'پروفائل لوڈ نہیں ہو سکے۔',
+    saveFailed: 'پروفائل محفوظ نہیں ہو سکا۔',
+    deleteFailed: 'پروفائل حذف نہیں ہو سکا۔',
+    confirmDelete: 'کیا پروفائل "{name}" حذف کر دیں؟',
+  },
+
   validation: {
     required: 'یہ خانہ لازمی ہے۔',
     minLength: 'کم از کم {count} حروف درج کریں۔',

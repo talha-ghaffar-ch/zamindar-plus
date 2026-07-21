@@ -7,6 +7,7 @@ import {
   type Profile,
 } from '../lib/api';
 import { FieldLabel } from '../components/FieldLabel';
+import { useI18n } from '../i18n/useT';
 
 type ProfilesPageProps = {
   onNotify: (message: string) => void;
@@ -20,6 +21,7 @@ const initialForm = {
 };
 
 export function ProfilesPage({ onNotify }: ProfilesPageProps) {
+  const { t } = useI18n();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
@@ -45,7 +47,11 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
       })
       .catch((loadError) => {
         if (isActive) {
-          setError(loadError instanceof Error ? loadError.message : 'Failed to load profiles.');
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : t('profiles.loadFailed'),
+          );
         }
       })
       .finally(() => {
@@ -57,7 +63,7 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [t]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -74,10 +80,10 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
 
       if (editingProfileId) {
         await updateProfile(editingProfileId, payload);
-        onNotify('Record updated successfully');
+        onNotify(t('records.updated'));
       } else {
         await createProfile(payload);
-        onNotify('Profile created successfully');
+        onNotify(t('profiles.created'));
       }
 
       setForm(initialForm);
@@ -85,7 +91,9 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
       await loadData();
     } catch (saveError) {
       setError(
-        saveError instanceof Error ? saveError.message : 'Failed to save profile.',
+        saveError instanceof Error
+          ? saveError.message
+          : t('profiles.saveFailed'),
       );
     } finally {
       setIsSaving(false);
@@ -108,7 +116,9 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
   }
 
   async function handleDelete(profile: Profile) {
-    const confirmed = window.confirm(`Delete profile "${profile.profileName}"?`);
+    const confirmed = window.confirm(
+      t('profiles.confirmDelete', { name: profile.profileName }),
+    );
 
     if (!confirmed) {
       return;
@@ -118,7 +128,7 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
 
     try {
       await deleteProfile(profile.id);
-      onNotify('Record deleted successfully');
+      onNotify(t('records.deleted'));
       if (editingProfileId === profile.id) {
         cancelEdit();
       }
@@ -127,7 +137,7 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
       setError(
         deleteError instanceof Error
           ? deleteError.message
-          : 'Failed to delete profile.',
+          : t('profiles.deleteFailed'),
       );
     }
   }
@@ -142,8 +152,8 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
     <>
       <section className="page-header">
         <div>
-          <p className="eyebrow">Profiles</p>
-          <h1>Kheti profiles</h1>
+          <p className="eyebrow">{t('profiles.eyebrow')}</p>
+          <h1>{t('profiles.title')}</h1>
         </div>
       </section>
 
@@ -152,16 +162,20 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
           <div className="form-heading">
-            <h2>{editingProfileId ? 'Edit profile' : 'Create profile'}</h2>
+            <h2>
+              {editingProfileId
+                ? t('profiles.editTitle')
+                : t('profiles.createTitle')}
+            </h2>
             {editingProfileId ? (
               <button className="text-button" type="button" onClick={cancelEdit}>
-                Cancel
+                {t('common.cancel')}
               </button>
             ) : null}
           </div>
 
           <label>
-            <FieldLabel required>Profile name</FieldLabel>
+            <FieldLabel required>{t('profiles.name')}</FieldLabel>
             <input
               required
               minLength={2}
@@ -171,7 +185,7 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
           </label>
 
           <label>
-            <FieldLabel>City</FieldLabel>
+            <FieldLabel>{t('profiles.city')}</FieldLabel>
             <input
               value={form.city}
               onChange={(event) => setForm({ ...form, city: event.target.value })}
@@ -179,7 +193,7 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
           </label>
 
           <label>
-            <FieldLabel>Area</FieldLabel>
+            <FieldLabel>{t('profiles.area')}</FieldLabel>
             <input
               value={form.chakAreaName}
               onChange={(event) => setForm({ ...form, chakAreaName: event.target.value })}
@@ -187,7 +201,7 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
           </label>
 
           <label>
-            <FieldLabel>Village</FieldLabel>
+            <FieldLabel>{t('profiles.village')}</FieldLabel>
             <input
               value={form.villageName}
               onChange={(event) => setForm({ ...form, villageName: event.target.value })}
@@ -196,18 +210,20 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
 
           <button className="primary-button" disabled={isSaving} type="submit">
             {isSaving
-              ? 'Saving...'
+              ? t('common.saving')
               : editingProfileId
-                ? 'Update profile'
-                : 'Create profile'}
+                ? t('profiles.updateButton')
+                : t('profiles.createButton')}
           </button>
         </form>
 
         <section className="panel">
           <div className="panel-header">
             <div>
-              <p className="eyebrow">Profiles</p>
-              <h2>{profiles.length} Total</h2>
+              <p className="eyebrow">{t('profiles.eyebrow')}</p>
+              <h2>
+                {profiles.length} {t('records.total')}
+              </h2>
             </div>
           </div>
 
@@ -215,22 +231,22 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
             <table>
               <thead>
                 <tr>
-                  <th>No.</th>
-                  <th>Profile</th>
-                  <th>City</th>
-                  <th>Area</th>
-                  <th>Village</th>
-                  <th>Actions</th>
+                  <th>{t('records.number')}</th>
+                  <th>{t('profiles.columnProfile')}</th>
+                  <th>{t('profiles.city')}</th>
+                  <th>{t('profiles.area')}</th>
+                  <th>{t('profiles.village')}</th>
+                  <th>{t('records.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6}>Loading profiles...</td>
+                    <td colSpan={6}>{t('profiles.loading')}</td>
                   </tr>
                 ) : sortedProfiles.length === 0 ? (
                   <tr>
-                    <td colSpan={6}>No profiles yet.</td>
+                    <td colSpan={6}>{t('profiles.empty')}</td>
                   </tr>
                 ) : (
                   sortedProfiles.map((profile, index) => (
@@ -245,14 +261,14 @@ export function ProfilesPage({ onNotify }: ProfilesPageProps) {
                       <td>
                         <div className="action-row">
                           <button type="button" onClick={() => startEdit(profile)}>
-                            Edit
+                            {t('common.edit')}
                           </button>
                           <button
                             className="danger-text-button"
                             type="button"
                             onClick={() => void handleDelete(profile)}
                           >
-                            Delete
+                            {t('common.delete')}
                           </button>
                         </div>
                       </td>

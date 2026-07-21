@@ -142,6 +142,36 @@ export const en = {
     aiName: 'Zamindar AI',
   },
 
+  // Shared strings for the record (CRUD) screens.
+  records: {
+    total: 'Total',
+    number: 'No.',
+    actions: 'Actions',
+    updated: 'Record updated successfully',
+    deleted: 'Record deleted successfully',
+  },
+
+  profiles: {
+    eyebrow: 'Profiles',
+    title: 'Farm profiles',
+    createTitle: 'Create profile',
+    editTitle: 'Edit profile',
+    createButton: 'Create profile',
+    updateButton: 'Update profile',
+    created: 'Profile created successfully',
+    name: 'Profile name',
+    city: 'City',
+    area: 'Area',
+    village: 'Village',
+    columnProfile: 'Profile',
+    loading: 'Loading profiles…',
+    empty: 'No profiles yet.',
+    loadFailed: 'Could not load profiles.',
+    saveFailed: 'Could not save the profile.',
+    deleteFailed: 'Could not delete the profile.',
+    confirmDelete: 'Delete profile "{name}"?',
+  },
+
   validation: {
     required: 'This field is required.',
     minLength: 'Please enter at least {count} characters.',
