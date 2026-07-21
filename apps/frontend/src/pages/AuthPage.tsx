@@ -13,7 +13,9 @@ import {
   ShieldCheck,
   UserPlus,
 } from 'lucide-react';
+import type { TranslationKey } from '@zamindar/shared';
 import { FieldLabel } from '../components/FieldLabel';
+import { useI18n } from '../i18n/useT';
 import {
   forgotPassword,
   googleLogin,
@@ -147,36 +149,26 @@ function GoogleIcon() {
   );
 }
 
-function getAuthTitle(mode: AuthMode) {
-  if (mode === 'login') return 'Sign in';
-  if (mode === 'signup') return 'Create account';
-  if (mode === 'verify') return 'Verify account';
-  if (mode === 'forgot') return 'Reset password';
+function getAuthTitleKey(mode: AuthMode): TranslationKey {
+  if (mode === 'login') return 'auth.signIn';
+  if (mode === 'signup') return 'auth.createAccount';
+  if (mode === 'verify') return 'auth.verifyAccount';
+  if (mode === 'forgot') return 'auth.resetPassword';
 
-  return 'Set new password';
+  return 'auth.setNewPassword';
 }
 
-function getAuthDescription(mode: AuthMode) {
-  if (mode === 'login') {
-    return 'Open your farm dashboard and continue from your latest records.';
-  }
+function getAuthDescriptionKey(mode: AuthMode): TranslationKey {
+  if (mode === 'login') return 'auth.signInDesc';
+  if (mode === 'signup') return 'auth.signupDesc';
+  if (mode === 'verify') return 'auth.verifyDesc';
+  if (mode === 'forgot') return 'auth.forgotDesc';
 
-  if (mode === 'signup') {
-    return 'Create a farmer account connected to the shared backend.';
-  }
-
-  if (mode === 'verify') {
-    return 'Enter the verification code to complete your account setup.';
-  }
-
-  if (mode === 'forgot') {
-    return 'Enter your account email and we will send a password reset code.';
-  }
-
-  return 'Enter the code from your email and choose a strong new password.';
+  return 'auth.resetDesc';
 }
 
 export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
+  const { t } = useI18n();
   const [mode, setMode] = useState<AuthMode>('login');
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
@@ -223,7 +215,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       setSuccess('');
 
       if (!response.credential) {
-        setError('Google did not return a valid sign-in credential.');
+        setError(t('auth.googleInvalid'));
         return;
       }
 
@@ -235,17 +227,17 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
         const message =
           googleError instanceof Error
             ? googleError.message
-            : 'Google sign-in failed.';
+            : t('auth.googleFailed');
         setError(message);
 
         if (message.toLowerCase().includes('not configured')) {
-          onNotify('Google sign-in will be available soon.');
+          onNotify(t('auth.googleUnavailable'));
         }
       } finally {
         setIsSaving(false);
       }
     },
-    [onAuthenticated, onNotify],
+    [onAuthenticated, onNotify, t],
   );
 
   useEffect(() => {
@@ -296,13 +288,13 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       void verifyEmail({ token: verificationToken })
         .then((response) => {
           setSuccess(response.message);
-          onNotify('Email verified successfully');
+          onNotify(t('auth.emailVerified'));
         })
         .catch((verificationError) => {
           setError(
             verificationError instanceof Error
               ? verificationError.message
-              : 'Email verification failed.',
+              : t('auth.verificationFailed'),
           );
         })
         .finally(() => setIsSaving(false));
@@ -311,7 +303,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     return () => {
       window.clearTimeout(verifyTimer);
     };
-  }, [onNotify]);
+  }, [onNotify, t]);
 
   useEffect(() => {
     if (!googleClientId || !googleButtonRef.current) {
@@ -355,7 +347,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       })
       .catch(() => {
         if (!isCancelled) {
-          setError('Google sign-in could not load. Check your internet connection.');
+          setError(t('auth.googleLoadFailed'));
         }
       });
 
@@ -366,7 +358,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       }
       buttonElement.replaceChildren();
     };
-  }, [googleClientId, mode]);
+  }, [googleClientId, mode, t]);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -379,7 +371,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       onAuthenticated(await login(loginForm));
     } catch (loginError) {
       const message =
-        loginError instanceof Error ? loginError.message : 'Login failed.';
+        loginError instanceof Error ? loginError.message : t('auth.loginFailed');
       setError(message);
       setShowForgotPassword(
         message.toLowerCase().includes('invalid email or password'),
@@ -415,10 +407,10 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       });
       setMode('verify');
       setSuccess(response.message);
-      onNotify('Account created successfully. Verify your email to continue.');
+      onNotify(t('auth.accountCreated'));
     } catch (signupError) {
       setError(
-        signupError instanceof Error ? signupError.message : 'Signup failed.',
+        signupError instanceof Error ? signupError.message : t('auth.signupFailed'),
       );
     } finally {
       setIsSaving(false);
@@ -439,12 +431,12 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       setResendAttempts(0);
       setMode('login');
       setSuccess(response.message);
-      onNotify('Email verified successfully');
+      onNotify(t('auth.emailVerified'));
     } catch (verificationError) {
       setError(
         verificationError instanceof Error
           ? verificationError.message
-          : 'Email verification failed.',
+          : t('auth.verificationFailed'),
       );
     } finally {
       setIsSaving(false);
@@ -453,18 +445,18 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
 
   function handleGooglePlaceholder() {
     setSuccess('');
-    setError('Google sign-in will be available soon.');
-    onNotify('Google sign-in will be available soon.');
+    setError(t('auth.googleUnavailable'));
+    onNotify(t('auth.googleUnavailable'));
   }
 
   async function handleResendVerification() {
     if (!pendingVerificationEmail) {
-      setError('Create an account first, then request a new verification code.');
+      setError(t('auth.signupFirst'));
       return;
     }
 
     if (resendAttempts >= MAX_VERIFICATION_RESEND_ATTEMPTS) {
-      setError('Verification resend limit reached. Try again later.');
+      setError(t('auth.resendLimit'));
       return;
     }
 
@@ -479,12 +471,12 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       setResendAttempts((currentAttempts) => currentAttempts + 1);
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
       setSuccess(response.message);
-      onNotify('Verification code refreshed');
+      onNotify(t('auth.codeRefreshed'));
     } catch (resendError) {
       setError(
         resendError instanceof Error
           ? resendError.message
-          : 'Verification code could not be refreshed.',
+          : t('auth.codeRefreshFailed'),
       );
     } finally {
       setIsResendingVerification(false);
@@ -508,12 +500,12 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       setResetPasswordForm(initialResetPasswordForm);
       setMode('reset');
       setSuccess(response.message);
-      onNotify('Password reset code sent');
+      onNotify(t('auth.resetSent'));
     } catch (forgotError) {
       setError(
         forgotError instanceof Error
           ? forgotError.message
-          : 'Password reset email could not be sent.',
+          : t('auth.resetSendFailed'),
       );
     } finally {
       setIsSaving(false);
@@ -526,7 +518,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
     setSuccess('');
 
     if (resetPasswordForm.password !== resetPasswordForm.confirmPassword) {
-      setError('Passwords do not match.');
+      setError(t('auth.passwordsMismatch'));
       return;
     }
 
@@ -542,12 +534,12 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
       setResetPasswordForm(initialResetPasswordForm);
       setMode('login');
       setSuccess(response.message);
-      onNotify('Password reset successfully');
+      onNotify(t('auth.resetSuccess'));
     } catch (resetError) {
       setError(
         resetError instanceof Error
           ? resetError.message
-          : 'Password reset failed.',
+          : t('auth.resetFailed'),
       );
     } finally {
       setIsSaving(false);
@@ -587,23 +579,23 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
 
         <div className="auth-card">
           <div className="auth-card-header">
-            <p className="eyebrow">Secure access</p>
-            <h2>{getAuthTitle(mode)}</h2>
-            <p>{getAuthDescription(mode)}</p>
+            <p className="eyebrow">{t('auth.eyebrow')}</p>
+            <h2>{t(getAuthTitleKey(mode))}</h2>
+            <p>{t(getAuthDescriptionKey(mode))}</p>
           </div>
 
           <div className="auth-status-row">
             <span>
               <ShieldCheck size={14} aria-hidden="true" />
-              Secure session
+              {t('auth.secureSession')}
             </span>
             <span>
               <BarChart3 size={14} aria-hidden="true" />
-              Profit reports
+              {t('auth.profitReports')}
             </span>
             <span>
               <BadgeCheck size={14} aria-hidden="true" />
-              Private data
+              {t('auth.privateData')}
             </span>
           </div>
 
@@ -637,7 +629,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                 >
                   <div className="google-auth-fallback" aria-hidden="true">
                     <GoogleIcon />
-                    {mode === 'login' ? 'Sign in with Google' : 'Sign up with Google'}
+                    {mode === 'login' ? t('auth.signInGoogle') : t('auth.signUpGoogle')}
                   </div>
                   <div className="google-auth-render" ref={googleButtonRef} />
                 </div>
@@ -648,7 +640,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                   onClick={handleGooglePlaceholder}
                 >
                   <GoogleIcon />
-                  {mode === 'login' ? 'Sign in with Google' : 'Sign up with Google'}
+                  {mode === 'login' ? t('auth.signInGoogle') : t('auth.signUpGoogle')}
                 </button>
               )}
             </>
@@ -659,7 +651,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               onClick={() => switchMode(mode === 'verify' ? 'signup' : 'login')}
             >
               <ArrowLeft size={15} aria-hidden="true" />
-              {mode === 'verify' ? 'Back to create account' : 'Back to sign in'}
+              {mode === 'verify' ? t('auth.backToSignup') : t('auth.backToSignIn')}
             </button>
           )}
 
@@ -669,7 +661,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
           {mode === 'login' ? (
             <form className="form-grid auth-form" onSubmit={handleLogin}>
               <label>
-                <FieldLabel required>Email</FieldLabel>
+                <FieldLabel required>{t('auth.email')}</FieldLabel>
                 <input
                   required
                   type="email"
@@ -682,7 +674,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               </label>
 
               <label>
-                <FieldLabel required>Password</FieldLabel>
+                <FieldLabel required>{t('auth.password')}</FieldLabel>
                 <span className="password-field">
                   <input
                     required
@@ -699,7 +691,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                   />
                   <button
                     aria-label={
-                      isLoginPasswordVisible ? 'Hide password' : 'Show password'
+                      isLoginPasswordVisible ? t('auth.hidePassword') : t('auth.showPassword')
                     }
                     className="password-toggle"
                     type="button"
@@ -725,7 +717,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                 disabled={isSaving}
                 type="submit"
               >
-                {isSaving ? 'Signing in...' : 'Sign in'}
+                {isSaving ? t('auth.signingIn') : t('auth.signIn')}
               </button>
 
               {showForgotPassword ? (
@@ -745,7 +737,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
           {mode === 'signup' ? (
             <form className="form-grid auth-form signup-form" onSubmit={handleSignup}>
               <label>
-                <FieldLabel required>First name</FieldLabel>
+                <FieldLabel required>{t('auth.firstName')}</FieldLabel>
                 <input
                   required
                   minLength={2}
@@ -760,7 +752,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               </label>
 
               <label>
-                <FieldLabel required>Last name</FieldLabel>
+                <FieldLabel required>{t('auth.lastName')}</FieldLabel>
                 <input
                   required
                   minLength={2}
@@ -772,7 +764,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               </label>
 
               <label>
-                <FieldLabel required>Email</FieldLabel>
+                <FieldLabel required>{t('auth.email')}</FieldLabel>
                 <input
                   required
                   type="email"
@@ -784,7 +776,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               </label>
 
               <label>
-                <FieldLabel>Phone</FieldLabel>
+                <FieldLabel>{t('auth.phone')}</FieldLabel>
                 <input
                   value={signupForm.phone}
                   onChange={(event) =>
@@ -794,7 +786,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               </label>
 
               <label>
-                <FieldLabel required>Password</FieldLabel>
+                <FieldLabel required>{t('auth.password')}</FieldLabel>
                 <span className="password-field">
                   <input
                     required
@@ -807,7 +799,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                   />
                   <button
                     aria-label={
-                      isSignupPasswordVisible ? 'Hide password' : 'Show password'
+                      isSignupPasswordVisible ? t('auth.hidePassword') : t('auth.showPassword')
                     }
                     className="password-toggle"
                     type="button"
@@ -825,7 +817,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               </label>
 
               <label>
-                <FieldLabel>Farmer type</FieldLabel>
+                <FieldLabel>{t('auth.farmerType')}</FieldLabel>
                 <select
                   value={signupForm.farmerType}
                   onChange={(event) =>
@@ -835,11 +827,11 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                     })
                   }
                 >
-                  <option value="Land Owner">Land owner</option>
-                  <option value="Thekka Farmer">Thekka farmer</option>
-                  <option value="Batai Farmer">Batai farmer</option>
-                  <option value="Family Member">Family member</option>
-                  <option value="Farm Manager">Farm manager</option>
+                  <option value="Land Owner">{t('auth.typeLandOwner')}</option>
+                  <option value="Thekka Farmer">{t('auth.typeThekka')}</option>
+                  <option value="Batai Farmer">{t('auth.typeBatai')}</option>
+                  <option value="Family Member">{t('auth.typeFamily')}</option>
+                  <option value="Farm Manager">{t('auth.typeManager')}</option>
                 </select>
               </label>
 
@@ -852,7 +844,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                 disabled={isSaving}
                 type="submit"
               >
-                {isSaving ? 'Creating...' : 'Create account'}
+                {isSaving ? t('auth.creating') : t('auth.createAccount')}
               </button>
             </form>
           ) : null}
@@ -867,7 +859,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               </div>
 
               <label>
-                <FieldLabel required>Verification code</FieldLabel>
+                <FieldLabel required>{t('auth.verificationCode')}</FieldLabel>
                 <input
                   required
                   inputMode="numeric"
@@ -893,7 +885,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                 type="submit"
               >
                 <CheckCircle2 size={16} aria-hidden="true" />
-                {isSaving ? 'Verifying...' : 'Verify account'}
+                {isSaving ? t('auth.verifying') : t('auth.verifyAccount')}
               </button>
 
               {resendCooldown > 0 ? (
@@ -909,8 +901,8 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                 >
                   <RefreshCw size={15} aria-hidden="true" />
                   {isResendingVerification
-                    ? 'Refreshing code...'
-                    : 'Resend verification email'}
+                    ? t('auth.refreshingCode')
+                    : t('auth.resendVerification')}
                 </button>
               ) : (
                 <p className="verification-cooldown">
@@ -923,7 +915,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
           {mode === 'forgot' ? (
             <form className="form-grid auth-form" onSubmit={handleForgotPassword}>
               <label>
-                <FieldLabel required>Email</FieldLabel>
+                <FieldLabel required>{t('auth.email')}</FieldLabel>
                 <input
                   required
                   type="email"
@@ -945,7 +937,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                 disabled={isSaving}
                 type="submit"
               >
-                {isSaving ? 'Sending...' : 'Send reset code'}
+                {isSaving ? t('auth.sending') : t('auth.sendResetCode')}
               </button>
             </form>
           ) : null}
@@ -962,7 +954,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               ) : null}
 
               <label>
-                <FieldLabel required>Reset code</FieldLabel>
+                <FieldLabel required>{t('auth.resetCode')}</FieldLabel>
                 <input
                   required
                   inputMode="numeric"
@@ -979,7 +971,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               </label>
 
               <label>
-                <FieldLabel required>New password</FieldLabel>
+                <FieldLabel required>{t('auth.newPassword')}</FieldLabel>
                 <span className="password-field">
                   <input
                     required
@@ -995,7 +987,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                   />
                   <button
                     aria-label={
-                      isResetPasswordVisible ? 'Hide password' : 'Show password'
+                      isResetPasswordVisible ? t('auth.hidePassword') : t('auth.showPassword')
                     }
                     className="password-toggle"
                     type="button"
@@ -1013,7 +1005,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
               </label>
 
               <label>
-                <FieldLabel required>Confirm password</FieldLabel>
+                <FieldLabel required>{t('auth.confirmPassword')}</FieldLabel>
                 <input
                   required
                   minLength={8}
@@ -1037,7 +1029,7 @@ export function AuthPage({ onAuthenticated, onNotify }: AuthPageProps) {
                 disabled={isSaving}
                 type="submit"
               >
-                {isSaving ? 'Resetting...' : 'Reset password'}
+                {isSaving ? t('auth.resetting') : t('auth.resetPassword')}
               </button>
             </form>
           ) : null}
