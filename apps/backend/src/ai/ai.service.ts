@@ -992,7 +992,31 @@ ${snapshotLines.join('\n')}`;
     if (typeof value !== 'string' || value.trim() === '') {
       return undefined;
     }
-    const date = new Date(value.trim());
+
+    const raw = value.trim();
+    const normalized = raw.toLowerCase().replace(/[_\s-]+/g, '');
+
+    // Models sometimes send a placeholder such as "current_date" or "today"
+    // instead of resolving the date themselves.
+    const dayOffsets: Record<string, number> = {
+      today: 0,
+      currentdate: 0,
+      todaysdate: 0,
+      now: 0,
+      aaj: 0,
+      yesterday: -1,
+      kal: -1,
+      guzishtakal: -1,
+      tomorrow: 1,
+    };
+
+    if (normalized in dayOffsets) {
+      const date = new Date();
+      date.setUTCDate(date.getUTCDate() + dayOffsets[normalized]);
+      return new Date(date.toISOString().slice(0, 10));
+    }
+
+    const date = new Date(raw);
     if (Number.isNaN(date.getTime())) {
       return undefined;
     }

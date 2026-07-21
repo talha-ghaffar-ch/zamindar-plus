@@ -163,9 +163,14 @@ export class OpenAiCompatibleProvider implements LlmProvider {
       .map((call) => {
         let args: Record<string, unknown> = {};
         try {
-          args = call.function?.arguments
-            ? (JSON.parse(call.function.arguments) as Record<string, unknown>)
+          const parsed: unknown = call.function?.arguments
+            ? JSON.parse(call.function.arguments)
             : {};
+          // Models sometimes send the literal "null" for a no-argument tool.
+          args =
+            parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+              ? (parsed as Record<string, unknown>)
+              : {};
         } catch {
           args = {};
         }
