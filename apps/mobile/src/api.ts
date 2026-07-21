@@ -549,12 +549,34 @@ export const getCropProfitability = () =>
 // AI assistant
 // ---------------------------------------------------------------------------
 
+export type AiActionEntity =
+  | 'profile'
+  | 'zameen'
+  | 'crop'
+  | 'expense'
+  | 'income';
+
+export type AiAction = {
+  type: 'created' | 'updated' | 'deleted';
+  entity: AiActionEntity;
+  id: string;
+  label: string;
+};
+
+export type AiChatResponse = {
+  reply: string;
+  actions?: AiAction[];
+  /** Set when the turn failed, so the UI can explain why in the user's language. */
+  errorCode?: 'RATE_LIMITED' | 'UNAVAILABLE' | 'FAILED';
+};
+
 export function sendAiMessage(
   message: string,
   history: AiChatHistoryMessage[],
+  language?: string,
 ) {
-  return requestJson<{reply: string}>('/ai/chat', {
+  return requestJson<AiChatResponse>('/ai/chat', {
     method: 'POST',
-    body: JSON.stringify({message, history}),
+    body: JSON.stringify({message, history, language}),
   });
 }

@@ -34,37 +34,90 @@ export function createFormatters(locale: Locale): Formatters {
   const { intlLocale } = LOCALES[locale];
   const numericLocale = `${intlLocale}-u-nu-latn`;
 
-  const pluralRules = new Intl.PluralRules(intlLocale);
-
   return {
     number(value, options) {
-      return new Intl.NumberFormat(numericLocale, options).format(value);
+      return safeNumber(numericLocale, value, options);
     },
     currency(value, currency = 'PKR') {
-      // Render as "Rs 1,234" style: symbol from a narrow currency format,
-      // grouped Latin digits, no forced decimals.
-      const formatted = new Intl.NumberFormat(numericLocale, {
+      // Render as "Rs 1,234": grouped Latin digits, no forced decimals.
+      const formatted = safeNumber(numericLocale, value, {
         maximumFractionDigits: 2,
-      }).format(value);
+      });
       const prefix = currency === 'PKR' ? 'Rs' : currency;
       return `${prefix} ${formatted}`;
     },
     date(value, options) {
-      return new Intl.DateTimeFormat(numericLocale, {
+      return safeDate(numericLocale, toDate(value), {
         ...DEFAULT_DATE_OPTIONS,
         ...options,
-      }).format(toDate(value));
+      });
     },
     monthYear(month, year) {
       const date = new Date(Date.UTC(year, Math.max(0, month - 1), 1));
-      return new Intl.DateTimeFormat(numericLocale, {
+      return safeDate(numericLocale, date, {
         month: 'long',
         year: 'numeric',
         timeZone: 'UTC',
-      }).format(date);
+      });
     },
     plural(count) {
-      return pluralRules.select(count);
+      try {
+        return new Intl.PluralRules(intlLocale).select(count);
+      } catch {
+        return count === 1 ? 'one' : 'other';
+      }
     },
   };
+}
+
+/**
+ * React Native's Hermes engine ships a reduced Intl implementation, and some
+ * builds omit it entirely. These wrappers fall back to plain formatting rather
+ * than throwing, so the same shared code runs on web and mobile.
+ */
+function safeNumber(
+  locale: string,
+  value: number,
+  options?: Intl.NumberFormatOptions,
+): string {
+  try {
+    return new Intl.NumberFormat(locale, options).format(value);
+  } catch {
+    // Group thousands manually so amounts stay readable.
+    const [whole, fraction] = String(value).split('.');
+    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return fraction ? `${grouped}.${fraction}` : grouped;
+  }
+}
+
+const SHORT_MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+function safeDate(
+  locale: string,
+  date: Date,
+  options: Intl.DateTimeFormatOptions,
+): string {
+  try {
+    return new Intl.DateTimeFormat(locale, options).format(date);
+  } catch {
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = SHORT_MONTHS[date.getUTCMonth()] ?? '';
+    const year = date.getUTCFullYear();
+    return options.day === undefined
+      ? `${month} ${year}`
+      : `${day} ${month} ${year}`;
+  }
 }
