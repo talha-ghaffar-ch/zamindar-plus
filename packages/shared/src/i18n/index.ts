@@ -20,4 +20,6 @@ export {
   type TranslationVars,
 } from './translate';
 
+export { ownershipTypeKey, areaUnitKey } from './labels';
+
 export { en, loadCatalog, type Messages } from './messages';

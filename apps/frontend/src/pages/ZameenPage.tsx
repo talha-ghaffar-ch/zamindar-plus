@@ -1,5 +1,11 @@
 import { type FormEvent, useEffect, useState } from 'react';
-import { AREA_UNITS, toSquareFeet, type AreaUnit } from '@zamindar/shared';
+import {
+  AREA_UNITS,
+  areaUnitKey,
+  ownershipTypeKey,
+  toSquareFeet,
+  type AreaUnit,
+} from '@zamindar/shared';
 
 import {
   createZameen,
@@ -12,6 +18,7 @@ import {
 } from '../lib/api';
 import { FieldLabel } from '../components/FieldLabel';
 import { groupByParent } from '../lib/recordGrouping';
+import { useI18n } from '../i18n/useT';
 
 type ZameenPageProps = {
   onNotify: (message: string) => void;
@@ -29,6 +36,7 @@ const initialForm = {
 };
 
 export function ZameenPage({ onNotify }: ZameenPageProps) {
+  const { t } = useI18n();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [zameen, setZameen] = useState<Zameen[]>([]);
   const [form, setForm] = useState(initialForm);
@@ -71,7 +79,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
       })
       .catch((loadError) => {
         if (isActive) {
-          setError(loadError instanceof Error ? loadError.message : 'Failed to load zameen.');
+          setError(loadError instanceof Error ? loadError.message : t('zameen.loadFailed'));
         }
       })
       .finally(() => {
@@ -83,7 +91,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [t]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -108,10 +116,10 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
 
       if (editingZameenId) {
         await updateZameen(editingZameenId, payload);
-        onNotify('Record updated successfully');
+        onNotify(t('records.updated'));
       } else {
         await createZameen(payload);
-        onNotify('Zameen created successfully');
+        onNotify(t('zameen.created'));
       }
 
       setForm({
@@ -122,7 +130,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
       await loadData();
     } catch (saveError) {
       setError(
-        saveError instanceof Error ? saveError.message : 'Failed to save zameen.',
+        saveError instanceof Error ? saveError.message : t('zameen.saveFailed'),
       );
     } finally {
       setIsSaving(false);
@@ -152,7 +160,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
   }
 
   async function handleDelete(item: Zameen) {
-    const confirmed = window.confirm(`Delete zameen "${item.zameenName}"?`);
+    const confirmed = window.confirm(t('zameen.confirmDelete', { name: item.zameenName }));
 
     if (!confirmed) {
       return;
@@ -162,7 +170,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
 
     try {
       await deleteZameen(item.id);
-      onNotify('Record deleted successfully');
+      onNotify(t('records.deleted'));
       if (editingZameenId === item.id) {
         cancelEdit();
       }
@@ -171,7 +179,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
       setError(
         deleteError instanceof Error
           ? deleteError.message
-          : 'Failed to delete zameen.',
+          : t('zameen.deleteFailed'),
       );
     }
   }
@@ -199,8 +207,8 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
     <>
       <section className="page-header">
         <div>
-          <p className="eyebrow">Zameen</p>
-          <h1>Zameen records</h1>
+          <p className="eyebrow">{t('zameen.eyebrow')}</p>
+          <h1>{t('zameen.title')}</h1>
         </div>
       </section>
 
@@ -209,7 +217,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
           <div className="form-heading">
-            <h2>{editingZameenId ? 'Edit zameen' : 'Create zameen'}</h2>
+            <h2>{editingZameenId ? t('zameen.editTitle') : t('zameen.createTitle')}</h2>
             {editingZameenId ? (
               <button className="text-button" type="button" onClick={cancelEdit}>
                 Cancel
@@ -218,7 +226,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </div>
 
           <label>
-            <FieldLabel required>Profile</FieldLabel>
+            <FieldLabel required>{t('zameen.profile')}</FieldLabel>
             <select
               required
               value={form.profileId}
@@ -233,7 +241,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Zameen name</FieldLabel>
+            <FieldLabel required>{t('zameen.name')}</FieldLabel>
             <input
               required
               minLength={2}
@@ -243,7 +251,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </label>
 
           <label>
-            <FieldLabel>Murabba number</FieldLabel>
+            <FieldLabel>{t('zameen.murabba')}</FieldLabel>
             <input
               value={form.murabbaNumber}
               onChange={(event) => setForm({ ...form, murabbaNumber: event.target.value })}
@@ -251,7 +259,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </label>
 
           <label>
-            <FieldLabel>Killa number</FieldLabel>
+            <FieldLabel>{t('zameen.killa')}</FieldLabel>
             <input
               value={form.killaNumber}
               onChange={(event) => setForm({ ...form, killaNumber: event.target.value })}
@@ -259,7 +267,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </label>
 
           <label>
-            <FieldLabel>Khasra number</FieldLabel>
+            <FieldLabel>{t('zameen.khasra')}</FieldLabel>
             <input
               value={form.khasraNumber}
               onChange={(event) => setForm({ ...form, khasraNumber: event.target.value })}
@@ -267,7 +275,7 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Total area</FieldLabel>
+            <FieldLabel required>{t('zameen.totalArea')}</FieldLabel>
             <input
               required
               min="0.01"
@@ -279,52 +287,59 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Area unit</FieldLabel>
+            <FieldLabel required>{t('zameen.areaUnit')}</FieldLabel>
             <select
               value={form.totalAreaUnit}
               onChange={(event) => setForm({ ...form, totalAreaUnit: event.target.value })}
             >
-              {AREA_UNITS.map((unit) => (
-                <option key={unit}>{unit}</option>
-              ))}
+              {AREA_UNITS.map((unit) => {
+                const unitKey = areaUnitKey(unit);
+                return (
+                  <option key={unit} value={unit}>
+                    {unitKey ? t(unitKey) : unit}
+                  </option>
+                );
+              })}
             </select>
           </label>
 
           <label>
-            <FieldLabel>Ownership type</FieldLabel>
+            <FieldLabel>{t('zameen.ownershipType')}</FieldLabel>
             <select
               value={form.ownershipType}
               onChange={(event) => setForm({ ...form, ownershipType: event.target.value })}
             >
-              <option value="Own Land">Own land</option>
-              <option value="Thekka Land">Thekka land</option>
-              <option value="Batai Land">Batai land</option>
-              <option value="Family Land">Family land</option>
-              <option value="Managed Land">Managed land</option>
+              <option value="Own Land">{t('units.ownershipOwn')}</option>
+              <option value="Thekka Land">{t('units.ownershipThekka')}</option>
+              <option value="Batai Land">{t('units.ownershipBatai')}</option>
+              <option value="Family Land">{t('units.ownershipFamily')}</option>
+              <option value="Managed Land">{t('units.ownershipManaged')}</option>
             </select>
           </label>
 
           <button className="primary-button" disabled={isSaving || profiles.length === 0} type="submit">
             {isSaving
-              ? 'Saving...'
+              ? t('common.saving')
               : editingZameenId
-                ? 'Update zameen'
-                : 'Create zameen'}
+                ? t('zameen.updateButton')
+                : t('zameen.createButton')}
           </button>
         </form>
 
         <section className="panel">
           <div className="panel-header">
             <div>
-              <p className="eyebrow">Zameen</p>
-              <h2>{visibleZameen.length} Total</h2>
+              <p className="eyebrow">{t('zameen.eyebrow')}</p>
+              <h2>
+                {visibleZameen.length} {t('records.total')}
+              </h2>
             </div>
             <select
               className="inline-filter"
               value={profileFilter}
               onChange={(event) => setProfileFilter(event.target.value)}
             >
-              <option value="all">All profiles</option>
+              <option value="all">{t('zameen.allProfiles')}</option>
               {sortedProfiles.map((profile) => (
                 <option key={profile.id} value={profile.id}>
                   {profile.profileName}
@@ -334,9 +349,9 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
           </div>
 
           {isLoading ? (
-            <p className="muted">Loading zameen...</p>
+            <p className="muted">{t('zameen.loading')}</p>
           ) : groupedZameen.length === 0 ? (
-            <p className="muted">No zameen records yet.</p>
+            <p className="muted">{t('zameen.empty')}</p>
           ) : (
             <div className="grouped-records">
               {groupedZameen.map((group) => (
@@ -354,26 +369,31 @@ export function ZameenPage({ onNotify }: ZameenPageProps) {
                       .map((item) => (
                         <article className="record-card" key={item.id}>
                           <div>
-                            <p className="eyebrow">{item.ownershipType ?? 'Ownership not set'}</p>
+                            <p className="eyebrow">{ownershipTypeKey(item.ownershipType)
+                                ? t(ownershipTypeKey(item.ownershipType)!)
+                                : t('zameen.ownershipNotSet')}</p>
                             <h4>{item.zameenName}</h4>
                           </div>
                           <dl className="record-meta">
                             <div>
-                              <dt>Area</dt>
+                              <dt>{t('zameen.colArea')}</dt>
                               <dd>
-                                {item.totalAreaValue} {item.totalAreaUnit}
+                                {item.totalAreaValue}{' '}
+                                {areaUnitKey(item.totalAreaUnit)
+                                  ? t(areaUnitKey(item.totalAreaUnit)!)
+                                  : item.totalAreaUnit}
                               </dd>
                             </div>
                             <div>
-                              <dt>Murabba</dt>
+                              <dt>{t('zameen.colMurabba')}</dt>
                               <dd>{item.murabbaNumber ?? '-'}</dd>
                             </div>
                             <div>
-                              <dt>Killa</dt>
+                              <dt>{t('zameen.colKilla')}</dt>
                               <dd>{item.killaNumber ?? '-'}</dd>
                             </div>
                             <div>
-                              <dt>Khasra</dt>
+                              <dt>{t('zameen.colKhasra')}</dt>
                               <dd>{item.khasraNumber ?? '-'}</dd>
                             </div>
                           </dl>
