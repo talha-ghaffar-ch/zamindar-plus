@@ -21,7 +21,9 @@ import {AppText} from '../components/AppText';
 import {Card} from '../components/Card';
 import {Button} from '../components/Button';
 import {SectionHeader} from '../components/SectionHeader';
+import {LOCALE_LIST, localeToPreferredLanguage, type Locale} from '@zamindar/shared';
 import {useAuth} from '../context/AuthContext';
+import {useI18n} from '../i18n/useT';
 import {theme} from '../theme';
 import {haptics} from '../haptics';
 import * as api from '../api';
@@ -29,8 +31,29 @@ import * as api from '../api';
 export function SettingsScreen() {
   const navigation = useNavigation<any>();
   const {user, signOut, refreshUser} = useAuth();
+  const {t, locale, setLocale} = useI18n();
   const [busy, setBusy] = useState<'google' | 'signout' | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Switch the interface immediately, then save the choice to the account so
+  // it follows the user to the web app.
+  const changeLanguage = (next: Locale) => {
+    if (next === locale) {
+      return;
+    }
+    haptics.light();
+    setLocale(next);
+    if (user) {
+      api
+        .updateUser(user.id, {
+          preferredLanguage: localeToPreferredLanguage(next),
+        })
+        .then(() => refreshUser())
+        .catch(() => {
+          // The choice is saved on the device; syncing can retry later.
+        });
+    }
+  };
 
   const connectGoogle = async () => {
     setError(null);
@@ -83,59 +106,89 @@ export function SettingsScreen() {
       <Card elevated>
         <Row
           icon={<UserIcon color={theme.colors.primaryBright} size={18} />}
-          label="Name"
+          label={t('mobile.name')}
           value={user ? `${user.firstName} ${user.lastName}` : '—'}
         />
         <Divider />
         <Row
           icon={<Mail color={theme.colors.textMuted} size={18} />}
-          label="Email"
+          label={t('mobile.email')}
           value={user?.email ?? '—'}
         />
         <Divider />
         <Row
           icon={<Phone color={theme.colors.textMuted} size={18} />}
-          label="Phone"
-          value={user?.phone || 'Not set'}
+          label={t('mobile.phone')}
+          value={user?.phone || t('mobile.notSet')}
         />
         <Divider />
         <Row
           icon={<Sprout color={theme.colors.textMuted} size={18} />}
-          label="Farmer type"
-          value={user?.farmerType || 'Not set'}
+          label={t('mobile.farmerType')}
+          value={user?.farmerType || t('mobile.notSet')}
         />
       </Card>
 
-      <SectionHeader title="Preferences" />
+      <SectionHeader title={t('mobile.preferences')} />
       <Card>
         <Row
           icon={<Ruler color={theme.colors.textMuted} size={18} />}
-          label="Area unit"
+          label={t('mobile.areaUnit')}
           value={user?.preferredAreaUnit ?? '—'}
         />
         <Divider />
         <Row
           icon={<Wallet color={theme.colors.textMuted} size={18} />}
-          label="Currency"
+          label={t('mobile.currency')}
           value={user?.preferredCurrency ?? '—'}
         />
         <Divider />
-        <Row
-          icon={<Languages color={theme.colors.textMuted} size={18} />}
-          label="Language"
-          value={user?.preferredLanguage ?? '—'}
-        />
+        <View style={styles.languageBlock}>
+          <View style={styles.row}>
+            <View style={styles.rowIcon}>
+              <Languages color={theme.colors.textMuted} size={18} />
+            </View>
+            <View style={styles.rowText}>
+              <AppText variant="caption" color={theme.colors.textMuted}>
+                {t('language.title').toUpperCase()}
+              </AppText>
+              <AppText variant="caption" color={theme.colors.textSecondary}>
+                {t('language.subtitle')}
+              </AppText>
+            </View>
+          </View>
+          <View style={styles.languageOptions}>
+            {LOCALE_LIST.map(meta => {
+              const active = meta.code === locale;
+              return (
+                <Pressable
+                  key={meta.code}
+                  onPress={() => { changeLanguage(meta.code); }}
+                  style={[
+                    styles.languageOption,
+                    active && styles.languageOptionActive,
+                  ]}>
+                  <AppText
+                    variant="bodyStrong"
+                    color={active ? theme.colors.onPrimary : theme.colors.text}>
+                    {meta.nativeLabel}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
       </Card>
 
-      <SectionHeader title="Google account" />
+      <SectionHeader title={t('mobile.googleAccount')} />
       <Card>
         <Row
           icon={<Link2 color={connected ? theme.colors.income : theme.colors.textMuted} size={18} />}
-          label="Status"
-          value={connected ? 'Connected' : 'Not connected'}
+          label={t('mobile.status')}
+          value={connected ? t('mobile.connected') : t('mobile.notConnected')}
         />
         <Button
-          title={connected ? 'Disconnect Google' : 'Connect Google'}
+          title={connected ? t('mobile.disconnectGoogle') : t('mobile.connectGoogle')}
           variant={connected ? 'secondary' : 'primary'}
           loading={busy === 'google'}
           disabled={busy !== null}
@@ -151,7 +204,7 @@ export function SettingsScreen() {
         />
       </Card>
 
-      <SectionHeader title="Support" />
+      <SectionHeader title={t('mobile.support')} />
       <Card padded={false}>
         <Pressable onPress={() => navigation.navigate('Help')} style={styles.helpRow}>
           <View style={styles.rowIcon}>
@@ -171,7 +224,7 @@ export function SettingsScreen() {
       ) : null}
 
       <Button
-        title="Sign out"
+        title={t('mobile.signOut')}
         variant="danger"
         loading={busy === 'signout'}
         disabled={busy !== null}
@@ -229,6 +282,21 @@ const styles = StyleSheet.create({
   rowText: {flex: 1},
   divider: {height: 1, backgroundColor: theme.colors.hairline},
   googleBtn: {marginTop: theme.spacing.md},
+  languageBlock: {gap: theme.spacing.md, paddingVertical: theme.spacing.sm},
+  languageOptions: {flexDirection: 'row', gap: theme.spacing.sm},
+  languageOption: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceAlt,
+  },
+  languageOptionActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
   helpRow: {
     flexDirection: 'row',
     alignItems: 'center',

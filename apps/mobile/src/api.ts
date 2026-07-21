@@ -358,6 +358,24 @@ export function getMe() {
   return requestJson<User>('/auth/me');
 }
 
+export type UpdateUserInput = {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  farmerType?: string;
+  preferredAreaUnit?: string;
+  preferredCurrency?: string;
+  preferredLanguage?: string;
+};
+
+/** Update the signed-in user's own account settings. */
+export function updateUser(id: string, payload: UpdateUserInput) {
+  return requestJson<User>(`/users/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Aggregated dashboard load
 // ---------------------------------------------------------------------------
