@@ -16,6 +16,7 @@ import {AuthSubmitButton} from '../../components/AuthSubmitButton';
 import {GoogleIcon} from '../../components/GoogleIcon';
 import {Input} from '../../components/Input';
 import {useAuth} from '../../context/AuthContext';
+import {useI18n} from '../../i18n/useT';
 import {theme} from '../../theme';
 import {haptics} from '../../haptics';
 import * as api from '../../api';
@@ -31,6 +32,7 @@ const emailValid = (e: string) => /\S+@\S+\.\S+/.test(e);
  * background image stay mounted and fixed.
  */
 export function LoginScreen() {
+  const {t} = useI18n();
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const {signInWithPassword, signInWithGoogle} = useAuth();
@@ -100,7 +102,7 @@ export function LoginScreen() {
     setError(null);
     if (content === 'login') {
       if (!email.trim() || !password) {
-        setError('Enter your email and password.');
+        setError(t('mobile.enterEmailPassword'));
         return;
       }
       setLoading('password');
@@ -142,21 +144,21 @@ export function LoginScreen() {
   if (sent) {
     return (
       <AuthScaffold
-        eyebrow="Almost there"
-        title="Check your inbox"
+        eyebrow={t('mobile.almostThere')}
+        title={t('mobile.checkInbox')}
         subtitle={`We sent a verification code to ${email.trim()}. Verify your email, then sign in.`}
         onBack={resetToLogin}>
         <View style={styles.successIcon}>
           <MailCheck color={theme.colors.primaryBright} size={32} />
         </View>
         <Button
-          title="Enter verification code"
+          title={t('mobile.enterVerificationCode')}
           onPress={() =>
             navigation.navigate('VerifyEmail', {email: email.trim()})
           }
         />
         <Button
-          title="Back to sign in"
+          title={t('auth.backToSignIn')}
           variant="ghost"
           onPress={resetToLogin}
           style={styles.gap}
@@ -171,19 +173,19 @@ export function LoginScreen() {
     <AuthScaffold tabs={{active: mode, onChange: switchTo}}>
       <Animated.View style={contentStyle}>
         <AppText variant="h1" style={styles.title}>
-          {isSignup ? 'Create account' : 'Sign in'}
+          {isSignup ? t('auth.createAccount') : t('auth.signIn')}
         </AppText>
         <AppText
           variant="body"
           color={theme.colors.textSecondary}
           style={styles.subtitle}>
           {isSignup
-            ? 'Set up your farm ledger in a couple of minutes.'
-            : 'Pick up right where you left off.'}
+            ? t('mobile.signupIntro')
+            : t('mobile.loginIntro')}
         </AppText>
 
         <Button
-          title={isSignup ? 'Sign up with Google' : 'Sign in with Google'}
+          title={isSignup ? t('auth.signUpGoogle') : t('auth.signInGoogle')}
           variant="secondary"
           icon={<GoogleIcon />}
           onPress={onGoogle}
@@ -194,7 +196,7 @@ export function LoginScreen() {
         <View style={styles.divider}>
           <View style={styles.line} />
           <AppText variant="caption" color={theme.colors.textMuted}>
-            {isSignup ? 'OR SIGN UP WITH EMAIL' : 'OR SIGN IN WITH EMAIL'}
+            {isSignup ? t('mobile.orSignUpEmail') : t('mobile.orSignInEmail')}
           </AppText>
           <View style={styles.line} />
         </View>
@@ -202,21 +204,21 @@ export function LoginScreen() {
         {isSignup ? (
           <View style={styles.row}>
             <Input
-              label="First name"
+              label={t('auth.firstName')}
               dense
               value={firstName}
-              onChangeText={t => {
-                setFirstName(t);
+              onChangeText={value => {
+                setFirstName(value);
                 setError(null);
               }}
               containerStyle={styles.half}
             />
             <Input
-              label="Last name"
+              label={t('auth.lastName')}
               dense
               value={lastName}
-              onChangeText={t => {
-                setLastName(t);
+              onChangeText={value => {
+                setLastName(value);
                 setError(null);
               }}
               containerStyle={styles.half}
@@ -225,27 +227,27 @@ export function LoginScreen() {
         ) : null}
 
         <Input
-          label="Email"
+          label={t('auth.email')}
           dense={isSignup}
           placeholder="you@example.com"
           autoCapitalize="none"
           keyboardType="email-address"
           value={email}
-          onChangeText={t => {
-            setEmail(t);
+          onChangeText={value => {
+            setEmail(value);
             setError(null);
           }}
           leftIcon={<Mail color={theme.colors.textMuted} size={18} />}
           containerStyle={isSignup ? styles.gap : undefined}
         />
         <Input
-          label="Password"
+          label={t('auth.password')}
           dense={isSignup}
           placeholder={isSignup ? 'At least 8 characters' : '••••••••'}
           secureTextEntry={!showPassword}
           value={password}
-          onChangeText={t => {
-            setPassword(t);
+          onChangeText={value => {
+            setPassword(value);
             setError(null);
           }}
           leftIcon={<Lock color={theme.colors.textMuted} size={18} />}
@@ -298,8 +300,8 @@ export function LoginScreen() {
                 ? 'Creating…'
                 : 'Signing in…'
               : isSignup
-                ? 'Create account'
-                : 'Sign in'
+                ? t('auth.createAccount')
+                : t('auth.signIn')
           }
           onPress={onSubmit}
           ready={isSignup ? signupReady : loginReady}

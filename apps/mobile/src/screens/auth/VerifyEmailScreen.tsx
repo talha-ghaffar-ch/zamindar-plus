@@ -8,12 +8,14 @@ import {AppText} from '../../components/AppText';
 import {Button} from '../../components/Button';
 import {AuthSubmitButton} from '../../components/AuthSubmitButton';
 import {Input} from '../../components/Input';
+import {useI18n} from '../../i18n/useT';
 import {theme} from '../../theme';
 import {haptics} from '../../haptics';
 import * as api from '../../api';
 import type {AuthStackParamList} from '../../navigation/types';
 
 export function VerifyEmailScreen() {
+  const {t} = useI18n();
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const {params} = useRoute<RouteProp<AuthStackParamList, 'VerifyEmail'>>();
@@ -48,14 +50,14 @@ export function VerifyEmailScreen() {
   if (done) {
     return (
       <AuthScaffold
-        eyebrow="All set"
-        title="Email verified"
-        subtitle="Your account is verified. You can sign in now.">
+        eyebrow={t('mobile.allSet')}
+        title={t('mobile.emailVerifiedTitle')}
+        subtitle={t('mobile.emailVerifiedBody')}>
         <View style={styles.icon}>
           <MailCheck color={theme.colors.primaryBright} size={32} />
         </View>
         <Button
-          title="Go to sign in"
+          title={t('mobile.goToSignIn')}
           onPress={() => navigation.navigate('Login')}
         />
       </AuthScaffold>
@@ -64,21 +66,21 @@ export function VerifyEmailScreen() {
 
   return (
     <AuthScaffold
-      eyebrow="Verify account"
-      title="Verify your email"
+      eyebrow={t('auth.verifyAccount')}
+      title={t('mobile.verifyYourEmail')}
       subtitle={`Enter the 6-digit code we emailed${email ? ` to ${email}` : ''}.`}
       onBack={() => navigation.goBack()}>
       <View style={styles.icon}>
         <ShieldCheck color={theme.colors.primaryBright} size={30} />
       </View>
       <Input
-        label="Verification code"
+        label={t('auth.verificationCode')}
         placeholder="123456"
         keyboardType="number-pad"
         maxLength={6}
         value={code}
-        onChangeText={t => {
-          setCode(t);
+        onChangeText={value => {
+          setCode(value);
           setError(null);
         }}
       />
@@ -91,7 +93,7 @@ export function VerifyEmailScreen() {
         </AppText>
       ) : null}
       <AuthSubmitButton
-        title={loading ? 'Verifying…' : 'Verify'}
+        title={loading ? 'Verifying…' : t('mobile.verify')}
         onPress={onVerify}
         ready={ready}
         loading={loading}

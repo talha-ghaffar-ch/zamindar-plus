@@ -8,12 +8,14 @@ import {AppText} from '../../components/AppText';
 import {Button} from '../../components/Button';
 import {AuthSubmitButton} from '../../components/AuthSubmitButton';
 import {Input} from '../../components/Input';
+import {useI18n} from '../../i18n/useT';
 import {theme} from '../../theme';
 import {haptics} from '../../haptics';
 import * as api from '../../api';
 import type {AuthStackParamList} from '../../navigation/types';
 
 export function ForgotPasswordScreen() {
+  const {t} = useI18n();
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const [email, setEmail] = useState('');
@@ -25,7 +27,7 @@ export function ForgotPasswordScreen() {
 
   const onSubmit = async () => {
     if (!ready) {
-      setError('Enter a valid email address.');
+      setError(t('mobile.invalidEmailShort'));
       return;
     }
     setError(null);
@@ -43,12 +45,12 @@ export function ForgotPasswordScreen() {
 
   return (
     <AuthScaffold
-      eyebrow="Password help"
-      title={sent ? 'Check your inbox' : 'Reset password'}
+      eyebrow={t('mobile.passwordHelp')}
+      title={sent ? t('mobile.checkInbox') : t('auth.resetPassword')}
       subtitle={
         sent
           ? `If an account exists for ${email.trim()}, a reset code is on its way.`
-          : 'Enter your email and we will send you a code to reset your password.'
+          : t('mobile.forgotIntro')
       }
       onBack={() => navigation.goBack()}>
       <View style={styles.icon}>
@@ -62,13 +64,13 @@ export function ForgotPasswordScreen() {
       {sent ? (
         <>
           <Button
-            title="Enter reset code"
+            title={t('mobile.enterResetCode')}
             onPress={() =>
               navigation.navigate('ResetPassword', {email: email.trim()})
             }
           />
           <Button
-            title="Back to sign in"
+            title={t('auth.backToSignIn')}
             variant="ghost"
             onPress={() => navigation.navigate('Login')}
             style={styles.gap}
@@ -77,13 +79,13 @@ export function ForgotPasswordScreen() {
       ) : (
         <>
           <Input
-            label="Email"
+            label={t('auth.email')}
             placeholder="you@example.com"
             autoCapitalize="none"
             keyboardType="email-address"
             value={email}
-            onChangeText={t => {
-              setEmail(t);
+            onChangeText={value => {
+              setEmail(value);
               setError(null);
             }}
             leftIcon={<Mail color={theme.colors.textMuted} size={18} />}
@@ -97,7 +99,7 @@ export function ForgotPasswordScreen() {
             </AppText>
           ) : null}
           <AuthSubmitButton
-            title={loading ? 'Sending…' : 'Send reset code'}
+            title={loading ? 'Sending…' : t('auth.sendResetCode')}
             onPress={onSubmit}
             ready={ready}
             loading={loading}

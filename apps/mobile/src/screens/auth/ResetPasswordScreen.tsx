@@ -8,12 +8,14 @@ import {AppText} from '../../components/AppText';
 import {Button} from '../../components/Button';
 import {AuthSubmitButton} from '../../components/AuthSubmitButton';
 import {Input} from '../../components/Input';
+import {useI18n} from '../../i18n/useT';
 import {theme} from '../../theme';
 import {haptics} from '../../haptics';
 import * as api from '../../api';
 import type {AuthStackParamList} from '../../navigation/types';
 
 export function ResetPasswordScreen() {
+  const {t} = useI18n();
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const {params} = useRoute<RouteProp<AuthStackParamList, 'ResetPassword'>>();
@@ -54,14 +56,14 @@ export function ResetPasswordScreen() {
   if (done) {
     return (
       <AuthScaffold
-        eyebrow="All set"
-        title="Password reset"
-        subtitle="Your password has been changed. Sign in with your new password.">
+        eyebrow={t('mobile.allSet')}
+        title={t('mobile.passwordResetTitle')}
+        subtitle={t('mobile.passwordResetBody')}>
         <View style={styles.icon}>
           <ShieldCheck color={theme.colors.primaryBright} size={32} />
         </View>
         <Button
-          title="Go to sign in"
+          title={t('mobile.goToSignIn')}
           onPress={() => navigation.navigate('Login')}
         />
       </AuthScaffold>
@@ -70,31 +72,31 @@ export function ResetPasswordScreen() {
 
   return (
     <AuthScaffold
-      eyebrow="Password help"
-      title="Set a new password"
+      eyebrow={t('mobile.passwordHelp')}
+      title={t('mobile.setNewPasswordTitle')}
       subtitle={`Enter the 6-digit code we emailed${email ? ` to ${email}` : ''} and choose a new password.`}
       onBack={() => navigation.goBack()}>
       <View style={styles.icon}>
         <KeyRound color={theme.colors.primaryBright} size={30} />
       </View>
       <Input
-        label="Reset code"
+        label={t('auth.resetCode')}
         placeholder="123456"
         keyboardType="number-pad"
         maxLength={6}
         value={code}
-        onChangeText={t => {
-          setCode(t);
+        onChangeText={value => {
+          setCode(value);
           setError(null);
         }}
       />
       <Input
-        label="New password"
+        label={t('auth.newPassword')}
         placeholder="At least 8 characters"
         secureTextEntry={!showPassword}
         value={password}
-        onChangeText={t => {
-          setPassword(t);
+        onChangeText={value => {
+          setPassword(value);
           setError(null);
         }}
         leftIcon={<Lock color={theme.colors.textMuted} size={18} />}
@@ -118,7 +120,7 @@ export function ResetPasswordScreen() {
         </AppText>
       ) : null}
       <AuthSubmitButton
-        title={loading ? 'Resetting…' : 'Reset password'}
+        title={loading ? 'Resetting…' : t('auth.resetPassword')}
         onPress={onSubmit}
         ready={ready}
         loading={loading}
