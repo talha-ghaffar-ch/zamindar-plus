@@ -84,9 +84,12 @@ export class OpenAiCompatibleProvider implements LlmProvider {
       }
 
       if (message.role === 'assistant') {
+        const hasToolCalls = Boolean(message.toolCalls?.length);
         out.push({
           role: 'assistant',
-          content: message.text ?? '',
+          // The spec expects null content on a tool-call turn; some providers
+          // reject an empty string there.
+          content: message.text || (hasToolCalls ? null : ''),
           ...(message.toolCalls?.length
             ? {
                 tool_calls: message.toolCalls.map((call, index) => ({
