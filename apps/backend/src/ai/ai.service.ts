@@ -102,7 +102,7 @@ export class AiService {
       };
     }
 
-    const model = process.env.GEMINI_MODEL?.trim() || 'gemini-2.0-flash';
+    const model = process.env.GEMINI_MODEL?.trim() || 'gemini-flash-latest';
     const systemPrompt = await this.buildSystemPrompt(userId);
 
     const history = (chatMessageDto.history ?? []).map(
