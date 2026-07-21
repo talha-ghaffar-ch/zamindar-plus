@@ -19,6 +19,7 @@ import {
   type MonthlySummaryReport,
   type ReportSummary,
 } from '../lib/api';
+import { useI18n } from '../i18n/useT';
 
 type ReportMode = 'overview' | 'crops' | 'monthly';
 
@@ -84,6 +85,7 @@ function exportCsv(filename: string, rows: Array<Array<string | number>>) {
 }
 
 export function ReportsPage({ onNotify }: ReportsPageProps) {
+  const { t } = useI18n();
   const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [cropReports, setCropReports] = useState<CropProfitabilityReport[]>([]);
   const [monthlyReports, setMonthlyReports] = useState<MonthlySummaryReport[]>([]);
@@ -113,7 +115,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
       })
       .catch((loadError) => {
         if (isActive) {
-          setError(loadError instanceof Error ? loadError.message : 'Failed to load reports.');
+          setError(loadError instanceof Error ? loadError.message : t('reports.loadFailed'));
         }
       })
       .finally(() => {
@@ -125,7 +127,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [t]);
 
   const availableYears = useMemo(
     () =>
@@ -182,9 +184,9 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
       : 0;
   const bestCrop = filteredCropReports[0];
   const reportTabs: Array<{ label: string; mode: ReportMode; icon: typeof BarChart3 }> = [
-    { label: 'Overview', mode: 'overview', icon: BarChart3 },
-    { label: 'Crop profitability', mode: 'crops', icon: ReceiptText },
-    { label: 'Monthly movement', mode: 'monthly', icon: CalendarRange },
+    { label: t('reports.overview'), mode: 'overview', icon: BarChart3 },
+    { label: t('reports.cropProfitability'), mode: 'crops', icon: ReceiptText },
+    { label: t('reports.monthlyMovement'), mode: 'monthly', icon: CalendarRange },
   ];
   const hasSummaryData = summary
     ? summary.zameenCount + summary.cropCount + transactionCount > 0
@@ -226,7 +228,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
       ['Expense Entries', summary?.expenseCount ?? 0],
       ['Income Entries', summary?.incomeCount ?? 0],
     ]);
-    onNotify('Summary exported successfully');
+    onNotify(t('reports.summaryExported'));
   }
 
   function handleExportCrops() {
@@ -248,7 +250,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
         report.incomeCount,
       ]),
     ]);
-    onNotify('Crop report exported successfully');
+    onNotify(t('reports.cropExported'));
   }
 
   function handleExportMonthly() {
@@ -268,15 +270,15 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
         report.incomeCount,
       ]),
     ]);
-    onNotify('Monthly report exported successfully');
+    onNotify(t('reports.monthlyExported'));
   }
 
   return (
     <section className="reports-screen">
       <section className="page-header report-page-header">
         <div>
-          <p className="eyebrow">Reports</p>
-          <h1>Profit intelligence</h1>
+          <p className="eyebrow">{t('reports.eyebrow')}</p>
+          <h1>{t('reports.title')}</h1>
         </div>
         <div className="report-actions">
           <button
@@ -285,7 +287,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
             onClick={handleExportSummary}
           >
             <Download size={16} aria-hidden="true" />
-            Summary
+            {t('reports.summary')}
           </button>
           <button
             disabled={isLoading || !hasCropReportData}
@@ -293,7 +295,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
             onClick={handleExportCrops}
           >
             <FileSpreadsheet size={16} aria-hidden="true" />
-            Crops
+            {t('reports.cropsBtn')}
           </button>
           <button
             disabled={isLoading || !hasMonthlyReportData}
@@ -301,11 +303,11 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
             onClick={handleExportMonthly}
           >
             <FileSpreadsheet size={16} aria-hidden="true" />
-            Monthly
+            {t('reports.monthlyBtn')}
           </button>
           <button type="button" onClick={() => window.print()}>
             <Printer size={16} aria-hidden="true" />
-            Print
+            {t('reports.print')}
           </button>
         </div>
       </section>
@@ -315,40 +317,40 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
       <section className="report-kpi-grid">
         <article className="report-kpi-card income">
           <BanknoteArrowUp size={20} aria-hidden="true" />
-          <span>Total income</span>
-          <strong>{summary ? formatCurrency(summary.totalIncome) : 'Loading...'}</strong>
+          <span>{t('reports.totalIncome')}</span>
+          <strong>{summary ? formatCurrency(summary.totalIncome) : t('common.loading')}</strong>
         </article>
         <article className="report-kpi-card expense">
           <BanknoteArrowDown size={20} aria-hidden="true" />
-          <span>Total expense</span>
-          <strong>{summary ? formatCurrency(summary.totalExpense) : 'Loading...'}</strong>
+          <span>{t('reports.totalExpense')}</span>
+          <strong>{summary ? formatCurrency(summary.totalExpense) : t('common.loading')}</strong>
         </article>
         <article className="report-kpi-card profit">
           <TrendingUp size={20} aria-hidden="true" />
-          <span>Net profit</span>
-          <strong>{summary ? formatCurrency(summary.netProfit) : 'Loading...'}</strong>
+          <span>{t('reports.netProfit')}</span>
+          <strong>{summary ? formatCurrency(summary.netProfit) : t('common.loading')}</strong>
         </article>
         <article className="report-kpi-card activity">
           <LineChart size={20} aria-hidden="true" />
-          <span>Margin</span>
-          <strong>{summary ? `${profitMargin}%` : 'Loading...'}</strong>
+          <span>{t('reports.margin')}</span>
+          <strong>{summary ? `${profitMargin}%` : t('common.loading')}</strong>
         </article>
       </section>
 
       <section className="panel report-filter-panel">
         <div>
-          <p className="eyebrow">Filters</p>
+          <p className="eyebrow">{t('reports.filters')}</p>
           <h2>Focus the report</h2>
         </div>
         <div className="report-filter-grid">
           <label>
-            <span>Year</span>
+            <span>{t('reports.year')}</span>
             <select
               className="inline-filter"
               value={selectedYear}
               onChange={(event) => setSelectedYear(event.target.value)}
             >
-              <option value="all">All years</option>
+              <option value="all">{t('reports.allYears')}</option>
               {availableYears.map((year) => (
                 <option key={year} value={year}>
                   {year}
@@ -357,13 +359,13 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
             </select>
           </label>
           <label>
-            <span>Crop</span>
+            <span>{t('reports.crop')}</span>
             <select
               className="inline-filter"
               value={selectedCropId}
               onChange={(event) => setSelectedCropId(event.target.value)}
             >
-              <option value="all">All crops</option>
+              <option value="all">{t('reports.allCrops')}</option>
               {cropFilterOptions.map((crop) => (
                 <option key={crop.id} value={crop.id}>
                   {crop.label}
@@ -372,13 +374,13 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
             </select>
           </label>
           <label>
-            <span>Status</span>
+            <span>{t('reports.status')}</span>
             <select
               className="inline-filter"
               value={selectedStatus}
               onChange={(event) => setSelectedStatus(event.target.value)}
             >
-              <option value="all">All statuses</option>
+              <option value="all">{t('reports.allStatuses')}</option>
               {statusFilterOptions.map((status) => (
                 <option key={status} value={status}>
                   {status}
@@ -387,7 +389,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
             </select>
           </label>
           <label>
-            <span>From month</span>
+            <span>{t('reports.fromMonth')}</span>
             <input
               className="inline-filter"
               type="month"
@@ -396,7 +398,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
             />
           </label>
           <label>
-            <span>To month</span>
+            <span>{t('reports.toMonth')}</span>
             <input
               className="inline-filter"
               type="month"
@@ -433,21 +435,21 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
 
         <div className="report-control-grid">
           <section className="report-visual-card">
-            <p className="eyebrow">Cash comparison</p>
-            <h2>Income, expense, and profit</h2>
+            <p className="eyebrow">{t('reports.cashComparison')}</p>
+            <h2>{t('reports.incomeExpenseProfit')}</h2>
             <div className="report-balance-bars">
               <span>
-                <b>Income</b>
+                <b>{t('reports.income')}</b>
                 <i className="income-fill" style={percentStyle(summary?.totalIncome ?? 0, maxMoneyValue)} />
                 <strong>{summary ? formatCurrency(summary.totalIncome) : '--'}</strong>
               </span>
               <span>
-                <b>Expense</b>
+                <b>{t('reports.expense')}</b>
                 <i className="expense-fill" style={percentStyle(summary?.totalExpense ?? 0, maxMoneyValue)} />
                 <strong>{summary ? formatCurrency(summary.totalExpense) : '--'}</strong>
               </span>
               <span>
-                <b>Net</b>
+                <b>{t('reports.net')}</b>
                 <i className="profit-fill" style={percentStyle(Math.abs(summary?.netProfit ?? 0), maxMoneyValue)} />
                 <strong>{summary ? formatCurrency(summary.netProfit) : '--'}</strong>
               </span>
@@ -455,7 +457,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
           </section>
 
           <section className="report-visual-card report-image-card">
-            <p className="eyebrow">Best performer</p>
+            <p className="eyebrow">{t('reports.bestPerformer')}</p>
             <h2>{bestCrop ? bestCrop.cropName : 'No crop report yet'}</h2>
             <strong>
               {bestCrop ? formatCurrency(bestCrop.netProfit) : 'Add crop income to unlock'}
@@ -470,15 +472,15 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
           <section className="panel">
             <div className="panel-header compact-panel-header">
               <div>
-                <p className="eyebrow">Monthly trend</p>
+                <p className="eyebrow">{t('reports.monthlyTrend')}</p>
                 <h2>{rangeFilteredMonthlyReports.length} months</h2>
               </div>
             </div>
             <div className="monthly-chart report-monthly-chart">
               {isLoading ? (
-                <p className="muted">Loading monthly reports...</p>
+                <p className="muted">{t('reports.loadingMonthly')}</p>
               ) : rangeFilteredMonthlyReports.length === 0 ? (
-                <p className="muted">No monthly report data yet.</p>
+                <p className="muted">{t('reports.noMonthly')}</p>
               ) : (
                 rangeFilteredMonthlyReports.map((report) => (
                   <div className="monthly-column" key={`${report.year}-${report.month}`}>
@@ -506,21 +508,21 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
           <section className="panel">
             <div className="panel-header compact-panel-header">
               <div>
-                <p className="eyebrow">Report health</p>
-                <h2>Coverage snapshot</h2>
+                <p className="eyebrow">{t('reports.reportHealth')}</p>
+                <h2>{t('reports.coverageSnapshot')}</h2>
               </div>
             </div>
             <div className="report-health-list">
               <div>
-                <span>Zameen coverage</span>
+                <span>{t('reports.zameenCoverage')}</span>
                 <strong>{summary?.zameenCount ?? 0} records</strong>
               </div>
               <div>
-                <span>Crop coverage</span>
+                <span>{t('reports.cropCoverage')}</span>
                 <strong>{summary?.cropCount ?? 0} Cycles</strong>
               </div>
               <div>
-                <span>Financial entries</span>
+                <span>{t('reports.financialEntries')}</span>
                 <strong>{transactionCount} Entries</strong>
               </div>
             </div>
@@ -532,7 +534,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
         <section className="panel report-table-panel">
           <div className="panel-header compact-panel-header">
             <div>
-              <p className="eyebrow">Crop profitability</p>
+              <p className="eyebrow">{t('reports.cropProfitability')}</p>
               <h2>{filteredCropReports.length} crops</h2>
             </div>
           </div>
@@ -541,23 +543,23 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
             <table>
               <thead>
                 <tr>
-                  <th>Crop</th>
-                  <th>Zameen</th>
-                  <th>Status</th>
-                  <th>Expense</th>
-                  <th>Income</th>
-                  <th>Net</th>
-                  <th>Entries</th>
+                  <th>{t('reports.crop')}</th>
+                  <th>{t('reports.zameen')}</th>
+                  <th>{t('reports.status')}</th>
+                  <th>{t('reports.expense')}</th>
+                  <th>{t('reports.income')}</th>
+                  <th>{t('reports.net')}</th>
+                  <th>{t('reports.entries')}</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7}>Loading crop reports...</td>
+                    <td colSpan={7}>{t('reports.loadingCrops')}</td>
                   </tr>
                 ) : filteredCropReports.length === 0 ? (
                   <tr>
-                    <td colSpan={7}>No crop report data yet.</td>
+                    <td colSpan={7}>{t('reports.noCrops')}</td>
                   </tr>
                 ) : (
                   filteredCropReports.map((report) => (
@@ -582,7 +584,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
         <section className="panel report-table-panel">
           <div className="panel-header compact-panel-header">
             <div>
-              <p className="eyebrow">Monthly summary</p>
+              <p className="eyebrow">{t('reports.monthlySummary')}</p>
               <h2>{rangeFilteredMonthlyReports.length} months</h2>
             </div>
           </div>
@@ -591,21 +593,21 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
             <table>
               <thead>
                 <tr>
-                  <th>Month</th>
-                  <th>Expense</th>
-                  <th>Income</th>
-                  <th>Net</th>
-                  <th>Records</th>
+                  <th>{t('reports.month')}</th>
+                  <th>{t('reports.expense')}</th>
+                  <th>{t('reports.income')}</th>
+                  <th>{t('reports.net')}</th>
+                  <th>{t('reports.records')}</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={5}>Loading monthly reports...</td>
+                    <td colSpan={5}>{t('reports.loadingMonthly')}</td>
                   </tr>
                 ) : rangeFilteredMonthlyReports.length === 0 ? (
                   <tr>
-                    <td colSpan={5}>No monthly report data yet.</td>
+                    <td colSpan={5}>{t('reports.noMonthly')}</td>
                   </tr>
                 ) : (
                   rangeFilteredMonthlyReports.map((report) => (
