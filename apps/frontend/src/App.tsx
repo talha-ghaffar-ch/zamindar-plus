@@ -29,6 +29,9 @@ import {
   type AuthResponse,
   type User,
 } from './lib/api';
+import type { TranslationKey } from '@zamindar/shared';
+import { normalizeLocale } from '@zamindar/shared';
+import { useI18n } from './i18n/useT';
 import { ToastViewport, type ToastMessage } from './components/ToastViewport';
 import { AuthPage } from './pages/AuthPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -55,6 +58,20 @@ const mainNavItems: Array<{ label: string; icon: LucideIcon }> = [
 const helpNavItem = { label: 'Help', icon: HelpCircle };
 const adminNavItem = { label: 'Admin', icon: ShieldCheck };
 const settingsNavItem = { label: 'Settings', icon: Settings };
+
+// Nav labels stay as stable routing keys; only the displayed text is localized.
+const NAV_LABEL_KEYS: Record<string, TranslationKey> = {
+  Dashboard: 'nav.dashboard',
+  Profiles: 'nav.profiles',
+  Zameen: 'nav.zameen',
+  Crops: 'nav.crops',
+  Expenses: 'nav.expenses',
+  Income: 'nav.income',
+  Reports: 'nav.reports',
+  Admin: 'nav.admin',
+  Help: 'nav.help',
+  Settings: 'nav.settings',
+};
 const THEME_STORAGE_KEY = 'zamindar-plus-theme';
 
 type ThemePreference = 'light' | 'dark';
@@ -75,11 +92,26 @@ function readStoredTheme(): ThemePreference {
 
 function App() {
   const [activePage, setActivePage] = useState('Dashboard');
+  const { t, setLocale } = useI18n();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<ThemePreference>(readStoredTheme);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const applyUserLocale = useCallback(
+    (user: User) => {
+      // The device's saved choice wins; otherwise adopt the account's language.
+      if (typeof window !== 'undefined') {
+        const stored = window.localStorage.getItem('zamindar-plus-locale');
+        if (stored) {
+          return;
+        }
+      }
+      setLocale(normalizeLocale(user.preferredLanguage));
+    },
+    [setLocale],
+  );
 
   const showToast = useCallback((message: string) => {
     setToasts((currentToasts) => [
@@ -116,6 +148,7 @@ function App() {
 
         if (isActive) {
           setCurrentUser(user);
+          applyUserLocale(user);
         }
       } catch {
         clearAuthToken();
@@ -131,7 +164,7 @@ function App() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [applyUserLocale]);
 
   useEffect(() => {
     function handleAuthExpired() {
@@ -149,6 +182,7 @@ function App() {
   function handleAuthenticated(authResponse: AuthResponse) {
     setAuthToken(authResponse.accessToken);
     setCurrentUser(authResponse.user);
+    applyUserLocale(authResponse.user);
     setActivePage('Dashboard');
     showToast('Account login successful');
   }
@@ -236,10 +270,10 @@ function App() {
     return (
       <section className="page-header">
         <div>
-          <p className="eyebrow">Workspace</p>
-          <h1>Section unavailable</h1>
+          <p className="eyebrow">{t('nav.workspace')}</p>
+          <h1>{t('nav.sectionUnavailable')}</h1>
         </div>
-        <p className="muted">Choose a section from the sidebar.</p>
+        <p className="muted">{t('nav.chooseSection')}</p>
       </section>
     );
   }
@@ -258,8 +292,8 @@ function App() {
             <div className="loading-mark" aria-hidden="true">
               <Sprout size={28} />
             </div>
-            <p className="eyebrow">Zamindar Plus</p>
-            <h1>Opening workspace...</h1>
+            <p className="eyebrow">{t('common.appName')}</p>
+            <h1>{t('nav.openingWorkspace')}</h1>
           </section>
         </motion.main>
         {toastViewport}
@@ -298,11 +332,13 @@ function App() {
             <Sprout size={24} />
           </div>
           <div className="brand-copy">
-            <strong>Zamindar Plus</strong>
-            <span>Har Kheti Ka Smart Hisab</span>
+            <strong>{t('common.appName')}</strong>
+            <span>{t('common.tagline')}</span>
           </div>
           <button
-            aria-label={isSidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
+            aria-label={
+              isSidebarCollapsed ? t('nav.openSidebar') : t('nav.closeSidebar')
+            }
             className="sidebar-toggle"
             type="button"
             onClick={() => setIsSidebarCollapsed((isCollapsed) => !isCollapsed)}
@@ -331,21 +367,21 @@ function App() {
         <nav className="nav-list">
           {visibleNavItems.map((item) => (
             <button
-              aria-label={item.label}
+              aria-label={t(NAV_LABEL_KEYS[item.label])}
               className={item.label === activePage ? 'nav-button active' : 'nav-button'}
               key={item.label}
               type="button"
               onClick={() => setActivePage(item.label)}
             >
               <item.icon size={18} aria-hidden="true" />
-              <span>{item.label}</span>
+              <span>{t(NAV_LABEL_KEYS[item.label])}</span>
             </button>
           ))}
         </nav>
 
         <button className="logout-button" type="button" onClick={handleLogout}>
           <LogOut size={18} aria-hidden="true" />
-          <span>Sign out</span>
+          <span>{t('nav.signOut')}</span>
         </button>
       </aside>
 
@@ -390,11 +426,12 @@ function ThemeToggle({
   onToggle: () => void;
   theme: ThemePreference;
 }) {
+  const { t } = useI18n();
   const isDark = theme === 'dark';
 
   return (
     <button
-      aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+      aria-label={isDark ? t('theme.switchToLight') : t('theme.switchToDark')}
       aria-pressed={isDark}
       className="global-theme-toggle"
       type="button"

@@ -103,7 +103,9 @@ export class AiService {
     }
 
     const model = process.env.GEMINI_MODEL?.trim() || 'gemini-flash-latest';
-    const systemPrompt = await this.buildSystemPrompt(userId);
+    const systemPrompt =
+      (await this.buildSystemPrompt(userId)) +
+      this.languageInstruction(chatMessageDto.language);
 
     const history = (chatMessageDto.history ?? []).map(
       (message): RequestContent => ({
@@ -347,6 +349,19 @@ HOW TO WORK:
 
 WORKSPACE SNAPSHOT (live data, ids are for your tool calls only):
 ${snapshotLines.join('\n')}`;
+  }
+
+  private languageInstruction(language?: 'en' | 'ur' | 'roman'): string {
+    switch (language) {
+      case 'ur':
+        return '\n\nSELECTED LANGUAGE: Urdu. Reply ONLY in natural, fluent Urdu using Urdu script (اردو), no matter which language the user writes in. Use authentic Urdu wording, not transliteration. Keep numbers, amounts and dates in Latin digits.';
+      case 'roman':
+        return '\n\nSELECTED LANGUAGE: Roman Urdu. Reply ONLY in natural Roman Urdu (Urdu written in English letters), no matter which language the user writes in. Use everyday Pakistani wording, not formal English.';
+      case 'en':
+        return '\n\nSELECTED LANGUAGE: English. Reply ONLY in clear, professional English, no matter which language the user writes in.';
+      default:
+        return '';
+    }
   }
 
   private async executeTool(

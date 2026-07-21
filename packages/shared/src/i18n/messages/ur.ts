@@ -1,0 +1,107 @@
+import type { Messages } from './index';
+
+/**
+ * Urdu catalog — authentic, native Urdu wording (not machine translation).
+ * The brand name and tagline stay consistent across every locale.
+ */
+export const ur: Messages = {
+  common: {
+    appName: 'Zamindar Plus',
+    tagline: 'Har Kheti Ka Smart Hisab',
+    loading: 'لوڈ ہو رہا ہے…',
+    saving: 'محفوظ کیا جا رہا ہے…',
+    save: 'محفوظ کریں',
+    saveChanges: 'تبدیلیاں محفوظ کریں',
+    cancel: 'منسوخ کریں',
+    delete: 'حذف کریں',
+    edit: 'ترمیم کریں',
+    add: 'شامل کریں',
+    remove: 'ہٹائیں',
+    close: 'بند کریں',
+    back: 'واپس',
+    confirm: 'تصدیق کریں',
+    search: 'تلاش کریں',
+    filter: 'چھانٹیں',
+    all: 'سب',
+    yes: 'جی ہاں',
+    no: 'نہیں',
+    none: 'کوئی نہیں',
+    optional: 'اختیاری',
+    required: 'لازمی',
+    comingSoon: 'جلد دستیاب',
+    retry: 'دوبارہ کوشش کریں',
+    view: 'دیکھیں',
+    open: 'کھولیں',
+    of: 'میں سے',
+    andMore: 'اور {count} مزید',
+  },
+
+  nav: {
+    dashboard: 'ڈیش بورڈ',
+    profiles: 'پروفائلز',
+    zameen: 'زمین',
+    crops: 'فصلیں',
+    expenses: 'اخراجات',
+    income: 'آمدنی',
+    reports: 'رپورٹیں',
+    ai: 'زمیندار AI',
+    admin: 'منتظم',
+    help: 'مدد',
+    settings: 'ترتیبات',
+    signOut: 'سائن آؤٹ',
+    openSidebar: 'سائیڈ بار کھولیں',
+    closeSidebar: 'سائیڈ بار بند کریں',
+    workspace: 'ورک اسپیس',
+    sectionUnavailable: 'یہ حصہ دستیاب نہیں',
+    chooseSection: 'سائیڈ بار سے کوئی حصہ منتخب کریں۔',
+    openingWorkspace: 'ورک اسپیس کھل رہا ہے…',
+  },
+
+  language: {
+    title: 'زبان',
+    subtitle: 'پوری ایپلیکیشن کے لیے زبان منتخب کریں۔',
+    english: 'انگریزی',
+    urdu: 'اردو',
+    roman: 'رومن اردو',
+    englishNote: 'بین الاقوامی انگریزی',
+    urduNote: 'خالص اردو',
+    romanNote: 'انگریزی حروف میں اردو',
+    current: 'موجودہ زبان',
+    changed: 'زبان تبدیل ہو گئی',
+  },
+
+  theme: {
+    switchToDark: 'گہرا تھیم منتخب کریں',
+    switchToLight: 'روشن تھیم منتخب کریں',
+  },
+
+  ai: {
+    title: 'آپ کا فارم لیجر ایجنٹ',
+    subtitle:
+      'اپنی زبان میں بتائیں — اپنی زمین، فصل، اخراجات، آمدنی اور منافع شامل کریں، تبدیل کریں یا دیکھیں۔ باقی کام میں خود کر دوں گا۔',
+    badge: 'فعال ایجنٹ',
+    eyebrow: 'زمیندار AI',
+    greeting:
+      'السلام علیکم۔ میں زمیندار AI ہوں۔ اپنی زبان میں بتائیے کیا کرنا ہے — کوئی زمین، فصل، خرچ یا آمدنی شامل کرنی ہو، یا اپنے ریکارڈ کے بارے میں پوچھنا ہو۔ میں خود آپ کے لیے کر دوں گا۔',
+    placeholder: 'زمیندار AI کو بتائیے کیا کرنا ہے…',
+    thinking: 'سوچ رہا ہوں…',
+    live: 'زمیندار AI · فعال',
+    check: 'دیکھیں',
+    sendMessage: 'پیغام بھیجیں',
+    couldNotRespond: 'زمیندار AI جواب نہیں دے سکا۔',
+    suggestion1: 'چک 45 کے نام سے نیا پروفائل بنائیں',
+    suggestion2: 'اس پروفائل میں 5 ایکڑ زمین "گندم کا کھیت" شامل کریں',
+    suggestion3: 'گندم کی فصل پر 20,000 کھاد کا خرچ لکھیں',
+    suggestion4: 'اس سال میں نے کتنا منافع کمایا؟',
+  },
+
+  validation: {
+    required: 'یہ خانہ لازمی ہے۔',
+    minLength: 'کم از کم {count} حروف درج کریں۔',
+    invalidEmail: 'درست ای میل پتہ درج کریں۔',
+    invalidNumber: 'درست عدد درج کریں۔',
+    positiveNumber: 'صفر سے بڑا عدد درج کریں۔',
+    passwordsDoNotMatch: 'پاس ورڈ آپس میں مطابقت نہیں رکھتے۔',
+    genericError: 'کچھ غلط ہو گیا۔ دوبارہ کوشش کریں۔',
+  },
+};

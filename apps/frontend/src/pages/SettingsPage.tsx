@@ -21,7 +21,13 @@ import {
   Sun,
   UserRound,
 } from 'lucide-react';
+import {
+  LOCALE_LIST,
+  localeToPreferredLanguage,
+  type Locale,
+} from '@zamindar/shared';
 import { FieldLabel } from '../components/FieldLabel';
+import { useI18n } from '../i18n/useT';
 import {
   connectGoogleAccount,
   deleteUser,
@@ -276,7 +282,9 @@ export function SettingsPage({
   onNotify,
   onThemeChange,
 }: SettingsPageProps) {
+  const { t, locale, setLocale } = useI18n();
   const [form, setForm] = useState(buildForm(currentUser));
+  const [isSavingLanguage, setIsSavingLanguage] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
   const [error, setError] = useState('');
@@ -287,6 +295,29 @@ export function SettingsPage({
   const [isDisconnectingGoogle, setIsDisconnectingGoogle] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const isGoogleConnected = Boolean(currentUser.googleConnected);
+
+  const handleLanguageChange = useCallback(
+    async (nextLocale: Locale) => {
+      if (nextLocale === locale || isSavingLanguage) {
+        return;
+      }
+      // Switch the whole UI immediately, then persist to the account.
+      setLocale(nextLocale);
+      const preferredLanguage = localeToPreferredLanguage(nextLocale);
+      setForm((current) => ({ ...current, preferredLanguage }));
+      setIsSavingLanguage(true);
+      try {
+        const updated = await updateUser(currentUser.id, { preferredLanguage });
+        onUserUpdated(updated);
+      } catch {
+        // The UI has already switched; the choice is saved locally and will
+        // sync to the account on the next successful update.
+      } finally {
+        setIsSavingLanguage(false);
+      }
+    },
+    [currentUser.id, isSavingLanguage, locale, onUserUpdated, setLocale],
+  );
 
   const handleGoogleCredential = useCallback(
     async (response: GoogleCredentialResponse) => {
@@ -775,19 +806,47 @@ export function SettingsPage({
               </select>
             </label>
 
-            <label>
-              <FieldLabel required>Language</FieldLabel>
-              <select
-                value={form.preferredLanguage}
-                onChange={(event) =>
-                  setForm({ ...form, preferredLanguage: event.target.value })
-                }
+            <div className="settings-language-field">
+              <FieldLabel required>{t('language.title')}</FieldLabel>
+              <p className="settings-language-hint">{t('language.subtitle')}</p>
+              <div
+                className="language-switcher"
+                role="group"
+                aria-label={t('language.title')}
               >
-                <option>English</option>
-                <option>Urdu</option>
-                <option>Punjabi</option>
-              </select>
-            </label>
+                {LOCALE_LIST.map((meta) => {
+                  const note =
+                    meta.code === 'en'
+                      ? t('language.englishNote')
+                      : meta.code === 'ur'
+                        ? t('language.urduNote')
+                        : t('language.romanNote');
+                  return (
+                    <button
+                      aria-pressed={meta.code === locale}
+                      className={
+                        meta.code === locale
+                          ? 'language-option active'
+                          : 'language-option'
+                      }
+                      disabled={isSavingLanguage}
+                      key={meta.code}
+                      type="button"
+                      onClick={() => void handleLanguageChange(meta.code)}
+                    >
+                      <span
+                        className="language-option-native"
+                        dir={meta.dir}
+                        lang={meta.htmlLang}
+                      >
+                        {meta.nativeLabel}
+                      </span>
+                      <span className="language-option-note">{note}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
           </div>
 

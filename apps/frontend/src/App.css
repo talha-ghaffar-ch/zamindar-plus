@@ -4137,3 +4137,172 @@ textarea:focus-visible {
     transition-duration: 1ms !important;
   }
 }
+
+/* ============================================================
+   Localization — Urdu (Nastaliq) typography + RTL support
+   ============================================================ */
+
+/* Urdu locale: render UI text in an elegant Nastaliq face. Input values keep
+   the neutral UI font so typed Latin data (names, numbers, emails) stays crisp. */
+:root[data-locale="ur"] body {
+  font-family: "Noto Nastaliq Urdu", "Manrope", "Segoe UI", serif;
+}
+
+:root[data-locale="ur"] h1,
+:root[data-locale="ur"] h2,
+:root[data-locale="ur"] h3,
+:root[data-locale="ur"] h4,
+:root[data-locale="ur"] h5,
+:root[data-locale="ur"] p,
+:root[data-locale="ur"] span,
+:root[data-locale="ur"] strong,
+:root[data-locale="ur"] a,
+:root[data-locale="ur"] label,
+:root[data-locale="ur"] button,
+:root[data-locale="ur"] .eyebrow,
+:root[data-locale="ur"] .muted {
+  font-family: "Noto Nastaliq Urdu", "Manrope", serif !important;
+}
+
+/* Nastaliq ligatures are tall — give them room to breathe. */
+:root[data-locale="ur"] p,
+:root[data-locale="ur"] li,
+:root[data-locale="ur"] label,
+:root[data-locale="ur"] .muted,
+:root[data-locale="ur"] .nav-button span,
+:root[data-locale="ur"] .ai-message p {
+  line-height: 2.15;
+}
+
+:root[data-locale="ur"] h1 {
+  line-height: 1.95;
+}
+
+:root[data-locale="ur"] h2,
+:root[data-locale="ur"] h3 {
+  line-height: 1.9;
+}
+
+/* Uppercasing and letter-spacing break connected Urdu script. */
+:root[data-locale="ur"] .eyebrow,
+:root[data-locale="ur"] .ai-live-badge,
+:root[data-locale="ur"] .nav-button span {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* --- Right-to-left layout --- */
+/* The app shell is a CSS grid; dir=rtl places the sidebar column on the right
+   and mirrors inline flow automatically. These rules fix the details that
+   physical properties would otherwise leave pointing the wrong way. */
+
+[dir="rtl"] .nav-button,
+[dir="rtl"] .logout-button,
+[dir="rtl"] .sidebar-user,
+[dir="rtl"] .brand {
+  text-align: right;
+}
+
+[dir="rtl"] .ai-message-user {
+  justify-self: start;
+}
+
+[dir="rtl"] .ai-message-assistant {
+  justify-self: end;
+}
+
+[dir="rtl"] .ai-action-chip,
+[dir="rtl"] .ai-suggestion-row,
+[dir="rtl"] .detail-list div {
+  text-align: right;
+}
+
+/* Keep numeric / currency / date cells left-to-right even inside RTL text. */
+[dir="rtl"] .metric-value,
+[dir="rtl"] .stat-value,
+[dir="rtl"] .amount,
+[dir="rtl"] time,
+[dir="rtl"] .tag {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* --- Language switcher (Settings) --- */
+.settings-language-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-language-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.language-switcher {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.language-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: var(--ink);
+  background: var(--soft-surface);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.language-option:hover:not(:disabled) {
+  border-color: var(--cyan);
+  background: var(--soft-surface-strong);
+}
+
+.language-option.active {
+  border-color: var(--green);
+  background: var(--green-soft);
+  box-shadow: 0 0 0 1px var(--green) inset;
+}
+
+.language-option:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.language-option-native {
+  font-size: 1.05rem;
+  font-weight: 760;
+}
+
+.language-option-note {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+:root[data-locale="ur"] .language-option {
+  align-items: flex-end;
+  text-align: right;
+}
+
+@media (max-width: 620px) {
+  .language-switcher {
+    grid-template-columns: 1fr;
+  }
+}
+
+:root[data-theme="dark"] .language-option {
+  border-color: var(--line);
+  background: var(--field-bg);
+}

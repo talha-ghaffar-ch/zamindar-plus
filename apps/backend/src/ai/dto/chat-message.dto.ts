@@ -31,4 +31,8 @@ export class ChatMessageDto {
   @ValidateNested({ each: true })
   @Type(() => ChatHistoryMessageDto)
   history?: ChatHistoryMessageDto[];
+
+  @IsOptional()
+  @IsIn(['en', 'ur', 'roman'])
+  language?: 'en' | 'ur' | 'roman';
 }

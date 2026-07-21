@@ -419,10 +419,11 @@ export function getReportSummary() {
 export function sendAiChatMessage(
   message: string,
   history: AiChatHistoryMessage[] = [],
+  language?: string,
 ) {
   return requestJson<AiChatResponse>('/ai/chat', {
     method: 'POST',
-    body: JSON.stringify({ message, history }),
+    body: JSON.stringify({ message, history, language }),
   });
 }
 
