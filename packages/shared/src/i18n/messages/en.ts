@@ -105,6 +105,8 @@ export const en = {
     voiceDenied: 'Microphone access was blocked. Allow it in your browser settings.',
     voiceNoSpeech: 'Nothing was heard. Please try again.',
     voiceError: 'Voice input could not start. Please try again.',
+    rateLimited: 'Too many requests just now. Please wait about a minute and try again.',
+    unavailable: 'The AI service is busy right now. Please try again in a moment.',
     clearChat: 'Clear chat',
     clearChatConfirm: 'Clear this conversation?',
     newChat: 'New chat',

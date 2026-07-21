@@ -103,6 +103,8 @@ export const roman: Messages = {
     voiceDenied: 'Mic ki ijazat nahi mili. Browser settings mein ijazat dein.',
     voiceNoSpeech: 'Kuch sunai nahi diya. Dobara koshish karein.',
     voiceError: 'Awaz ki sahulat shuru nahi ho saki. Dobara koshish karein.',
+    rateLimited: 'Abhi bohat zyada requests ho gayi hain. Taqreeban ek minute baad dobara koshish karein.',
+    unavailable: 'AI service abhi masroof hai. Thori der baad dobara koshish karein.',
     clearChat: 'Guftagu saaf karein',
     clearChatConfirm: 'Kya ye guftagu saaf kar dein?',
     newChat: 'Nayi guftagu',

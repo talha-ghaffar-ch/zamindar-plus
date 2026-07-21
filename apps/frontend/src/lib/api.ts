@@ -154,6 +154,8 @@ export type AiAction = {
 export type AiChatResponse = {
   reply: string;
   actions?: AiAction[];
+  /** Set when the turn failed, so the UI can explain why in the user's language. */
+  errorCode?: 'RATE_LIMITED' | 'UNAVAILABLE' | 'FAILED';
 };
 
 export type AiChatHistoryMessage = {

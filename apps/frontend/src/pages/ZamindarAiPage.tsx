@@ -63,6 +63,18 @@ export function ZamindarAiPage({ onNavigate }: ZamindarAiPageProps) {
           history,
           locale,
         );
+
+        if (response.errorCode === 'RATE_LIMITED') {
+          setError(t('ai.rateLimited'));
+        } else if (response.errorCode === 'UNAVAILABLE') {
+          setError(t('ai.unavailable'));
+        }
+
+        // A failed turn still reports any records that were already saved.
+        if (response.errorCode && !response.actions?.length) {
+          return;
+        }
+
         addMessage({
           role: 'assistant',
           text: response.reply,

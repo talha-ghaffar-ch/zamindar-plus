@@ -179,9 +179,16 @@ export class AiService {
         actions,
       };
     } catch (error) {
-      this.logger.error(
-        `Zamindar AI chat failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Zamindar AI chat failed: ${message}`);
+
+      // A typed code lets the client show a properly translated explanation
+      // instead of a generic failure string.
+      const errorCode = message.includes('status 429')
+        ? 'RATE_LIMITED'
+        : /status 5\d\d/.test(message)
+          ? 'UNAVAILABLE'
+          : 'FAILED';
 
       return {
         reply:
@@ -189,6 +196,7 @@ export class AiService {
             ? 'I saved some of the changes but could not finish the whole request. Please check your records and tell me what is missing.'
             : 'Zamindar AI is having trouble responding right now. Please try again in a moment.',
         actions,
+        errorCode,
       };
     }
   }
@@ -232,9 +240,10 @@ export class AiService {
         `Gemini request failed with status ${response.status}: ${errorText.slice(0, 300)}`,
       );
 
-      // 429/500/503 are transient (rate limit or model overload). Back off and
-      // retry; anything else is a real failure and should surface immediately.
-      const isTransient = [429, 500, 502, 503, 504].includes(response.status);
+      // 5xx means the model is briefly overloaded — a short backoff usually
+      // clears it. A 429 is a per-minute quota that needs ~a minute to reset,
+      // so retrying only burns more quota; fail fast and tell the user to wait.
+      const isTransient = [500, 502, 503, 504].includes(response.status);
       if (!isTransient || attempt === GEMINI_MAX_ATTEMPTS - 1) {
         break;
       }
