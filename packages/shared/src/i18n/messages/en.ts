@@ -98,6 +98,16 @@ export const en = {
     suggestion2: 'Add 5 acre zameen "Wheat Field" in this profile',
     suggestion3: 'Record a 20,000 fertilizer expense on the wheat crop',
     suggestion4: 'How much profit did I make this year?',
+    startVoice: 'Speak your message',
+    stopVoice: 'Stop listening',
+    listening: 'Listening… speak now',
+    voiceUnsupported: 'Voice input is not supported in this browser. Try Chrome or Edge.',
+    voiceDenied: 'Microphone access was blocked. Allow it in your browser settings.',
+    voiceNoSpeech: 'Nothing was heard. Please try again.',
+    voiceError: 'Voice input could not start. Please try again.',
+    clearChat: 'Clear chat',
+    clearChatConfirm: 'Clear this conversation?',
+    newChat: 'New chat',
   },
 
   dashboard: {

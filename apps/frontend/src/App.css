@@ -4326,3 +4326,146 @@ textarea:focus-visible {
     font-size: 0.72rem;
   }
 }
+
+/* --- AI chat: voice input, rich text and history controls --- */
+.ai-header-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.ai-clear-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color 140ms ease,
+    border-color 140ms ease;
+}
+
+.ai-clear-button:hover {
+  color: var(--rose);
+  border-color: var(--rose);
+}
+
+.ai-chat-form {
+  grid-template-columns: 52px minmax(0, 1fr) 52px;
+}
+
+.ai-mic-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  min-height: 48px;
+  border: 1px solid rgba(100, 121, 114, 0.26);
+  border-radius: 999px;
+  color: var(--ink);
+  background: #ffffff;
+  cursor: pointer;
+  transition:
+    color 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease;
+}
+
+.ai-mic-button:hover:not(:disabled) {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.ai-mic-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ai-mic-button.listening {
+  color: #ffffff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--rose), var(--amber));
+  animation: ai-mic-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes ai-mic-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(184, 68, 85, 0.42);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgba(184, 68, 85, 0);
+  }
+}
+
+.ai-message-interim {
+  opacity: 0.72;
+}
+
+.ai-listening-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-inline-start: 7px;
+  border-radius: 999px;
+  background: currentColor;
+  animation: ai-listening-blink 1s steps(2, start) infinite;
+}
+
+@keyframes ai-listening-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+/* Formatted assistant replies */
+.ai-rich-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-rich-text p {
+  margin: 0;
+}
+
+.ai-rich-text ul,
+.ai-rich-text ol {
+  margin: 0;
+  padding-inline-start: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ai-rich-text li {
+  line-height: 1.5;
+}
+
+.ai-rich-text strong {
+  font-weight: 820;
+}
+
+:root[data-theme="dark"] .ai-mic-button {
+  border-color: var(--line);
+  background: var(--field-bg);
+  color: var(--ink);
+}
+
+@media (max-width: 620px) {
+  .ai-chat-form {
+    grid-template-columns: 46px minmax(0, 1fr) 46px;
+  }
+
+  .ai-mic-button {
+    min-width: 46px;
+  }
+}

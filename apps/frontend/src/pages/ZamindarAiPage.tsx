@@ -1,14 +1,10 @@
-import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { Bot, Send, Sparkles } from 'lucide-react';
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Bot, Eraser, Mic, Send, Sparkles, Square } from 'lucide-react';
 import { useI18n } from '../i18n/useT';
+import { FormattedMessage } from '../ai/FormattedMessage';
+import { useAiChat } from '../ai/useAiChat';
+import { useSpeechInput } from '../ai/useSpeechInput';
 import { type AiAction, sendAiChatMessage } from '../lib/api';
-
-type ChatMessage = {
-  id: number;
-  role: 'assistant' | 'user';
-  text: string;
-  actions?: AiAction[];
-};
 
 type ZamindarAiPageProps = {
   onNavigate: (page: string) => void;
@@ -23,15 +19,13 @@ const ENTITY_PAGE: Record<AiAction['entity'], string> = {
 };
 
 export function ZamindarAiPage({ onNavigate }: ZamindarAiPageProps) {
-  const { t, locale, dir } = useI18n();
-  // The greeting is derived from the active language and rendered as a fixed
-  // first bubble, so it is never stored in state and always stays localized.
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const { t, locale } = useI18n();
+  const { messages, addMessage, clearMessages } = useAiChat();
   const [messageText, setMessageText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
-  const nextIdRef = useRef(1);
+  const isSendingRef = useRef(false);
 
   const suggestions = useMemo(
     () => [
@@ -43,60 +37,99 @@ export function ZamindarAiPage({ onNavigate }: ZamindarAiPageProps) {
     [t],
   );
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  const sendMessage = useCallback(
+    async (rawMessage: string) => {
+      const trimmedMessage = rawMessage.trim();
 
-  async function sendMessage(rawMessage: string) {
-    const trimmedMessage = rawMessage.trim();
+      if (!trimmedMessage || isSendingRef.current) {
+        return;
+      }
 
-    if (!trimmedMessage || isSending) {
-      return;
-    }
+      // The history sent to the agent is captured before the new turn is added.
+      const history = messages.slice(-8).map((message) => ({
+        role: message.role,
+        text: message.text,
+      }));
 
-    const userMessage: ChatMessage = {
-      id: nextIdRef.current++,
-      role: 'user',
-      text: trimmedMessage,
-    };
+      addMessage({ role: 'user', text: trimmedMessage });
+      setMessageText('');
+      setError('');
+      isSendingRef.current = true;
+      setIsSending(true);
 
-    setMessages((currentMessages) => [...currentMessages, userMessage]);
-    setMessageText('');
-    setError('');
-    setIsSending(true);
-
-    try {
-      const response = await sendAiChatMessage(
-        trimmedMessage,
-        messages.slice(-8).map((message) => ({
-          role: message.role,
-          text: message.text,
-        })),
-        locale,
-      );
-      setMessages((currentMessages) => [
-        ...currentMessages,
-        {
-          id: nextIdRef.current++,
+      try {
+        const response = await sendAiChatMessage(
+          trimmedMessage,
+          history,
+          locale,
+        );
+        addMessage({
           role: 'assistant',
           text: response.reply,
           actions: response.actions,
-        },
-      ]);
-    } catch (chatError) {
-      setError(
-        chatError instanceof Error
-          ? chatError.message
-          : t('ai.couldNotRespond'),
-      );
-    } finally {
-      setIsSending(false);
+        });
+      } catch (chatError) {
+        setError(
+          chatError instanceof Error
+            ? chatError.message
+            : t('ai.couldNotRespond'),
+        );
+      } finally {
+        isSendingRef.current = false;
+        setIsSending(false);
+      }
+    },
+    [addMessage, locale, messages, t],
+  );
+
+  // Speaking a message sends it straight away, so the flow stays hands-free.
+  const handleTranscript = useCallback(
+    (transcript: string) => {
+      void sendMessage(transcript);
+    },
+    [sendMessage],
+  );
+
+  const speech = useSpeechInput({ locale, onResult: handleTranscript });
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isSending, speech.interimText]);
+
+  const voiceError = useMemo(() => {
+    if (!speech.error) {
+      return '';
     }
-  }
+    if (speech.error === 'not-allowed' || speech.error === 'service-not-allowed') {
+      return t('ai.voiceDenied');
+    }
+    if (speech.error === 'no-speech') {
+      return t('ai.voiceNoSpeech');
+    }
+    return t('ai.voiceError');
+  }, [speech.error, t]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void sendMessage(messageText);
+  }
+
+  function handleClear() {
+    if (messages.length === 0) {
+      return;
+    }
+    if (window.confirm(t('ai.clearChatConfirm'))) {
+      clearMessages();
+      setError('');
+    }
+  }
+
+  function toggleVoice() {
+    if (speech.isListening) {
+      speech.stop();
+    } else {
+      speech.start();
+    }
   }
 
   return (
@@ -110,13 +143,26 @@ export function ZamindarAiPage({ onNavigate }: ZamindarAiPageProps) {
           <h1>{t('ai.title')}</h1>
           <p>{t('ai.subtitle')}</p>
         </div>
-        <span className="ai-live-badge">
-          <Sparkles size={14} aria-hidden="true" />
-          {t('ai.badge')}
-        </span>
+        <div className="ai-header-actions">
+          <span className="ai-live-badge">
+            <Sparkles size={14} aria-hidden="true" />
+            {t('ai.badge')}
+          </span>
+          {messages.length > 0 ? (
+            <button
+              className="ai-clear-button"
+              type="button"
+              onClick={handleClear}
+            >
+              <Eraser size={14} aria-hidden="true" />
+              {t('ai.clearChat')}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {error ? <p className="error ai-chat-error">{error}</p> : null}
+      {voiceError ? <p className="error ai-chat-error">{voiceError}</p> : null}
 
       <div className="ai-chat-panel">
         <div className="ai-message-list">
@@ -144,7 +190,11 @@ export function ZamindarAiPage({ onNavigate }: ZamindarAiPageProps) {
                 </div>
               ) : null}
               <div className="ai-message-body">
-                <p>{message.text}</p>
+                {message.role === 'assistant' ? (
+                  <FormattedMessage text={message.text} />
+                ) : (
+                  <p>{message.text}</p>
+                )}
                 {message.actions && message.actions.length > 0 ? (
                   <div className="ai-action-list">
                     {message.actions.map((action) => (
@@ -174,6 +224,17 @@ export function ZamindarAiPage({ onNavigate }: ZamindarAiPageProps) {
             </article>
           ))}
 
+          {speech.isListening ? (
+            <article className="ai-message ai-message-user ai-message-interim">
+              <div className="ai-message-body">
+                <p>
+                  {speech.interimText || t('ai.listening')}
+                  <span className="ai-listening-dot" aria-hidden="true" />
+                </p>
+              </div>
+            </article>
+          ) : null}
+
           {isSending ? (
             <article className="ai-message ai-message-assistant">
               <div className="ai-message-icon" aria-hidden="true">
@@ -202,10 +263,34 @@ export function ZamindarAiPage({ onNavigate }: ZamindarAiPageProps) {
         ) : null}
 
         <form className="ai-chat-form" onSubmit={handleSubmit}>
+          {speech.isSupported ? (
+            <button
+              aria-label={
+                speech.isListening ? t('ai.stopVoice') : t('ai.startVoice')
+              }
+              aria-pressed={speech.isListening}
+              className={
+                speech.isListening
+                  ? 'ai-mic-button listening'
+                  : 'ai-mic-button'
+              }
+              disabled={isSending}
+              title={speech.isListening ? t('ai.stopVoice') : t('ai.startVoice')}
+              type="button"
+              onClick={toggleVoice}
+            >
+              {speech.isListening ? (
+                <Square size={16} aria-hidden="true" />
+              ) : (
+                <Mic size={18} aria-hidden="true" />
+              )}
+            </button>
+          ) : null}
           <input
-            dir={dir}
             maxLength={1200}
-            placeholder={t('ai.placeholder')}
+            placeholder={
+              speech.isListening ? t('ai.listening') : t('ai.placeholder')
+            }
             value={messageText}
             onChange={(event) => setMessageText(event.target.value)}
           />
