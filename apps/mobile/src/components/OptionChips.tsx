@@ -1,5 +1,6 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
+import {useI18n} from '../i18n/useT';
 import {theme} from '../theme';
 import {AppText} from './AppText';
 import {Chip} from './Chip';
@@ -15,6 +16,7 @@ type Props = {
 };
 
 export function OptionChips({label, options, value, onChange, emptyText}: Props) {
+  const {t} = useI18n();
   return (
     <View style={styles.wrap}>
       {label ? (
@@ -24,7 +26,7 @@ export function OptionChips({label, options, value, onChange, emptyText}: Props)
       ) : null}
       {options.length === 0 ? (
         <AppText variant="small" color={theme.colors.textMuted}>
-          {emptyText ?? 'No options available.'}
+          {emptyText ?? t('mobile.noOptions')}
         </AppText>
       ) : (
         <View style={styles.row}>

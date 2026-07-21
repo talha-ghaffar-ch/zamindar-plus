@@ -682,6 +682,8 @@ export const roman: Messages = {
     startYear: 'Aghaz ka saal',
     chakArea: 'Chak / Ilaqa',
     buyer: 'Kharidar',
+    noOptions: 'Koi option dastyab nahi.',
+    googleCancelled: 'Google sign in mansookh ho gaya.',
     gettingStartedBody: 'Pehle farm Profile banayein, phir us ke tehat Zameen, phir Fasal. Fasal banne ke baad us par kharchay aur aamdani darj kar sakte hain.',
     recordsLedgersBody: 'Records se aap profile, zameen, fasal aur har fasal ke khate tak ja sakte hain. Mahana tafseel ke liye All Expenses ya All Income kholein.',
     addingRecordsBody: 'Add tab mein paanchon qismein mojood hain — Profile, Zameen, Fasal, Kharcha, Aamdani — website jaise khanon ke sath.',

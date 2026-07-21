@@ -17,6 +17,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import {ArrowLeft, LogIn, UserPlus} from 'lucide-react-native';
+import {useI18n} from '../i18n/useT';
 import {fonts, theme} from '../theme';
 import {AppText} from './AppText';
 
@@ -47,6 +48,7 @@ export function AuthScaffold({
   compactHero,
   children,
 }: Props) {
+  const {t} = useI18n();
   const enter = useSharedValue(0);
   const breathe = useSharedValue(0);
 
@@ -146,7 +148,7 @@ export function AuthScaffold({
                         }
                       />
                     }
-                    label="Sign in"
+                    label={t('auth.signIn')}
                     active={tabs.active === 'login'}
                     onPress={() => tabs.onChange('login')}
                   />
@@ -161,7 +163,7 @@ export function AuthScaffold({
                         }
                       />
                     }
-                    label="Create account"
+                    label={t('auth.createAccount')}
                     active={tabs.active === 'signup'}
                     onPress={() => tabs.onChange('signup')}
                   />

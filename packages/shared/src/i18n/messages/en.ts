@@ -686,6 +686,8 @@ export const en = {
     startYear: 'Start year',
     chakArea: 'Chak / area',
     buyer: 'Buyer',
+    noOptions: 'No options available.',
+    googleCancelled: 'Google sign-in was cancelled.',
     gettingStartedBody: 'Add a farm Profile first, then a Zameen (land) under it, then a Crop. Once you have a crop you can log Expenses and Income against it.',
     recordsLedgersBody: 'Records lets you drill from a profile into its zameen, crops, and each crop ledger. Open All Expenses / All Income for a month-by-month view.',
     addingRecordsBody: 'The Add tab has all five record types — Profile, Zameen, Crop, Expense, Income — with the same fields as the website.',
