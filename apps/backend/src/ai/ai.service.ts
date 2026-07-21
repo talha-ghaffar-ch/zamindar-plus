@@ -11,6 +11,9 @@ import { ChatMessageDto } from './dto/chat-message.dto';
 
 const MAX_TOOL_ROUNDS = 8;
 const MAX_LIST_ITEMS = 60;
+// Gemini occasionally returns 503 when the model is briefly overloaded.
+const GEMINI_MAX_ATTEMPTS = 4;
+const GEMINI_RETRY_BASE_MS = 700;
 
 const AREA_UNIT_ALIASES: Record<string, string> = {
   acre: 'Acre',
@@ -196,35 +199,54 @@ export class AiService {
     systemPrompt: string,
     contents: RequestContent[],
   ): Promise<GeminiResponse> {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemPrompt }],
-          },
-          contents,
-          tools: [{ functionDeclarations: AGENT_FUNCTION_DECLARATIONS }],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 1024,
-          },
-        }),
-      },
-    );
+    let lastError: Error | null = null;
 
-    if (!response.ok) {
+    for (let attempt = 0; attempt < GEMINI_MAX_ATTEMPTS; attempt += 1) {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: systemPrompt }],
+            },
+            contents,
+            tools: [{ functionDeclarations: AGENT_FUNCTION_DECLARATIONS }],
+            generationConfig: {
+              temperature: 0.4,
+              maxOutputTokens: 1024,
+            },
+          }),
+        },
+      );
+
+      if (response.ok) {
+        return (await response.json()) as GeminiResponse;
+      }
+
       const errorText = await response.text().catch(() => '');
-      throw new Error(
+      lastError = new Error(
         `Gemini request failed with status ${response.status}: ${errorText.slice(0, 300)}`,
       );
+
+      // 429/500/503 are transient (rate limit or model overload). Back off and
+      // retry; anything else is a real failure and should surface immediately.
+      const isTransient = [429, 500, 502, 503, 504].includes(response.status);
+      if (!isTransient || attempt === GEMINI_MAX_ATTEMPTS - 1) {
+        break;
+      }
+
+      const delayMs = GEMINI_RETRY_BASE_MS * 2 ** attempt;
+      this.logger.warn(
+        `Gemini returned ${response.status}; retrying in ${delayMs}ms (attempt ${attempt + 1}/${GEMINI_MAX_ATTEMPTS})`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
-    return (await response.json()) as GeminiResponse;
+    throw lastError ?? new Error('Gemini request failed.');
   }
 
   private async buildSystemPrompt(userId: string) {
