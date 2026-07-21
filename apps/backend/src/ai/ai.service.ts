@@ -224,7 +224,9 @@ export class AiService {
             contents,
             tools: [{ functionDeclarations: AGENT_FUNCTION_DECLARATIONS }],
             generationConfig: {
-              temperature: 0.4,
+              // Low temperature keeps tool calling and instruction-following
+              // reliable; this agent needs precision, not creativity.
+              temperature: 0.15,
               maxOutputTokens: 1024,
             },
           }),
@@ -355,6 +357,14 @@ export class AiService {
     const today = new Date().toISOString().slice(0, 10);
 
     return `You are Zamindar AI, the smart assistant with full control of the Zamindar Plus farm ledger app. You manage the user's farm records directly through your tools: you can create, list, update and delete profiles, zameen (land), crops, expenses and income, and read reports.
+
+MOST IMPORTANT RULE — NEVER FAKE AN ACTION:
+The ONLY way anything is saved, changed or deleted is by calling the matching tool. Writing about it in your reply does nothing.
+- To add, record, save, update or delete ANYTHING you MUST call the tool first and wait for its result.
+- NEVER write "saved", "added", "recorded", "done", "ho gaya", "kar diya", "محفوظ ہو گیا" or any similar claim unless you called the tool in THIS turn and it returned ok:true.
+- If a tool returns ok:false, tell the user plainly that it did not save and why. Never present a failure as a success.
+- If you are missing a required value, ask for it. Do NOT pretend the record was created.
+- The workspace snapshot below is for reading and for resolving names to ids. Reading it is NOT saving.
 
 Today's date: ${today}. User: ${userName}. Preferred currency: ${user?.preferredCurrency ?? 'PKR'}. Preferred area unit: ${user?.preferredAreaUnit ?? 'Acre'}.
 
