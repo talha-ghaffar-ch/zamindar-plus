@@ -1,5 +1,10 @@
 import { type FormEvent, useEffect, useState } from 'react';
-import { AREA_UNITS, toSquareFeet, type AreaUnit } from '@zamindar/shared';
+import {
+  AREA_UNITS,
+  areaUnitKey,
+  toSquareFeet,
+  type AreaUnit,
+} from '@zamindar/shared';
 
 import {
   createCrop,
@@ -12,6 +17,7 @@ import {
 } from '../lib/api';
 import { FieldLabel } from '../components/FieldLabel';
 import { groupByParent } from '../lib/recordGrouping';
+import { useI18n } from '../i18n/useT';
 
 type CropsPageProps = {
   onNotify: (message: string) => void;
@@ -58,6 +64,7 @@ function splitStartPeriod(startPeriod: string) {
 }
 
 export function CropsPage({ onNotify }: CropsPageProps) {
+  const { t } = useI18n();
   const [zameen, setZameen] = useState<Zameen[]>([]);
   const [crops, setCrops] = useState<Crop[]>([]);
   const [form, setForm] = useState(initialForm);
@@ -100,7 +107,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
       })
       .catch((loadError) => {
         if (isActive) {
-          setError(loadError instanceof Error ? loadError.message : 'Failed to load crops.');
+          setError(loadError instanceof Error ? loadError.message : t('crops.loadFailed'));
         }
       })
       .finally(() => {
@@ -112,7 +119,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [t]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -136,10 +143,10 @@ export function CropsPage({ onNotify }: CropsPageProps) {
 
       if (editingCropId) {
         await updateCrop(editingCropId, payload);
-        onNotify('Record updated successfully');
+        onNotify(t('records.updated'));
       } else {
         await createCrop(payload);
-        onNotify('Crop added successfully');
+        onNotify(t('crops.created'));
       }
 
       setForm({
@@ -149,7 +156,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
       setEditingCropId(null);
       await loadData();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Failed to save crop.');
+      setError(saveError instanceof Error ? saveError.message : t('crops.saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -186,14 +193,16 @@ export function CropsPage({ onNotify }: CropsPageProps) {
 
     try {
       await deleteCrop(crop.id);
-      onNotify('Record deleted successfully');
+      onNotify(t('records.deleted'));
       if (editingCropId === crop.id) {
         cancelEdit();
       }
       await loadData();
     } catch (deleteError) {
       setError(
-        deleteError instanceof Error ? deleteError.message : 'Failed to delete crop.',
+        deleteError instanceof Error
+          ? deleteError.message
+          : t('crops.deleteFailed'),
       );
     }
   }
@@ -221,8 +230,8 @@ export function CropsPage({ onNotify }: CropsPageProps) {
     <>
       <section className="page-header">
         <div>
-          <p className="eyebrow">Crops</p>
-          <h1>Crop allocations</h1>
+          <p className="eyebrow">{t('crops.eyebrow')}</p>
+          <h1>{t('crops.title')}</h1>
         </div>
       </section>
 
@@ -231,7 +240,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
           <div className="form-heading">
-            <h2>{editingCropId ? 'Edit crop' : 'Create crop'}</h2>
+            <h2>{editingCropId ? t('crops.editTitle') : t('crops.createTitle')}</h2>
             {editingCropId ? (
               <button className="text-button" type="button" onClick={cancelEdit}>
                 Cancel
@@ -240,7 +249,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
           </div>
 
           <label>
-            <FieldLabel required>Zameen</FieldLabel>
+            <FieldLabel required>{t('crops.zameen')}</FieldLabel>
             <select
               required
               value={form.zameenId}
@@ -255,7 +264,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Crop name</FieldLabel>
+            <FieldLabel required>{t('crops.name')}</FieldLabel>
             <select
               value={form.cropName}
               onChange={(event) => setForm({ ...form, cropName: event.target.value })}
@@ -267,7 +276,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Crop area</FieldLabel>
+            <FieldLabel required>{t('crops.cropArea')}</FieldLabel>
             <input
               required
               min="0.01"
@@ -279,19 +288,24 @@ export function CropsPage({ onNotify }: CropsPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Area unit</FieldLabel>
+            <FieldLabel required>{t('crops.areaUnit')}</FieldLabel>
             <select
               value={form.cropAreaUnit}
               onChange={(event) => setForm({ ...form, cropAreaUnit: event.target.value })}
             >
-              {AREA_UNITS.filter((unit) => unit !== 'Murabba').map((unit) => (
-                <option key={unit}>{unit}</option>
-              ))}
+              {AREA_UNITS.filter((unit) => unit !== 'Murabba').map((unit) => {
+                const unitKey = areaUnitKey(unit);
+                return (
+                  <option key={unit} value={unit}>
+                    {unitKey ? t(unitKey) : unit}
+                  </option>
+                );
+              })}
             </select>
           </label>
 
           <label>
-            <FieldLabel required>Start period</FieldLabel>
+            <FieldLabel required>{t('crops.startPeriod')}</FieldLabel>
             <input
               required
               type="month"
@@ -301,23 +315,27 @@ export function CropsPage({ onNotify }: CropsPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Status</FieldLabel>
+            <FieldLabel required>{t('crops.status')}</FieldLabel>
             <select
               value={form.status}
               onChange={(event) => setForm({ ...form, status: event.target.value })}
             >
               {cropStatuses.map((status) => (
-                <option key={status}>{status}</option>
+                <option key={status} value={status}>
+                  {status === 'Completed'
+                    ? t('crops.statusCompleted')
+                    : t('crops.statusActive')}
+                </option>
               ))}
             </select>
           </label>
 
           <button className="primary-button" disabled={isSaving || zameen.length === 0} type="submit">
             {isSaving
-              ? 'Saving...'
+              ? t('common.saving')
               : editingCropId
-                ? 'Update crop'
-                : 'Create crop'}
+                ? t('crops.updateButton')
+                : t('crops.createButton')}
           </button>
         </form>
 
@@ -332,7 +350,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
               value={zameenFilter}
               onChange={(event) => setZameenFilter(event.target.value)}
             >
-              <option value="all">All zameen</option>
+              <option value="all">{t('crops.allZameen')}</option>
               {sortedZameen.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.zameenName}
@@ -342,9 +360,9 @@ export function CropsPage({ onNotify }: CropsPageProps) {
           </div>
 
           {isLoading ? (
-            <p className="muted">Loading crops...</p>
+            <p className="muted">{t('crops.loading')}</p>
           ) : groupedCrops.length === 0 ? (
-            <p className="muted">No crop records yet.</p>
+            <p className="muted">{t('crops.empty')}</p>
           ) : (
             <div className="grouped-records">
               {groupedCrops.map((group) => (
@@ -372,17 +390,22 @@ export function CropsPage({ onNotify }: CropsPageProps) {
                                 : 'status-pill status-active'
                             }
                           >
-                            {crop.status === 'Completed' ? 'Completed' : 'Active'}
+                            {crop.status === 'Completed'
+                              ? t('crops.statusCompleted')
+                              : t('crops.statusActive')}
                           </span>
                           <dl className="record-meta">
                             <div>
-                              <dt>Area</dt>
+                              <dt>{t('crops.colArea')}</dt>
                               <dd>
-                                {crop.cropAreaValue} {crop.cropAreaUnit}
+                                {crop.cropAreaValue}{' '}
+                                {areaUnitKey(crop.cropAreaUnit)
+                                  ? t(areaUnitKey(crop.cropAreaUnit)!)
+                                  : crop.cropAreaUnit}
                               </dd>
                             </div>
                             <div>
-                              <dt>Start</dt>
+                              <dt>{t('crops.colStart')}</dt>
                               <dd>{startPeriodLabel(crop)}</dd>
                             </div>
                           </dl>
