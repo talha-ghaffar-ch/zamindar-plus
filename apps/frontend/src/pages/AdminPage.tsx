@@ -8,6 +8,7 @@ import {
   UsersRound,
 } from 'lucide-react';
 import { FieldLabel } from '../components/FieldLabel';
+import { useI18n } from '../i18n/useT';
 import {
   createUser,
   deleteUser,
@@ -50,6 +51,7 @@ function formatDate(dateValue: string | null) {
 }
 
 export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
+  const { t } = useI18n();
   const [users, setUsers] = useState<User[]>([]);
   const [form, setForm] = useState(initialAdminUserForm);
   const [error, setError] = useState('');
@@ -84,7 +86,7 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
       })
       .catch((loadError) => {
         if (isActive) {
-          setError(loadError instanceof Error ? loadError.message : 'Failed to load users.');
+          setError(loadError instanceof Error ? loadError.message : t('admin.loadFailed'));
         }
       })
       .finally(() => {
@@ -96,7 +98,7 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [t]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -113,10 +115,10 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
       });
       setForm(initialAdminUserForm);
       await loadUsers();
-      onNotify('User account created successfully');
+      onNotify(t('admin.userCreated'));
     } catch (saveError) {
       setError(
-        saveError instanceof Error ? saveError.message : 'Failed to create user.',
+        saveError instanceof Error ? saveError.message : t('admin.createFailed'),
       );
     } finally {
       setIsSaving(false);
@@ -125,7 +127,7 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
 
   async function handleDeleteUser(user: User) {
     if (user.id === currentUser.id) {
-      setError('Use account settings if you need to delete your own account.');
+      setError(t('admin.deleteOwnAccount'));
       return;
     }
 
@@ -141,10 +143,10 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
     try {
       await deleteUser(user.id);
       await loadUsers();
-      onNotify('Record deleted successfully');
+      onNotify(t('records.deleted'));
     } catch (deleteError) {
       setError(
-        deleteError instanceof Error ? deleteError.message : 'Failed to delete user.',
+        deleteError instanceof Error ? deleteError.message : t('admin.deleteFailed'),
       );
     } finally {
       setIsSaving(false);
@@ -155,10 +157,10 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
     return (
       <section className="page-header">
         <div>
-          <p className="eyebrow">Admin</p>
-          <h1>Restricted area</h1>
+          <p className="eyebrow">{t('admin.roleAdmin')}</p>
+          <h1>{t('admin.restricted')}</h1>
         </div>
-        <p className="muted">Only authorized admins can open this section.</p>
+        <p className="muted">{t('admin.restrictedNote')}</p>
       </section>
     );
   }
@@ -167,8 +169,8 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
     <section className="page-stack admin-screen">
       <section className="page-header admin-hero-panel">
         <div>
-          <p className="eyebrow">Full authorization</p>
-          <h1>Admin panel</h1>
+          <p className="eyebrow">{t('admin.fullAuth')}</p>
+          <h1>{t('admin.panel')}</h1>
           <p className="muted">
             Core admin access for user visibility, account creation, and user
             control across Zamindar Plus.
@@ -183,22 +185,22 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
       <section className="admin-stat-grid">
         <article className="metric-card">
           <UsersRound size={20} aria-hidden="true" />
-          <span>Total users</span>
+          <span>{t('admin.totalUsers')}</span>
           <strong>{stats.total}</strong>
         </article>
         <article className="metric-card">
           <ShieldCheck size={20} aria-hidden="true" />
-          <span>Admins</span>
+          <span>{t('admin.admins')}</span>
           <strong>{stats.admins}</strong>
         </article>
         <article className="metric-card">
           <UserCog size={20} aria-hidden="true" />
-          <span>Farmers</span>
+          <span>{t('admin.farmers')}</span>
           <strong>{stats.farmers}</strong>
         </article>
         <article className="metric-card">
           <BadgeCheck size={20} aria-hidden="true" />
-          <span>Verified</span>
+          <span>{t('admin.verified')}</span>
           <strong>{stats.verified}</strong>
         </article>
       </section>
@@ -208,15 +210,15 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
       <section className="panel form-panel">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Admin action</p>
-            <h2>Create user account</h2>
+            <p className="eyebrow">{t('admin.adminAction')}</p>
+            <h2>{t('admin.createUser')}</h2>
           </div>
           <UserPlus size={22} aria-hidden="true" />
         </div>
 
         <form className="form-grid two-column-form" onSubmit={handleSubmit}>
           <label>
-            <FieldLabel required>First name</FieldLabel>
+            <FieldLabel required>{t('admin.firstName')}</FieldLabel>
             <input
               required
               minLength={2}
@@ -227,7 +229,7 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
             />
           </label>
           <label>
-            <FieldLabel required>Last name</FieldLabel>
+            <FieldLabel required>{t('admin.lastName')}</FieldLabel>
             <input
               required
               minLength={2}
@@ -238,7 +240,7 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
             />
           </label>
           <label>
-            <FieldLabel required>Email</FieldLabel>
+            <FieldLabel required>{t('admin.email')}</FieldLabel>
             <input
               required
               type="email"
@@ -249,7 +251,7 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
             />
           </label>
           <label>
-            <FieldLabel required>Password</FieldLabel>
+            <FieldLabel required>{t('admin.password')}</FieldLabel>
             <input
               required
               minLength={8}
@@ -261,7 +263,7 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
             />
           </label>
           <label>
-            <FieldLabel>Phone</FieldLabel>
+            <FieldLabel>{t('admin.phone')}</FieldLabel>
             <input
               value={form.phone}
               onChange={(event) =>
@@ -270,22 +272,22 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
             />
           </label>
           <label>
-            <FieldLabel>Farmer type</FieldLabel>
+            <FieldLabel>{t('admin.farmerType')}</FieldLabel>
             <select
               value={form.farmerType}
               onChange={(event) =>
                 setForm({ ...form, farmerType: event.target.value })
               }
             >
-              <option value="Land Owner">Land owner</option>
-              <option value="Thekka Farmer">Thekka farmer</option>
-              <option value="Batai Farmer">Batai farmer</option>
-              <option value="Family Member">Family member</option>
-              <option value="Farm Manager">Farm manager</option>
+              <option value="Land Owner">{t('auth.typeLandOwner')}</option>
+              <option value="Thekka Farmer">{t('auth.typeThekka')}</option>
+              <option value="Batai Farmer">{t('auth.typeBatai')}</option>
+              <option value="Family Member">{t('auth.typeFamily')}</option>
+              <option value="Farm Manager">{t('auth.typeManager')}</option>
             </select>
           </label>
           <label>
-            <FieldLabel required>Role</FieldLabel>
+            <FieldLabel required>{t('admin.roleLabel')}</FieldLabel>
             <select
               required
               value={form.role}
@@ -296,13 +298,13 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
                 })
               }
             >
-              <option value="USER">User</option>
+              <option value="USER">{t('admin.roleUser')}</option>
               <option value="ADMIN">Admin</option>
             </select>
           </label>
 
           <button className="primary-button" disabled={isSaving} type="submit">
-            {isSaving ? 'Creating...' : 'Create user'}
+            {isSaving ? t('admin.creating') : t('admin.createButton')}
           </button>
         </form>
       </section>
@@ -310,8 +312,8 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
       <section className="panel">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Users</p>
-            <h2>Account access</h2>
+            <p className="eyebrow">{t('admin.users')}</p>
+            <h2>{t('admin.accountAccess')}</h2>
           </div>
           <span className="record-count">
             {isLoading ? 'Loading...' : `${users.length} total`}

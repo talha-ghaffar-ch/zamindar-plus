@@ -269,7 +269,7 @@ function readImageFile(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error('Failed to read image file.'));
+    reader.onerror = () => reject(new Error());
     reader.readAsDataURL(file);
   });
 }
@@ -325,7 +325,7 @@ export function SettingsPage({
       setSuccess('');
 
       if (!response.credential) {
-        setError('Google did not return a valid account credential.');
+        setError(t('settings.googleInvalid'));
         return;
       }
 
@@ -338,18 +338,18 @@ export function SettingsPage({
         onUserUpdated(updatedUser);
         setForm(buildForm(updatedUser));
         setSuccess('Google account connected.');
-        onNotify('Google account connected successfully');
+        onNotify(t('settings.googleConnectedToast'));
       } catch (connectError) {
         setError(
           connectError instanceof Error
             ? connectError.message
-            : 'Google account could not be connected.',
+            : t('settings.googleConnectFailed'),
         );
       } finally {
         setIsConnectingGoogle(false);
       }
     },
-    [onNotify, onUserUpdated],
+    [onNotify, onUserUpdated, t],
   );
 
   async function handleDisconnectGoogle() {
@@ -362,12 +362,12 @@ export function SettingsPage({
       onUserUpdated(updatedUser);
       setForm(buildForm(updatedUser));
       setSuccess('Google account disconnected.');
-      onNotify('Google account disconnected successfully');
+      onNotify(t('settings.googleDisconnectedToast'));
     } catch (disconnectError) {
       setError(
         disconnectError instanceof Error
           ? disconnectError.message
-          : 'Google account could not be disconnected.',
+          : t('settings.googleDisconnectFailed'),
       );
     } finally {
       setIsDisconnectingGoogle(false);
@@ -418,7 +418,7 @@ export function SettingsPage({
       })
       .catch(() => {
         if (!isCancelled) {
-          setError('Google account connection could not load.');
+          setError(t('settings.googleLoadFailed'));
         }
       });
 
@@ -426,7 +426,7 @@ export function SettingsPage({
       isCancelled = true;
       buttonElement.replaceChildren();
     };
-  }, [googleClientId, isGoogleConnected]);
+  }, [googleClientId, isGoogleConnected, t]);
 
   async function handleImageUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -439,7 +439,7 @@ export function SettingsPage({
     setSuccess('');
 
     if (!file.type.startsWith('image/')) {
-      setError('Please choose an image file.');
+      setError(t('settings.chooseImage'));
       return;
     }
 
@@ -456,9 +456,9 @@ export function SettingsPage({
       }));
     } catch (uploadError) {
       setError(
-        uploadError instanceof Error
+        uploadError instanceof Error && uploadError.message
           ? uploadError.message
-          : 'Failed to upload profile image.',
+          : t('settings.imageReadFailed'),
       );
     } finally {
       event.target.value = '';
@@ -501,12 +501,12 @@ export function SettingsPage({
       setSuccess(message);
       onNotify(
         updatedUser.emailVerified
-          ? 'Settings saved successfully'
-          : 'Settings saved. Verify your new email.',
+          ? t('settings.saved')
+          : t('settings.savedVerifyEmail'),
       );
     } catch (saveError) {
       setError(
-        saveError instanceof Error ? saveError.message : 'Failed to save settings.',
+        saveError instanceof Error ? saveError.message : t('settings.saveFailed'),
       );
     } finally {
       setIsSaving(false);
@@ -515,7 +515,7 @@ export function SettingsPage({
 
   async function handleDelete() {
     const confirmed = window.confirm(
-      'Delete your account and all related farm records?',
+      t('settings.confirmDelete'),
     );
 
     if (!confirmed) {
@@ -533,7 +533,7 @@ export function SettingsPage({
       setError(
         deleteError instanceof Error
           ? deleteError.message
-          : 'Failed to delete account.',
+          : t('settings.deleteFailed'),
       );
     } finally {
       setIsDeleting(false);
@@ -544,8 +544,8 @@ export function SettingsPage({
     <>
       <section className="page-header">
         <div>
-          <p className="eyebrow">Settings</p>
-          <h1>Account settings</h1>
+          <p className="eyebrow">{t('settings.eyebrow')}</p>
+          <h1>{t('settings.title')}</h1>
         </div>
       </section>
 
@@ -571,7 +571,7 @@ export function SettingsPage({
           </div>
 
           <div>
-            <p className="eyebrow">Profile photo</p>
+            <p className="eyebrow">{t('settings.profilePhoto')}</p>
             <h2>
               {currentUser.firstName} {currentUser.lastName}
             </h2>
@@ -602,16 +602,16 @@ export function SettingsPage({
 
           <dl className="detail-list compact-detail-list">
             <div>
-              <dt>Role</dt>
+              <dt>{t('settings.role')}</dt>
               <dd>{currentUser.role}</dd>
             </div>
             <div>
-              <dt>Account email</dt>
+              <dt>{t('settings.accountEmail')}</dt>
               <dd>{currentUser.email}</dd>
             </div>
             <div>
-              <dt>Email status</dt>
-              <dd>{currentUser.emailVerified ? 'Verified' : 'Not verified'}</dd>
+              <dt>{t('settings.emailStatus')}</dt>
+              <dd>{currentUser.emailVerified ? t('settings.verified') : t('settings.notVerified')}</dd>
             </div>
           </dl>
         </section>
@@ -620,14 +620,14 @@ export function SettingsPage({
           <div className="settings-section-heading">
             <UserRound size={18} aria-hidden="true" />
             <div>
-              <p className="eyebrow">Account</p>
-              <h2>Personal information</h2>
+              <p className="eyebrow">{t('settings.account')}</p>
+              <h2>{t('settings.personalInfo')}</h2>
             </div>
           </div>
 
           <div className="settings-two-column">
             <label>
-              <FieldLabel required>First name</FieldLabel>
+              <FieldLabel required>{t('settings.firstName')}</FieldLabel>
               <input
                 required
                 minLength={2}
@@ -639,7 +639,7 @@ export function SettingsPage({
             </label>
 
             <label>
-              <FieldLabel required>Last name</FieldLabel>
+              <FieldLabel required>{t('settings.lastName')}</FieldLabel>
               <input
                 required
                 minLength={2}
@@ -651,7 +651,7 @@ export function SettingsPage({
             </label>
 
             <label>
-              <FieldLabel required>Email</FieldLabel>
+              <FieldLabel required>{t('settings.email')}</FieldLabel>
               <input
                 required
                 type="email"
@@ -663,7 +663,7 @@ export function SettingsPage({
             </label>
 
             <label>
-              <FieldLabel>Phone</FieldLabel>
+              <FieldLabel>{t('settings.phone')}</FieldLabel>
               <input
                 value={form.phone}
                 onChange={(event) =>
@@ -673,29 +673,29 @@ export function SettingsPage({
             </label>
 
             <label>
-              <FieldLabel>Farmer type</FieldLabel>
+              <FieldLabel>{t('settings.farmerType')}</FieldLabel>
               <select
                 value={form.farmerType}
                 onChange={(event) =>
                   setForm({ ...form, farmerType: event.target.value })
                 }
               >
-                <option value="Land Owner">Land owner</option>
-                <option value="Thekka Farmer">Thekka farmer</option>
-                <option value="Batai Farmer">Batai farmer</option>
-                <option value="Family Member">Family member</option>
-                <option value="Farm Manager">Farm manager</option>
+                <option value="Land Owner">{t('auth.typeLandOwner')}</option>
+                <option value="Thekka Farmer">{t('auth.typeThekka')}</option>
+                <option value="Batai Farmer">{t('auth.typeBatai')}</option>
+                <option value="Family Member">{t('auth.typeFamily')}</option>
+                <option value="Farm Manager">{t('auth.typeManager')}</option>
               </select>
             </label>
           </div>
 
           <div className="settings-google-panel">
             <div>
-              <p className="eyebrow">Google account</p>
+              <p className="eyebrow">{t('settings.googleAccount')}</p>
               <h3>
                 {isGoogleConnected
-                  ? 'Google account connected'
-                  : 'Connect Google account'}
+                  ? t('settings.googleConnected')
+                  : t('settings.connectGoogle')}
               </h3>
               <p className="muted">
                 {isGoogleConnected
@@ -713,8 +713,8 @@ export function SettingsPage({
                 onClick={() => void handleDisconnectGoogle()}
               >
                 {isDisconnectingGoogle
-                  ? 'Disconnecting...'
-                  : 'Disconnect Google account'}
+                  ? t('settings.disconnecting')
+                  : t('settings.disconnectGoogle')}
               </button>
             ) : googleClientId ? (
               <div
@@ -734,16 +734,16 @@ export function SettingsPage({
           <div className="settings-section-heading">
             <Palette size={18} aria-hidden="true" />
             <div>
-              <p className="eyebrow">Preferences</p>
-              <h2>Workspace defaults</h2>
+              <p className="eyebrow">{t('settings.preferences')}</p>
+              <h2>{t('settings.workspaceDefaults')}</h2>
             </div>
           </div>
 
           <div className="settings-two-column">
             <div className="theme-switch-card">
               <div>
-                <p className="eyebrow">Theme</p>
-                <h3>Display mode</h3>
+                <p className="eyebrow">{t('settings.theme')}</p>
+                <h3>{t('settings.displayMode')}</h3>
                 <p className="muted">
                   Choose the color scheme that feels best for daily farm work.
                 </p>
@@ -756,7 +756,7 @@ export function SettingsPage({
                   type="button"
                   onClick={() => {
                     onThemeChange('light');
-                    onNotify('Light theme enabled');
+                    onNotify(t('settings.lightEnabled'));
                   }}
                 >
                   <Sun size={17} aria-hidden="true" />
@@ -768,7 +768,7 @@ export function SettingsPage({
                   type="button"
                   onClick={() => {
                     onThemeChange('dark');
-                    onNotify('Dark theme enabled');
+                    onNotify(t('settings.darkEnabled'));
                   }}
                 >
                   <Moon size={17} aria-hidden="true" />
@@ -778,7 +778,7 @@ export function SettingsPage({
             </div>
 
             <label>
-              <FieldLabel required>Preferred area unit</FieldLabel>
+              <FieldLabel required>{t('settings.preferredAreaUnit')}</FieldLabel>
               <select
                 value={form.preferredAreaUnit}
                 onChange={(event) =>
@@ -792,7 +792,7 @@ export function SettingsPage({
             </label>
 
             <label>
-              <FieldLabel required>Currency</FieldLabel>
+              <FieldLabel required>{t('settings.currency')}</FieldLabel>
               <select
                 value={form.preferredCurrency}
                 onChange={(event) =>
@@ -855,8 +855,8 @@ export function SettingsPage({
           <div className="settings-section-heading">
             <Bell size={18} aria-hidden="true" />
             <div>
-              <p className="eyebrow">Notifications</p>
-              <h2>Farm reminders</h2>
+              <p className="eyebrow">{t('settings.notifications')}</p>
+              <h2>{t('settings.farmReminders')}</h2>
             </div>
           </div>
 
@@ -875,7 +875,7 @@ export function SettingsPage({
                 checked={form.emailNotifications}
                 type="checkbox"
                 onChange={(event) => {
-                  onNotify('Notification delivery will be available soon.');
+                  onNotify(t('settings.notificationsSoon'));
                   setForm({
                     ...form,
                     emailNotifications: event.target.checked,
@@ -893,7 +893,7 @@ export function SettingsPage({
                 checked={form.smsNotifications}
                 type="checkbox"
                 onChange={(event) => {
-                  onNotify('Notification delivery will be available soon.');
+                  onNotify(t('settings.notificationsSoon'));
                   setForm({
                     ...form,
                     smsNotifications: event.target.checked,
@@ -911,7 +911,7 @@ export function SettingsPage({
                 checked={form.weeklyReport}
                 type="checkbox"
                 onChange={(event) => {
-                  onNotify('Weekly report delivery will be available soon.');
+                  onNotify(t('settings.weeklySoon'));
                   setForm({ ...form, weeklyReport: event.target.checked });
                 }}
               />
@@ -923,13 +923,13 @@ export function SettingsPage({
           <div className="settings-section-heading">
             <KeyRound size={18} aria-hidden="true" />
             <div>
-              <p className="eyebrow">Security</p>
-              <h2>Password</h2>
+              <p className="eyebrow">{t('settings.security')}</p>
+              <h2>{t('settings.password')}</h2>
             </div>
           </div>
 
           <label>
-            <FieldLabel>New password</FieldLabel>
+            <FieldLabel>{t('settings.newPassword')}</FieldLabel>
             <span className="password-field">
               <input
                 minLength={8}
@@ -940,7 +940,7 @@ export function SettingsPage({
                 }
               />
               <button
-                aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
+                aria-label={isPasswordVisible ? t('settings.hidePassword') : t('settings.showPassword')}
                 className="password-toggle"
                 type="button"
                 onClick={() =>
@@ -958,7 +958,7 @@ export function SettingsPage({
 
           <div className="settings-actions">
             <button className="primary-button" disabled={isSaving} type="submit">
-              {isSaving ? 'Saving...' : 'Save settings'}
+              {isSaving ? t('common.saving') : t('settings.saveSettings')}
             </button>
           </div>
         </section>
@@ -967,8 +967,8 @@ export function SettingsPage({
           <div className="settings-section-heading">
             <ShieldCheck size={18} aria-hidden="true" />
             <div>
-              <p className="eyebrow">Account safety</p>
-              <h2>Danger zone</h2>
+              <p className="eyebrow">{t('settings.accountSafety')}</p>
+              <h2>{t('settings.dangerZone')}</h2>
             </div>
           </div>
           <p className="muted">
@@ -981,7 +981,7 @@ export function SettingsPage({
             type="button"
             onClick={handleDelete}
           >
-            {isDeleting ? 'Deleting...' : 'Delete account'}
+            {isDeleting ? t('settings.deleting') : t('settings.deleteAccount')}
           </button>
         </section>
       </form>
