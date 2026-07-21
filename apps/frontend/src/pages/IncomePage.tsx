@@ -350,7 +350,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
         <section className="panel">
           <div className="panel-header">
             <div>
-              <p className="eyebrow">Income</p>
+              <p className="eyebrow">{t('income.eyebrow')}</p>
               <h2>{visibleIncome.length} Total</h2>
             </div>
             <div className="panel-actions">
@@ -440,11 +440,11 @@ export function IncomePage({ onNotify }: IncomePageProps) {
                                   </dd>
                                 </div>
                                 <div>
-                                  <dt>Rate</dt>
+                                  <dt>{t('income.colRate')}</dt>
                                   <dd>{item.rate ? format.currency(item.rate) : '-'}</dd>
                                 </div>
                                 <div>
-                                  <dt>Total</dt>
+                                  <dt>{t('income.colTotal')}</dt>
                                   <dd>{format.currency(item.totalAmount)}</dd>
                                 </div>
                               </dl>

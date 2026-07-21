@@ -342,7 +342,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
         <section className="panel">
           <div className="panel-header">
             <div>
-              <p className="eyebrow">Crops</p>
+              <p className="eyebrow">{t('crops.eyebrow')}</p>
               <h2>{visibleCrops.length} Total</h2>
             </div>
             <select
@@ -380,7 +380,7 @@ export function CropsPage({ onNotify }: CropsPageProps) {
                       .map((crop) => (
                         <article className="record-card" key={crop.id}>
                           <div>
-                            <p className="eyebrow">Crop</p>
+                            <p className="eyebrow">{t('crops.colCrop')}</p>
                             <h4>{crop.cropName}</h4>
                           </div>
                           <span

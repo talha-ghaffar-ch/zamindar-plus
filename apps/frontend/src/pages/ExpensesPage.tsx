@@ -332,7 +332,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
         <section className="panel">
           <div className="panel-header">
             <div>
-              <p className="eyebrow">Expenses</p>
+              <p className="eyebrow">{t('expenses.eyebrow')}</p>
               <h2>{visibleExpenses.length} Total</h2>
             </div>
             <div className="panel-actions">

@@ -299,7 +299,7 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
               }
             >
               <option value="USER">{t('admin.roleUser')}</option>
-              <option value="ADMIN">Admin</option>
+              <option value="ADMIN">{t('admin.roleAdmin')}</option>
             </select>
           </label>
 
@@ -324,12 +324,12 @@ export function AdminPage({ currentUser, onNotify }: AdminPageProps) {
           <table>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Verified</th>
-                <th>Action</th>
+                <th>{t('admin.colName')}</th>
+                <th>{t('admin.colEmail')}</th>
+                <th>{t('admin.colRole')}</th>
+                <th>{t('admin.colStatus')}</th>
+                <th>{t('admin.colVerified')}</th>
+                <th>{t('admin.colAction')}</th>
               </tr>
             </thead>
             <tbody>

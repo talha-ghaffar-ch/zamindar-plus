@@ -340,7 +340,7 @@ export function ReportsPage({ onNotify }: ReportsPageProps) {
       <section className="panel report-filter-panel">
         <div>
           <p className="eyebrow">{t('reports.filters')}</p>
-          <h2>Focus the report</h2>
+          <h2>{t('reports.focusReport')}</h2>
         </div>
         <div className="report-filter-grid">
           <label>

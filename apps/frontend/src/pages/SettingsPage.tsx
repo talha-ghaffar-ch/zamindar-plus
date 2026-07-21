@@ -785,9 +785,9 @@ export function SettingsPage({
                   setForm({ ...form, preferredAreaUnit: event.target.value })
                 }
               >
-                <option>Acre</option>
-                <option>Kanal</option>
-                <option>Marla</option>
+                <option value="Acre">{t('units.areaAcre')}</option>
+                <option value="Kanal">{t('units.areaKanal')}</option>
+                <option value="Marla">{t('units.areaMarla')}</option>
               </select>
             </label>
 
