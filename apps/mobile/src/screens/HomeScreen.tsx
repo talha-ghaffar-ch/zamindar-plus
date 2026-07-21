@@ -25,11 +25,13 @@ import {EmptyState} from '../components/EmptyState';
 import {SectionHeader} from '../components/SectionHeader';
 import {useAuth} from '../context/AuthContext';
 import {useFarmData} from '../context/FarmDataContext';
+import {useI18n} from '../i18n/useT';
 import {theme} from '../theme';
 import {haptics} from '../haptics';
 import {compactCurrency, formatCurrency, initialsOf, monthName} from '../format';
 
 export function HomeScreen() {
+  const {t} = useI18n();
   const navigation = useNavigation<any>();
   const {user} = useAuth();
   const {data, status, error, refreshing, refresh, reload} = useFarmData();
@@ -67,49 +69,49 @@ export function HomeScreen() {
     level: number;
   }[] = [
     {
-      label: 'Expense',
+      label: t('dashboard.expense'),
       value: compactCurrency(s?.totalExpense ?? 0),
-      hint: `${expenseShare}% of movement`,
+      hint: t('dashboard.ofMovement', {percent: expenseShare}),
       tone: 'expense',
       icon: <TrendingDown color={theme.colors.expense} size={18} />,
       level: (s?.totalExpense ?? 0) / maxMoney,
     },
     {
-      label: 'Income',
+      label: t('dashboard.income'),
       value: compactCurrency(s?.totalIncome ?? 0),
-      hint: 'Received',
+      hint: t('dashboard.receivedRecorded'),
       tone: 'income',
       icon: <TrendingUp color={theme.colors.income} size={18} />,
       level: (s?.totalIncome ?? 0) / maxMoney,
     },
     {
-      label: 'Net profit',
+      label: t('dashboard.netProfit'),
       value: compactCurrency(s?.netProfit ?? 0),
-      hint: `${profitMargin}% margin`,
+      hint: t('dashboard.margin', {percent: profitMargin}),
       tone: 'profit',
       icon: <Wallet color={theme.colors.profit} size={18} />,
       level: Math.abs(s?.netProfit ?? 0) / maxMoney,
     },
     {
-      label: 'Zameen',
+      label: t('dashboard.zameen'),
       value: `${s?.zameenCount ?? 0}`,
-      hint: 'Land records',
+      hint: t('dashboard.managedRecords'),
       tone: 'land',
       icon: <MapPin color={theme.colors.land} size={18} />,
       level: 0.55,
     },
     {
-      label: 'Crops',
+      label: t('dashboard.crops'),
       value: `${s?.cropCount ?? 0}`,
-      hint: 'Crop cycles',
+      hint: t('dashboard.cropCycles'),
       tone: 'crop',
       icon: <Sprout color={theme.colors.crop} size={18} />,
       level: 0.55,
     },
     {
-      label: 'Entries',
+      label: t('dashboard.entries'),
       value: `${entries}`,
-      hint: 'Expense + income',
+      hint: t('dashboard.expensePlusIncome'),
       tone: 'activity',
       icon: <Layers color={theme.colors.activity} size={18} />,
       level: 0.7,
@@ -117,12 +119,12 @@ export function HomeScreen() {
   ];
 
   const actions: {label: string; icon: React.ReactNode; go: () => void}[] = [
-    {label: 'Add expense', icon: <TrendingDown color={theme.colors.expense} size={19} />, go: () => navigation.navigate('Add')},
-    {label: 'Add income', icon: <TrendingUp color={theme.colors.income} size={19} />, go: () => navigation.navigate('Add')},
-    {label: 'Add crop', icon: <Sprout color={theme.colors.crop} size={19} />, go: () => navigation.navigate('Add')},
-    {label: 'Add zameen', icon: <MapPin color={theme.colors.land} size={19} />, go: () => navigation.navigate('Add')},
-    {label: 'Reports', icon: <BarChart3 color={theme.colors.profit} size={19} />, go: () => navigation.navigate('Reports')},
-    {label: 'Records', icon: <Layers color={theme.colors.primary} size={19} />, go: () => navigation.navigate('Records')},
+    {label: t('dashboard.addExpense'), icon: <TrendingDown color={theme.colors.expense} size={19} />, go: () => navigation.navigate('Add')},
+    {label: t('dashboard.addIncome'), icon: <TrendingUp color={theme.colors.income} size={19} />, go: () => navigation.navigate('Add')},
+    {label: t('dashboard.addCrop'), icon: <Sprout color={theme.colors.crop} size={19} />, go: () => navigation.navigate('Add')},
+    {label: t('dashboard.addZameen'), icon: <MapPin color={theme.colors.land} size={19} />, go: () => navigation.navigate('Add')},
+    {label: t('mobile.reports'), icon: <BarChart3 color={theme.colors.profit} size={19} />, go: () => navigation.navigate('Reports')},
+    {label: t('mobile.records'), icon: <Layers color={theme.colors.primary} size={19} />, go: () => navigation.navigate('Records')},
   ];
 
   return (
@@ -147,7 +149,7 @@ export function HomeScreen() {
               Farm command center
             </AppText>
           </View>
-          <Pressable onPress={() => navigation.navigate('Settings')} style={styles.avatar}>
+          <Pressable onPress={() => navigation.navigate(t('mobile.settings'))} style={styles.avatar}>
             <AppText variant="bodyStrong" color={theme.colors.primary}>
               {initialsOf(user?.firstName, user?.lastName)}
             </AppText>
@@ -160,8 +162,8 @@ export function HomeScreen() {
           <EmptyState
             tone="error"
             title="Couldn't load your farm"
-            message={error ?? 'Something went wrong.'}
-            actionLabel="Try again"
+            message={error ?? t('validation.genericError')}
+            actionLabel={t('common.retry')}
             onAction={reload}
           />
         ) : (
@@ -198,7 +200,7 @@ export function HomeScreen() {
                     </AppText>
                   </View>
                 </View>
-                <ProfitRing percent={profitMargin} centerLabel={`${profitMargin}%`} caption="Margin" />
+                <ProfitRing percent={profitMargin} centerLabel={`${profitMargin}%`} caption={t('dashboard.profitMargin')} />
               </Card>
             </Animated.View>
 
@@ -213,7 +215,7 @@ export function HomeScreen() {
               ))}
             </View>
 
-            <SectionHeader title="Quick actions" />
+            <SectionHeader title={t('dashboard.directActions')} />
             <View style={styles.actionsGrid}>
               {actions.map(a => (
                 <Pressable
@@ -231,7 +233,7 @@ export function HomeScreen() {
               ))}
             </View>
 
-            <SectionHeader title="Monthly movement" />
+            <SectionHeader title={t('dashboard.monthlyMovement')} />
             <Card elevated style={styles.chartCard}>
               {months.length === 0 ? (
                 <AppText variant="body" color={theme.colors.textSecondary} center style={styles.noData}>
@@ -240,8 +242,8 @@ export function HomeScreen() {
               ) : (
                 <>
                   <View style={styles.legend}>
-                    <Legend color={theme.colors.income} label="Income" />
-                    <Legend color={theme.colors.expense} label="Spent" />
+                    <Legend color={theme.colors.income} label={t('dashboard.income')} />
+                    <Legend color={theme.colors.expense} label={t('dashboard.expense')} />
                   </View>
                   <View style={styles.chart}>
                     {months.map(m => (
@@ -279,7 +281,7 @@ export function HomeScreen() {
             <Pressable
               onPress={() => {
                 haptics.medium();
-                navigation.navigate('Assistant');
+                navigation.navigate(t('mobile.assistant'));
               }}
               style={styles.aiWrap}>
               <Gradient
