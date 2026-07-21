@@ -17,6 +17,7 @@ import {
   Sprout,
   Wheat,
 } from 'lucide-react';
+import { useI18n } from '../i18n/useT';
 import {
   getMonthlySummaryReport,
   getReportSummary,
@@ -31,29 +32,6 @@ type DashboardPageProps = {
 };
 
 type MetricTone = 'expense' | 'income' | 'profit' | 'land' | 'crop' | 'activity';
-
-const monthNames = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-function formatCurrency(value: number) {
-  return `Rs ${value.toLocaleString()}`;
-}
-
-function formatMonth(report: MonthlySummaryReport) {
-  return `${monthNames[report.month - 1] ?? report.month} ${report.year}`;
-}
 
 function percentStyle(value: number, maxValue: number) {
   const normalizedValue = maxValue > 0 ? Math.max((value / maxValue) * 100, 8) : 8;
@@ -70,9 +48,18 @@ function ringStyle(value: number) {
 }
 
 export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
+  const { t, format } = useI18n();
   const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [monthlyReports, setMonthlyReports] = useState<MonthlySummaryReport[]>([]);
   const [error, setError] = useState('');
+
+  const formatCurrency = (value: number) => format.currency(value);
+  const formatMonth = (report: MonthlySummaryReport) =>
+    format.date(new Date(Date.UTC(report.year, report.month - 1, 1)), {
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'UTC',
+    });
 
   useEffect(() => {
     let isActive = true;
@@ -140,49 +127,49 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
     rawValue: number;
   }> = [
     {
-      label: 'Expense',
-      value: summary ? formatCurrency(summary.totalExpense) : 'Loading...',
-      hint: `${expenseShare}% of movement`,
+      label: t('dashboard.expense'),
+      value: summary ? formatCurrency(summary.totalExpense) : t('common.loading'),
+      hint: t('dashboard.ofMovement', { percent: expenseShare }),
       tone: 'expense',
       icon: BanknoteArrowDown,
       rawValue: summary?.totalExpense ?? 0,
     },
     {
-      label: 'Income',
-      value: summary ? formatCurrency(summary.totalIncome) : 'Loading...',
-      hint: 'Received and recorded',
+      label: t('dashboard.income'),
+      value: summary ? formatCurrency(summary.totalIncome) : t('common.loading'),
+      hint: t('dashboard.receivedRecorded'),
       tone: 'income',
       icon: BanknoteArrowUp,
       rawValue: summary?.totalIncome ?? 0,
     },
     {
-      label: 'Net profit',
-      value: summary ? formatCurrency(summary.netProfit) : 'Loading...',
-      hint: `${profitMargin}% margin`,
+      label: t('dashboard.netProfit'),
+      value: summary ? formatCurrency(summary.netProfit) : t('common.loading'),
+      hint: t('dashboard.margin', { percent: profitMargin }),
       tone: 'profit',
       icon: CircleDollarSign,
       rawValue: Math.abs(summary?.netProfit ?? 0),
     },
     {
-      label: 'Zameen',
-      value: summary ? summary.zameenCount.toLocaleString() : 'Loading...',
-      hint: 'Managed records',
+      label: t('dashboard.zameen'),
+      value: summary ? format.number(summary.zameenCount) : t('common.loading'),
+      hint: t('dashboard.managedRecords'),
       tone: 'land',
       icon: LandPlot,
       rawValue: summary?.zameenCount ?? 0,
     },
     {
-      label: 'Crops',
-      value: summary ? summary.cropCount.toLocaleString() : 'Loading...',
-      hint: 'Crop cycles',
+      label: t('dashboard.crops'),
+      value: summary ? format.number(summary.cropCount) : t('common.loading'),
+      hint: t('dashboard.cropCycles'),
       tone: 'crop',
       icon: Wheat,
       rawValue: summary?.cropCount ?? 0,
     },
     {
-      label: 'Entries',
-      value: summary ? transactionCount.toLocaleString() : 'Loading...',
-      hint: 'Expense + Income',
+      label: t('dashboard.entries'),
+      value: summary ? format.number(transactionCount) : t('common.loading'),
+      hint: t('dashboard.expensePlusIncome'),
       tone: 'activity',
       icon: ClipboardList,
       rawValue: transactionCount,
@@ -191,40 +178,40 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
 
   const quickActions = [
     {
-      label: 'Add profile',
+      label: t('dashboard.addProfile'),
       page: 'Profiles',
       icon: PlusCircle,
-      hint: 'Farm owner or farm book',
+      hint: t('dashboard.profileHint'),
     },
     {
-      label: 'Add zameen',
+      label: t('dashboard.addZameen'),
       page: 'Zameen',
       icon: LandPlot,
-      hint: 'Land and ownership',
+      hint: t('dashboard.zameenHint'),
     },
     {
-      label: 'Add crop',
+      label: t('dashboard.addCrop'),
       page: 'Crops',
       icon: Wheat,
-      hint: 'Area and season',
+      hint: t('dashboard.cropHint'),
     },
     {
-      label: 'Add expense',
+      label: t('dashboard.addExpense'),
       page: 'Expenses',
       icon: ReceiptText,
-      hint: 'Kharcha entry',
+      hint: t('dashboard.expenseHint'),
     },
     {
-      label: 'Add income',
+      label: t('dashboard.addIncome'),
       page: 'Income',
       icon: CircleDollarSign,
-      hint: 'Sale or payment',
+      hint: t('dashboard.incomeHint'),
     },
     {
-      label: 'Open reports',
+      label: t('dashboard.openReports'),
       page: 'Reports',
       icon: BarChart3,
-      hint: 'Profit details',
+      hint: t('dashboard.reportsHint'),
     },
   ];
 
@@ -232,12 +219,12 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
     <section className="dashboard-screen">
       <div className="dashboard-titlebar">
         <div>
-          <p className="eyebrow">Dashboard</p>
-          <h1>Farm command center</h1>
+          <p className="eyebrow">{t('dashboard.eyebrow')}</p>
+          <h1>{t('dashboard.title')}</h1>
         </div>
         <div className="dashboard-user-chip">
           <Sprout size={16} aria-hidden="true" />
-          <span>{currentUser.farmerType ?? 'Farmer'}</span>
+          <span>{currentUser.farmerType ?? t('dashboard.farmer')}</span>
           <strong>{currentUser.preferredAreaUnit} / {currentUser.preferredCurrency}</strong>
         </div>
       </div>
@@ -248,31 +235,31 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
         <section className="panel dashboard-profit-panel">
           <div className="panel-header compact-panel-header">
             <div>
-              <p className="eyebrow">Financial pulse</p>
-              <h2>{summary ? formatCurrency(summary.netProfit) : 'Loading...'}</h2>
+              <p className="eyebrow">{t('dashboard.financialPulse')}</p>
+              <h2>{summary ? formatCurrency(summary.netProfit) : t('common.loading')}</h2>
             </div>
             <Gauge size={22} aria-hidden="true" />
           </div>
 
           <div className="profit-ring" style={ringStyle(profitMargin)}>
             <strong>{summary ? `${profitMargin}%` : '--'}</strong>
-            <span>Profit margin</span>
+            <span>{t('dashboard.profitMargin')}</span>
           </div>
 
           <div className="cash-mini-list">
             <div>
               <span>
                 <ArrowDownRight size={15} aria-hidden="true" />
-                Expense
+                {t('dashboard.expense')}
               </span>
-              <b>{summary ? formatCurrency(summary.totalExpense) : 'Loading...'}</b>
+              <b>{summary ? formatCurrency(summary.totalExpense) : t('common.loading')}</b>
             </div>
             <div>
               <span>
                 <ArrowUpRight size={15} aria-hidden="true" />
-                Income
+                {t('dashboard.income')}
               </span>
-              <b>{summary ? formatCurrency(summary.totalIncome) : 'Loading...'}</b>
+              <b>{summary ? formatCurrency(summary.totalIncome) : t('common.loading')}</b>
             </div>
           </div>
         </section>
@@ -298,8 +285,8 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
         <section className="panel quick-actions-panel">
           <div className="panel-header compact-panel-header">
             <div>
-              <p className="eyebrow">Fast work</p>
-              <h2>Direct actions</h2>
+              <p className="eyebrow">{t('dashboard.fastWork')}</p>
+              <h2>{t('dashboard.directActions')}</h2>
             </div>
             <Route size={20} aria-hidden="true" />
           </div>
@@ -322,24 +309,24 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
         <section className="panel dashboard-chart-panel">
           <div className="panel-header compact-panel-header">
             <div>
-              <p className="eyebrow">Monthly movement</p>
-              <h2>{recentMonths.length ? `${recentMonths.length} month trend` : 'No monthly data'}</h2>
+              <p className="eyebrow">{t('dashboard.monthlyMovement')}</p>
+              <h2>{recentMonths.length ? t('dashboard.monthTrend', { count: recentMonths.length }) : t('dashboard.noMonthlyData')}</h2>
             </div>
             <div className="chart-legend">
-              <span className="legend-income">Income</span>
-              <span className="legend-expense">Expense</span>
-              <span className="legend-profit">Net</span>
+              <span className="legend-income">{t('dashboard.legendIncome')}</span>
+              <span className="legend-expense">{t('dashboard.legendExpense')}</span>
+              <span className="legend-profit">{t('dashboard.legendNet')}</span>
             </div>
           </div>
 
           <div className="monthly-chart-wrap">
             <div className="chart-caption">
               <LineChart size={16} aria-hidden="true" />
-              <span>Compare cash in, cash out, and net result by month.</span>
+              <span>{t('dashboard.chartCaption')}</span>
             </div>
-            <div className="monthly-chart" aria-label="Monthly income, expense, and profit chart">
+            <div className="monthly-chart" aria-label={t('dashboard.chartAria')}>
             {recentMonths.length === 0 ? (
-              <p className="muted">Monthly reports will appear when income and expenses are recorded.</p>
+              <p className="muted">{t('dashboard.monthlyEmpty')}</p>
             ) : (
               recentMonths.map((report) => (
                 <div className="monthly-column" key={`${report.year}-${report.month}`}>
@@ -373,7 +360,7 @@ export function DashboardPage({ currentUser, onNavigate }: DashboardPageProps) {
           <div className="dashboard-ai-orb" aria-hidden="true">
             <Bot size={34} />
           </div>
-          <strong>Zamindar AI</strong>
+          <strong>{t('dashboard.aiName')}</strong>
         </button>
       </div>
     </section>
