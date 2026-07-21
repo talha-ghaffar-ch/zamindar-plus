@@ -15,12 +15,14 @@ import {DeleteButton} from '../../components/DeleteButton';
 import {EditButton} from '../../components/EditButton';
 import {EditRecordModal} from '../../components/EditRecordModal';
 import {useFarmData} from '../../context/FarmDataContext';
+import {useI18n} from '../../i18n/useT';
 import {theme} from '../../theme';
 import {formatArea} from '../../format';
 import * as api from '../../api';
 import type {RecordsStackParamList} from '../../navigation/types';
 
 export function ProfileDetailScreen() {
+  const {t} = useI18n();
   const navigation =
     useNavigation<NativeStackNavigationProp<RecordsStackParamList>>();
   const {params} = useRoute<RouteProp<RecordsStackParamList, 'ProfileDetail'>>();
@@ -42,13 +44,13 @@ export function ProfileDetailScreen() {
         showsVerticalScrollIndicator={false}>
         <DetailHeader
           title={profile?.profileName ?? 'Profile'}
-          subtitle={location || 'Location not set'}
+          subtitle={location || t('mobile.locationNotSet')}
           onBack={() => navigation.goBack()}
           right={
             <View style={styles.headerActions}>
               <EditButton onPress={() => setEditing(true)} />
               <DeleteButton
-                title="Delete profile"
+                title={t('mobile.deleteProfile')}
                 message={`Delete "${
                   profile?.profileName ?? 'this profile'
                 }" and all its zameen, crops and records?`}
@@ -77,8 +79,8 @@ export function ProfileDetailScreen() {
         {zameen.length === 0 ? (
           <EmptyState
             icon={<Sprout color={theme.colors.primaryBright} size={24} />}
-            title="No land added"
-            message="Add zameen for this profile from the Add tab."
+            title={t('mobile.noLandAdded')}
+            message={t('mobile.noLandBody')}
           />
         ) : (
           zameen.map(z => {

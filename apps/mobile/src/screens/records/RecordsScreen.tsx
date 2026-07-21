@@ -11,10 +11,12 @@ import {SectionHeader} from '../../components/SectionHeader';
 import {Skeleton} from '../../components/Skeleton';
 import {EmptyState} from '../../components/EmptyState';
 import {useFarmData} from '../../context/FarmDataContext';
+import {useI18n} from '../../i18n/useT';
 import {theme} from '../../theme';
 import type {RecordsStackParamList} from '../../navigation/types';
 
 export function RecordsScreen() {
+  const {t} = useI18n();
   const navigation =
     useNavigation<NativeStackNavigationProp<RecordsStackParamList>>();
   const {data, status, refreshing, refresh} = useFarmData();
@@ -42,14 +44,14 @@ export function RecordsScreen() {
 
         <View style={styles.ledgerRow}>
           <LedgerCard
-            label="All expenses"
+            label={t('mobile.allExpenses')}
             tint={theme.palette.roseSoft}
             color={theme.colors.expense}
             icon={<TrendingDown color={theme.colors.expense} size={20} />}
             onPress={() => navigation.navigate('Ledger', {kind: 'expense'})}
           />
           <LedgerCard
-            label="All income"
+            label={t('mobile.allIncome')}
             tint={theme.palette.greenSoft}
             color={theme.colors.income}
             icon={<TrendingUp color={theme.colors.income} size={20} />}
@@ -57,7 +59,7 @@ export function RecordsScreen() {
           />
         </View>
 
-        <SectionHeader title="Farm profiles" />
+        <SectionHeader title={t('mobile.farmProfiles')} />
         {status === 'loading' ? (
           <View>
             <Skeleton height={78} radius={12} style={styles.skel} />
@@ -66,8 +68,8 @@ export function RecordsScreen() {
         ) : profiles.length === 0 ? (
           <EmptyState
             icon={<Layers color={theme.colors.primary} size={26} />}
-            title="No farm profiles yet"
-            message="Create a profile from the Add tab to start tracking your zameen and crops."
+            title={t('mobile.noProfilesYet')}
+            message={t('mobile.noProfilesBody')}
           />
         ) : (
           profiles.map(profile => {
@@ -81,7 +83,7 @@ export function RecordsScreen() {
               <ListItemCard
                 key={profile.id}
                 title={profile.profileName}
-                subtitle={location || 'Location not set'}
+                subtitle={location || t('mobile.locationNotSet')}
                 meta={`${zameen.length} zameen`}
                 metaColor={theme.colors.textSecondary}
                 leading={

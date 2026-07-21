@@ -13,48 +13,57 @@ import {Screen} from '../components/Screen';
 import {AppText} from '../components/AppText';
 import {Card} from '../components/Card';
 import {DetailHeader} from '../components/DetailHeader';
+import {useI18n} from '../i18n/useT';
 import {theme} from '../theme';
 
-const TIPS: {icon: React.ReactNode; title: string; body: string; tint: string}[] = [
-  {
-    icon: <Sprout color={theme.colors.primary} size={20} />,
-    tint: theme.palette.greenSoft,
-    title: 'Getting started',
-    body: 'Add a farm Profile first, then a Zameen (land) under it, then a Crop. Once you have a crop you can log Expenses and Income against it.',
-  },
-  {
-    icon: <BarChart3 color={theme.colors.profit} size={20} />,
-    tint: theme.palette.cyanSoft,
-    title: 'Your dashboard',
-    body: 'The Home tab shows your net-profit pulse, the profit-margin ring, and six live metric cards. Use the Quick actions to jump straight to adding records.',
-  },
-  {
-    icon: <Layers color={theme.colors.primary} size={20} />,
-    tint: theme.palette.greenSoft,
-    title: 'Records & ledgers',
-    body: 'Records lets you drill from a profile into its zameen, crops, and each crop’s ledger. Open All Expenses / All Income for a month-by-month view. Tap a header to edit, long-press a ledger row to delete.',
-  },
-  {
-    icon: <Plus color={theme.colors.income} size={20} />,
-    tint: theme.palette.greenSoft,
-    title: 'Adding records',
-    body: 'The Add tab has all five record types — Profile, Zameen, Crop, Expense, Income — with the same fields as the website (area units, categories, dates).',
-  },
-  {
-    icon: <ListChecks color={theme.colors.land} size={20} />,
-    tint: theme.palette.amberSoft,
-    title: 'Reports',
-    body: 'Reports shows income vs expense totals, a monthly trend chart, and profit per crop so you can see which crops earn the most.',
-  },
-  {
-    icon: <Sparkles color={theme.colors.accent} size={20} />,
-    tint: theme.palette.amberSoft,
-    title: 'Zamindar AI',
-    body: 'Ask the Assistant anything about your crops, costs, and profit in plain language — it understands your farm ledger.',
-  },
-];
+type Tip = {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+  tint: string;
+};
 
 export function HelpScreen() {
+  const {t} = useI18n();
+  const TIPS: Tip[] = [
+    {
+      icon: <Sprout color={theme.colors.primary} size={20} />,
+      tint: theme.palette.greenSoft,
+      title: t('mobile.gettingStarted'),
+      body: t('mobile.gettingStartedBody'),
+    },
+    {
+      icon: <BarChart3 color={theme.colors.profit} size={20} />,
+      tint: theme.palette.cyanSoft,
+      title: t('mobile.yourDashboard'),
+      body: t('mobile.dashboardBody'),
+    },
+    {
+      icon: <Layers color={theme.colors.primary} size={20} />,
+      tint: theme.palette.greenSoft,
+      title: t('mobile.recordsLedgers'),
+      body: t('mobile.recordsLedgersBody'),
+    },
+    {
+      icon: <Plus color={theme.colors.income} size={20} />,
+      tint: theme.palette.greenSoft,
+      title: t('mobile.addingRecords'),
+      body: t('mobile.addingRecordsBody'),
+    },
+    {
+      icon: <ListChecks color={theme.colors.land} size={20} />,
+      tint: theme.palette.amberSoft,
+      title: t('mobile.reports'),
+      body: t('mobile.reportsBody'),
+    },
+    {
+      icon: <Sparkles color={theme.colors.accent} size={20} />,
+      tint: theme.palette.amberSoft,
+      title: t('dashboard.aiName'),
+      body: t('mobile.assistantBody'),
+    },
+  ];
+
   const navigation = useNavigation();
 
   return (
@@ -62,7 +71,7 @@ export function HelpScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
-        <DetailHeader title="Help & tips" onBack={() => navigation.goBack()} />
+        <DetailHeader title={t('mobile.helpTips')} onBack={() => navigation.goBack()} />
         <AppText variant="body" color={theme.colors.textSecondary} style={styles.intro}>
           A quick guide to getting the most out of Zamindar Plus.
         </AppText>

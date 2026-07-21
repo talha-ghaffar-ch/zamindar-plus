@@ -11,6 +11,7 @@ import {SectionHeader} from '../../components/SectionHeader';
 import {TransactionRow} from '../../components/TransactionRow';
 import {EmptyState} from '../../components/EmptyState';
 import {useFarmData} from '../../context/FarmDataContext';
+import {useI18n} from '../../i18n/useT';
 import {theme} from '../../theme';
 import {compactCurrency, formatCurrency, monthName} from '../../format';
 import type {RecordsStackParamList} from '../../navigation/types';
@@ -26,6 +27,7 @@ type Item = {
 };
 
 export function LedgerScreen() {
+  const {t} = useI18n();
   const navigation =
     useNavigation<NativeStackNavigationProp<RecordsStackParamList>>();
   const {params} = useRoute<RouteProp<RecordsStackParamList, 'Ledger'>>();
@@ -54,11 +56,11 @@ export function LedgerScreen() {
     return data.income.map(i => ({
       id: i.id,
       cropId: i.cropId,
-      title: i.buyerName || 'Crop sale',
+      title: i.buyerName || t('mobile.cropSale'),
       subtitle: `${i.quantity != null ? `${i.quantity} ${i.quantityUnit ?? ''} · ` : ''}${cropName(i.cropId)}`,
       amount: i.totalAmount,
       date: i.incomeDate,
-      filterKey: i.paymentStatus ?? 'Other',
+      filterKey: i.paymentStatus ?? t('mobile.other'),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, kind]);
@@ -100,14 +102,14 @@ export function LedgerScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
         <DetailHeader
-          title={kind === 'expense' ? 'All expenses' : 'All income'}
+          title={kind === 'expense' ? t('mobile.allExpenses') : t('mobile.allIncome')}
           subtitle={`${filtered.length} entries`}
           onBack={() => navigation.goBack()}
         />
 
         <Card elevated style={styles.summary}>
           <AppText variant="label" color={theme.colors.textMuted}>
-            {kind === 'expense' ? 'TOTAL SPENT' : 'TOTAL RECEIVED'}
+            {kind === 'expense' ? t('mobile.totalSpent') : t('mobile.totalReceived')}
           </AppText>
           <AppText variant="numeric" color={toneColor} style={styles.total}>
             {formatCurrency(total)}

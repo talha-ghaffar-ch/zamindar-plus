@@ -13,12 +13,14 @@ import {DeleteButton} from '../../components/DeleteButton';
 import {EditButton} from '../../components/EditButton';
 import {EditRecordModal} from '../../components/EditRecordModal';
 import {useFarmData} from '../../context/FarmDataContext';
+import {useI18n} from '../../i18n/useT';
 import {theme} from '../../theme';
 import {compactCurrency, formatArea, monthName} from '../../format';
 import * as api from '../../api';
 import type {RecordsStackParamList} from '../../navigation/types';
 
 export function ZameenDetailScreen() {
+  const {t} = useI18n();
   const navigation =
     useNavigation<NativeStackNavigationProp<RecordsStackParamList>>();
   const {params} = useRoute<RouteProp<RecordsStackParamList, 'ZameenDetail'>>();
@@ -57,7 +59,7 @@ export function ZameenDetailScreen() {
             <View style={styles.headerActions}>
               <EditButton onPress={() => setEditing(true)} />
               <DeleteButton
-                title="Delete zameen"
+                title={t('mobile.deleteZameen')}
                 message={`Delete "${
                   zameen?.zameenName ?? 'this zameen'
                 }" and all its crops and records?`}
@@ -75,8 +77,8 @@ export function ZameenDetailScreen() {
         {crops.length === 0 ? (
           <EmptyState
             icon={<Wheat color={theme.colors.primaryBright} size={24} />}
-            title="No crops yet"
-            message="Add a crop to this land from the Add tab."
+            title={t('mobile.noCropsYet')}
+            message={t('mobile.noCropsBody')}
           />
         ) : (
           crops.map(c => {
@@ -84,7 +86,7 @@ export function ZameenDetailScreen() {
             const start =
               c.startMonth && c.startYear
                 ? `${monthName(c.startMonth)} ${c.startYear}`
-                : 'Start not set';
+                : t('mobile.startNotSet');
             return (
               <ListItemCard
                 key={c.id}

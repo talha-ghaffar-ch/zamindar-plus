@@ -10,12 +10,14 @@ import {Skeleton} from '../components/Skeleton';
 import {EmptyState} from '../components/EmptyState';
 import {ListItemCard} from '../components/ListItemCard';
 import {useFarmData} from '../context/FarmDataContext';
+import {useI18n} from '../i18n/useT';
 import {theme} from '../theme';
 import {compactCurrency, formatCurrency, monthName} from '../format';
 
 const CHART_HEIGHT = 130;
 
 export function ReportsScreen() {
+  const {t} = useI18n();
   const {data, status, refreshing, refresh} = useFarmData();
   const summary = data?.summary;
 
@@ -67,20 +69,20 @@ export function ReportsScreen() {
           <>
             <View style={styles.tiles}>
               <StatTile
-                label="Income"
+                label={t('dashboard.income')}
                 value={compactCurrency(summary?.totalIncome ?? 0)}
                 tone="income"
                 icon={<TrendingUp color={theme.colors.income} size={16} />}
               />
               <StatTile
-                label="Expenses"
+                label={t('nav.expenses')}
                 value={compactCurrency(summary?.totalExpense ?? 0)}
                 tone="expense"
                 icon={<TrendingDown color={theme.colors.expense} size={16} />}
               />
             </View>
             <StatTile
-              label="Net profit"
+              label={t('dashboard.netProfit')}
               value={formatCurrency(summary?.netProfit ?? 0)}
               tone={(summary?.netProfit ?? 0) >= 0 ? 'income' : 'expense'}
               style={styles.netTile}
@@ -137,11 +139,11 @@ export function ReportsScreen() {
               )}
             </Card>
 
-            <SectionHeader title="Crop profitability" />
+            <SectionHeader title={t('mobile.cropProfitability')} />
             {profitability.length === 0 ? (
               <EmptyState
-                title="No crop data yet"
-                message="Add crops with expenses and income to see profitability."
+                title={t('mobile.noCropData')}
+                message={t('mobile.noCropDataBody')}
               />
             ) : (
               profitability.map(c => (

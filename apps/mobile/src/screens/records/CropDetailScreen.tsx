@@ -12,12 +12,14 @@ import {EditButton} from '../../components/EditButton';
 import {EditRecordModal, EditTarget} from '../../components/EditRecordModal';
 import {TransactionRow} from '../../components/TransactionRow';
 import {useFarmData} from '../../context/FarmDataContext';
+import {useI18n} from '../../i18n/useT';
 import {theme} from '../../theme';
 import {formatArea, formatCurrency, monthName} from '../../format';
 import * as api from '../../api';
 import type {RecordsStackParamList} from '../../navigation/types';
 
 export function CropDetailScreen() {
+  const {t} = useI18n();
   const navigation = useNavigation();
   const {params} = useRoute<RouteProp<RecordsStackParamList, 'CropDetail'>>();
   const {data, reload} = useFarmData();
@@ -45,7 +47,7 @@ export function CropDetailScreen() {
       id: `i-${x.id}`,
       realId: x.id,
       kind: 'income' as const,
-      title: x.buyerName || 'Crop sale',
+      title: x.buyerName || t('mobile.cropSale'),
       subtitle:
         x.quantity != null ? `${x.quantity} ${x.quantityUnit ?? ''}`.trim() : undefined,
       amount: x.totalAmount,
@@ -54,7 +56,7 @@ export function CropDetailScreen() {
     return [...e, ...i].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
-  }, [expenses, income]);
+  }, [expenses, income, t]);
 
   const entryTarget = (entry: (typeof ledger)[number]): EditTarget | null => {
     if (entry.kind === 'expense') {
@@ -116,7 +118,7 @@ export function CropDetailScreen() {
                 }
               />
               <DeleteButton
-                title="Delete crop"
+                title={t('mobile.deleteCrop')}
                 message={`Delete "${
                   crop?.cropName ?? 'this crop'
                 }" and all its expenses and income?`}
@@ -180,9 +182,9 @@ export function CropDetailScreen() {
                     tone={item.kind}
                     date={item.date}
                     onPress={() => {
-                      const t = entryTarget(item);
-                      if (t) {
-                        setEditTarget(t);
+                      const target = entryTarget(item);
+                      if (target) {
+                        setEditTarget(target);
                       }
                     }}
                     onLongPress={() => confirmDeleteEntry(item)}
