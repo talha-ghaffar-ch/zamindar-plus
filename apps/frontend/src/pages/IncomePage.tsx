@@ -9,6 +9,7 @@ import {
   type Income,
 } from '../lib/api';
 import { FieldLabel } from '../components/FieldLabel';
+import { useI18n } from '../i18n/useT';
 import {
   dateInputValue,
   dateParts,
@@ -46,6 +47,7 @@ const initialForm = {
 };
 
 export function IncomePage({ onNotify }: IncomePageProps) {
+  const { t, format } = useI18n();
   const [crops, setCrops] = useState<Crop[]>([]);
   const [income, setIncome] = useState<Income[]>([]);
   const [form, setForm] = useState(initialForm);
@@ -97,7 +99,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
       })
       .catch((loadError) => {
         if (isActive) {
-          setError(loadError instanceof Error ? loadError.message : 'Failed to load income.');
+          setError(loadError instanceof Error ? loadError.message : t('income.loadFailed'));
         }
       })
       .finally(() => {
@@ -109,7 +111,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [t]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -134,10 +136,10 @@ export function IncomePage({ onNotify }: IncomePageProps) {
 
       if (editingIncomeId) {
         await updateIncome(editingIncomeId, payload);
-        onNotify('Record updated successfully');
+        onNotify(t('records.updated'));
       } else {
         await createIncome(payload);
-        onNotify('Income added successfully');
+        onNotify(t('income.created'));
       }
 
       setForm({
@@ -147,7 +149,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
       setEditingIncomeId(null);
       await loadData();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Failed to save income.');
+      setError(saveError instanceof Error ? saveError.message : t('income.saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -186,14 +188,16 @@ export function IncomePage({ onNotify }: IncomePageProps) {
 
     try {
       await deleteIncome(item.id);
-      onNotify('Record deleted successfully');
+      onNotify(t('records.deleted'));
       if (editingIncomeId === item.id) {
         cancelEdit();
       }
       await loadData();
     } catch (deleteError) {
       setError(
-        deleteError instanceof Error ? deleteError.message : 'Failed to delete income.',
+        deleteError instanceof Error
+          ? deleteError.message
+          : t('income.deleteFailed'),
       );
     }
   }
@@ -226,8 +230,8 @@ export function IncomePage({ onNotify }: IncomePageProps) {
     <>
       <section className="page-header">
         <div>
-          <p className="eyebrow">Income</p>
-          <h1>Crop income</h1>
+          <p className="eyebrow">{t('income.eyebrow')}</p>
+          <h1>{t('income.title')}</h1>
         </div>
       </section>
 
@@ -236,7 +240,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
           <div className="form-heading">
-            <h2>{editingIncomeId ? 'Edit income' : 'Create income'}</h2>
+            <h2>{editingIncomeId ? t('income.editTitle') : t('income.createTitle')}</h2>
             {editingIncomeId ? (
               <button className="text-button" type="button" onClick={cancelEdit}>
                 Cancel
@@ -245,7 +249,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
           </div>
 
           <label>
-            <FieldLabel required>Crop</FieldLabel>
+            <FieldLabel required>{t('income.crop')}</FieldLabel>
             <select
               required
               value={form.cropId}
@@ -260,7 +264,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
           </label>
 
           <label>
-            <FieldLabel>Quantity</FieldLabel>
+            <FieldLabel>{t('income.quantity')}</FieldLabel>
             <input
               min="0"
               step="0.01"
@@ -271,7 +275,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
           </label>
 
           <label>
-            <FieldLabel>Quantity unit</FieldLabel>
+            <FieldLabel>{t('income.quantityUnit')}</FieldLabel>
             <select
               value={form.quantityUnit}
               onChange={(event) => setForm({ ...form, quantityUnit: event.target.value })}
@@ -283,7 +287,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
           </label>
 
           <label>
-            <FieldLabel>Rate</FieldLabel>
+            <FieldLabel>{t('income.rate')}</FieldLabel>
             <input
               min="0"
               step="0.01"
@@ -294,7 +298,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Total amount</FieldLabel>
+            <FieldLabel required>{t('income.totalAmount')}</FieldLabel>
             <input
               required
               min="0"
@@ -306,7 +310,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Date</FieldLabel>
+            <FieldLabel required>{t('income.date')}</FieldLabel>
             <input
               required
               type="date"
@@ -316,7 +320,7 @@ export function IncomePage({ onNotify }: IncomePageProps) {
           </label>
 
           <label>
-            <FieldLabel>Buyer name</FieldLabel>
+            <FieldLabel>{t('income.buyerName')}</FieldLabel>
             <input
               value={form.buyerName}
               onChange={(event) => setForm({ ...form, buyerName: event.target.value })}
@@ -324,22 +328,22 @@ export function IncomePage({ onNotify }: IncomePageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Payment status</FieldLabel>
+            <FieldLabel required>{t('income.paymentStatus')}</FieldLabel>
             <select
               value={form.paymentStatus}
               onChange={(event) => setForm({ ...form, paymentStatus: event.target.value })}
             >
-              <option>Received</option>
-              <option>Pending</option>
+              <option value="Received">{t('income.received')}</option>
+              <option value="Pending">{t('income.pending')}</option>
             </select>
           </label>
 
           <button className="primary-button" disabled={isSaving || crops.length === 0} type="submit">
             {isSaving
-              ? 'Saving...'
+              ? t('common.saving')
               : editingIncomeId
-                ? 'Update income'
-                : 'Create income'}
+                ? t('income.updateButton')
+                : t('income.createButton')}
           </button>
         </form>
 
@@ -350,13 +354,13 @@ export function IncomePage({ onNotify }: IncomePageProps) {
               <h2>{visibleIncome.length} Total</h2>
             </div>
             <div className="panel-actions">
-              <strong>Rs {filteredIncomeTotal.toLocaleString()}</strong>
+              <strong>{format.currency(filteredIncomeTotal)}</strong>
               <select
                 className="inline-filter"
                 value={cropFilter}
                 onChange={(event) => setCropFilter(event.target.value)}
               >
-                <option value="all">All crops</option>
+                <option value="all">{t('income.allCrops')}</option>
                 {sortedCrops.map((crop) => (
                   <option key={crop.id} value={crop.id}>
                     {crop.cropName}
@@ -367,9 +371,9 @@ export function IncomePage({ onNotify }: IncomePageProps) {
           </div>
 
           {isLoading ? (
-            <p className="muted">Loading income...</p>
+            <p className="muted">{t('income.loading')}</p>
           ) : groupedIncome.length === 0 ? (
-            <p className="muted">No income records yet.</p>
+            <p className="muted">{t('income.empty')}</p>
           ) : (
             <div className="grouped-records">
               {groupedIncome.map((cropGroup) => (
@@ -377,10 +381,12 @@ export function IncomePage({ onNotify }: IncomePageProps) {
                   <div className="record-group-header">
                     <h3>{cropGroup.label}</h3>
                     <span>
-                      Rs{' '}
-                      {cropGroup.items
-                        .reduce((total, item) => total + item.totalAmount, 0)
-                        .toLocaleString()}
+                      {format.currency(
+                        cropGroup.items.reduce(
+                          (total, item) => total + item.totalAmount,
+                          0,
+                        ),
+                      )}
                     </span>
                   </div>
 
@@ -393,10 +399,12 @@ export function IncomePage({ onNotify }: IncomePageProps) {
                       <div className="month-group-header">
                         <h4>{monthGroup.label}</h4>
                         <span>
-                          Rs{' '}
-                          {monthGroup.items
-                            .reduce((total, item) => total + item.totalAmount, 0)
-                            .toLocaleString()}
+                          {format.currency(
+                            monthGroup.items.reduce(
+                              (total, item) => total + item.totalAmount,
+                              0,
+                            ),
+                          )}
                         </span>
                       </div>
 
@@ -405,8 +413,8 @@ export function IncomePage({ onNotify }: IncomePageProps) {
                           (item) => (
                             <article className="record-card" key={item.id}>
                               <div>
-                                <p className="eyebrow">Buyer</p>
-                                <h4>{item.buyerName ?? 'Buyer not set'}</h4>
+                                <p className="eyebrow">{t('income.colBuyer')}</p>
+                                <h4>{item.buyerName ?? t('income.buyerNotSet')}</h4>
                               </div>
                               <div className="transaction-side">
                                 <time className="transaction-date" dateTime={item.incomeDate}>
@@ -419,23 +427,25 @@ export function IncomePage({ onNotify }: IncomePageProps) {
                                       : 'status-pill status-paid'
                                   }
                                 >
-                                  {item.paymentStatus === 'Pending' ? 'Pending' : 'Received'}
+                                  {item.paymentStatus === 'Pending'
+                                    ? t('income.pending')
+                                    : t('income.received')}
                                 </span>
                               </div>
                               <dl className="record-meta">
                                 <div>
-                                  <dt>Quantity</dt>
+                                  <dt>{t('income.colQuantity')}</dt>
                                   <dd>
                                     {item.quantity ?? '-'} {item.quantityUnit ?? ''}
                                   </dd>
                                 </div>
                                 <div>
                                   <dt>Rate</dt>
-                                  <dd>{item.rate ? `Rs ${item.rate.toLocaleString()}` : '-'}</dd>
+                                  <dd>{item.rate ? format.currency(item.rate) : '-'}</dd>
                                 </div>
                                 <div>
                                   <dt>Total</dt>
-                                  <dd>Rs {item.totalAmount.toLocaleString()}</dd>
+                                  <dd>{format.currency(item.totalAmount)}</dd>
                                 </div>
                               </dl>
                               <div className="action-row">

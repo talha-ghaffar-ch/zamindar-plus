@@ -8,7 +8,9 @@ import {
   type Crop,
   type Expense,
 } from '../lib/api';
+import type { TranslationKey } from '@zamindar/shared';
 import { FieldLabel } from '../components/FieldLabel';
+import { useI18n } from '../i18n/useT';
 import {
   dateInputValue,
   dateParts,
@@ -35,6 +37,19 @@ const categories = [
   'Other expense',
 ];
 
+const categoryKeys: Record<string, TranslationKey> = {
+  'Land preparation': 'expenses.catLandPreparation',
+  'Seed / Sowing': 'expenses.catSeedSowing',
+  Fertilizer: 'expenses.catFertilizer',
+  'Spray / Pesticide': 'expenses.catSprayPesticide',
+  'Water / Irrigation': 'expenses.catWaterIrrigation',
+  Labour: 'expenses.catLabour',
+  'Machinery / Diesel': 'expenses.catMachineryDiesel',
+  'Rent / Thekka': 'expenses.catRentThekka',
+  Transport: 'expenses.catTransport',
+  'Other expense': 'expenses.catOther',
+};
+
 const initialForm = {
   cropId: '',
   expenseCategory: 'Fertilizer',
@@ -45,6 +60,7 @@ const initialForm = {
 };
 
 export function ExpensesPage({ onNotify }: ExpensesPageProps) {
+  const { t, format } = useI18n();
   const [crops, setCrops] = useState<Crop[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [form, setForm] = useState(initialForm);
@@ -85,7 +101,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
       })
       .catch((loadError) => {
         if (isActive) {
-          setError(loadError instanceof Error ? loadError.message : 'Failed to load expenses.');
+          setError(loadError instanceof Error ? loadError.message : t('expenses.loadFailed'));
         }
       })
       .finally(() => {
@@ -97,7 +113,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [t]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -120,10 +136,10 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
 
       if (editingExpenseId) {
         await updateExpense(editingExpenseId, payload);
-        onNotify('Record updated successfully');
+        onNotify(t('records.updated'));
       } else {
         await createExpense(payload);
-        onNotify('Expense added successfully');
+        onNotify(t('expenses.created'));
       }
 
       setForm({
@@ -134,7 +150,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
       await loadData();
     } catch (saveError) {
       setError(
-        saveError instanceof Error ? saveError.message : 'Failed to save expense.',
+        saveError instanceof Error ? saveError.message : t('expenses.saveFailed'),
       );
     } finally {
       setIsSaving(false);
@@ -172,7 +188,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
 
     try {
       await deleteExpense(expense.id);
-      onNotify('Record deleted successfully');
+      onNotify(t('records.deleted'));
       if (editingExpenseId === expense.id) {
         cancelEdit();
       }
@@ -181,7 +197,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
       setError(
         deleteError instanceof Error
           ? deleteError.message
-          : 'Failed to delete expense.',
+          : t('expenses.deleteFailed'),
       );
     }
   }
@@ -214,8 +230,8 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
     <>
       <section className="page-header">
         <div>
-          <p className="eyebrow">Expenses</p>
-          <h1>Crop expenses</h1>
+          <p className="eyebrow">{t('expenses.eyebrow')}</p>
+          <h1>{t('expenses.title')}</h1>
         </div>
       </section>
 
@@ -224,7 +240,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
       <section className="content-grid">
         <form className="panel form-grid" onSubmit={handleSubmit}>
           <div className="form-heading">
-            <h2>{editingExpenseId ? 'Edit expense' : 'Create expense'}</h2>
+            <h2>{editingExpenseId ? t('expenses.editTitle') : t('expenses.createTitle')}</h2>
             {editingExpenseId ? (
               <button className="text-button" type="button" onClick={cancelEdit}>
                 Cancel
@@ -233,7 +249,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
           </div>
 
           <label>
-            <FieldLabel required>Crop</FieldLabel>
+            <FieldLabel required>{t('expenses.crop')}</FieldLabel>
             <select
               required
               value={form.cropId}
@@ -248,19 +264,21 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Category</FieldLabel>
+            <FieldLabel required>{t('expenses.category')}</FieldLabel>
             <select
               value={form.expenseCategory}
               onChange={(event) => setForm({ ...form, expenseCategory: event.target.value })}
             >
               {categories.map((category) => (
-                <option key={category}>{category}</option>
+                <option key={category} value={category}>
+                  {categoryKeys[category] ? t(categoryKeys[category]) : category}
+                </option>
               ))}
             </select>
           </label>
 
           <label>
-            <FieldLabel required>Description</FieldLabel>
+            <FieldLabel required>{t('expenses.description')}</FieldLabel>
             <input
               required
               minLength={2}
@@ -270,7 +288,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Amount</FieldLabel>
+            <FieldLabel required>{t('expenses.amount')}</FieldLabel>
             <input
               required
               min="0"
@@ -282,7 +300,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Date</FieldLabel>
+            <FieldLabel required>{t('expenses.date')}</FieldLabel>
             <input
               required
               type="date"
@@ -292,22 +310,22 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
           </label>
 
           <label>
-            <FieldLabel required>Payment status</FieldLabel>
+            <FieldLabel required>{t('expenses.paymentStatus')}</FieldLabel>
             <select
               value={form.paymentStatus}
               onChange={(event) => setForm({ ...form, paymentStatus: event.target.value })}
             >
-              <option>Paid</option>
-              <option>Unpaid</option>
+              <option value="Paid">{t('expenses.paid')}</option>
+              <option value="Unpaid">{t('expenses.unpaid')}</option>
             </select>
           </label>
 
           <button className="primary-button" disabled={isSaving || crops.length === 0} type="submit">
             {isSaving
-              ? 'Saving...'
+              ? t('common.saving')
               : editingExpenseId
-                ? 'Update expense'
-                : 'Create expense'}
+                ? t('expenses.updateButton')
+                : t('expenses.createButton')}
           </button>
         </form>
 
@@ -324,7 +342,7 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
                 value={cropFilter}
                 onChange={(event) => setCropFilter(event.target.value)}
               >
-                <option value="all">All crops</option>
+                <option value="all">{t('expenses.allCrops')}</option>
                 {sortedCrops.map((crop) => (
                   <option key={crop.id} value={crop.id}>
                     {crop.cropName}
@@ -335,9 +353,9 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
           </div>
 
           {isLoading ? (
-            <p className="muted">Loading expenses...</p>
+            <p className="muted">{t('expenses.loading')}</p>
           ) : groupedExpenses.length === 0 ? (
-            <p className="muted">No expense records yet.</p>
+            <p className="muted">{t('expenses.empty')}</p>
           ) : (
             <div className="grouped-records">
               {groupedExpenses.map((cropGroup) => (
@@ -373,7 +391,11 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
                           (expense) => (
                             <article className="record-card" key={expense.id}>
                               <div>
-                                <p className="eyebrow">{expense.expenseCategory}</p>
+                                <p className="eyebrow">
+                                  {categoryKeys[expense.expenseCategory]
+                                    ? t(categoryKeys[expense.expenseCategory])
+                                    : expense.expenseCategory}
+                                </p>
                                 <h4>{expense.description}</h4>
                               </div>
                               <div className="transaction-side">
@@ -387,22 +409,28 @@ export function ExpensesPage({ onNotify }: ExpensesPageProps) {
                                       : 'status-pill status-paid'
                                   }
                                 >
-                                  {expense.paymentStatus === 'Unpaid' ? 'Unpaid' : 'Paid'}
+                                  {expense.paymentStatus === 'Unpaid'
+                                    ? t('expenses.unpaid')
+                                    : t('expenses.paid')}
                                 </span>
                               </div>
                               <dl className="record-meta">
                                 <div>
-                                  <dt>Category</dt>
-                                  <dd>{expense.expenseCategory}</dd>
+                                  <dt>{t('expenses.colCategory')}</dt>
+                                  <dd>
+                                    {categoryKeys[expense.expenseCategory]
+                                      ? t(categoryKeys[expense.expenseCategory])
+                                      : expense.expenseCategory}
+                                  </dd>
                                 </div>
                                 <div>
-                                  <dt>Amount</dt>
-                                  <dd>Rs {expense.amount.toLocaleString()}</dd>
+                                  <dt>{t('expenses.colAmount')}</dt>
+                                  <dd>{format.currency(expense.amount)}</dd>
                                 </div>
                               </dl>
                               <div className="action-row">
                                 <button type="button" onClick={() => startEdit(expense)}>
-                                  Edit
+                                  {t('common.edit')}
                                 </button>
                                 <button
                                   className="danger-text-button"
