@@ -68,8 +68,7 @@ const areaUnitProperty: SchemaProperty = {
 export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   {
     name: 'list_profiles',
-    description:
-      'List all farm profiles of the current user with their ids and details.',
+    description: 'List the user profiles with their ids.',
   },
   {
     name: 'create_profile',
@@ -79,25 +78,25 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
       properties: {
         profileName: {
           type: 'STRING',
-          description: 'Name of the profile (required, min 2 characters)',
+          description: 'Name of the profile (min 2 chars)',
         },
-        city: { type: 'STRING', description: 'City (optional)' },
+        city: { type: 'STRING', description: 'City' },
         chakAreaName: {
           type: 'STRING',
-          description: 'Chak / area name (optional)',
+          description: 'Chak / area name',
         },
-        villageName: { type: 'STRING', description: 'Village name (optional)' },
+        villageName: { type: 'STRING', description: 'Village name' },
       },
       required: ['profileName'],
     },
   },
   {
     name: 'update_profile',
-    description: 'Update an existing profile. Only pass fields to change.',
+    description: 'Update a profile. Pass only changed fields.',
     parameters: {
       type: 'OBJECT',
       properties: {
-        profileId: { type: 'STRING', description: 'Id of the profile' },
+        profileId: { type: 'STRING', description: 'Profile id' },
         profileName: { type: 'STRING', description: 'New profile name' },
         city: { type: 'STRING', description: 'New city' },
         chakAreaName: { type: 'STRING', description: 'New chak / area name' },
@@ -109,11 +108,11 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   {
     name: 'delete_profile',
     description:
-      'Delete a profile permanently. This also deletes all zameen, crops, expenses and income under it. Only call after the user has explicitly confirmed the deletion in chat.',
+      'Delete a profile and every record under it. Needs explicit user confirmation first.',
     parameters: {
       type: 'OBJECT',
       properties: {
-        profileId: { type: 'STRING', description: 'Id of the profile' },
+        profileId: { type: 'STRING', description: 'Profile id' },
       },
       required: ['profileId'],
     },
@@ -121,49 +120,48 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   {
     name: 'list_zameen',
     description:
-      'List zameen (land parcels) of the user, optionally for one profile, including used and available area.',
+      'List zameen with total, used and available area. Optionally filter by profile.',
     parameters: {
       type: 'OBJECT',
       properties: {
         profileId: {
           type: 'STRING',
-          description: 'Filter by profile id (optional)',
+          description: 'Filter by profile id',
         },
       },
     },
   },
   {
     name: 'create_zameen',
-    description:
-      'Add a new zameen (land parcel) under a profile. Area is given as value + unit; square feet is computed automatically.',
+    description: 'Add a zameen under a profile. Give area as value + unit.',
     parameters: {
       type: 'OBJECT',
       properties: {
         profileId: {
           type: 'STRING',
-          description: 'Id of the parent profile (required)',
+          description: 'Parent profile id',
         },
         zameenName: {
           type: 'STRING',
-          description: 'Name of the zameen (required, min 2 characters)',
+          description: 'Zameen name',
         },
         totalAreaValue: {
           type: 'NUMBER',
-          description: 'Total area value, e.g. 5 (required)',
+          description: 'Area value, e.g. 5',
         },
         totalAreaUnit: areaUnitProperty,
         murabbaNumber: {
           type: 'STRING',
-          description: 'Murabba number (optional)',
+          description: 'Murabba number',
         },
-        killaNumber: { type: 'STRING', description: 'Killa number (optional)' },
+        killaNumber: { type: 'STRING', description: 'Killa number' },
         khasraNumber: {
           type: 'STRING',
-          description: 'Khasra number (optional)',
+          description: 'Khasra number',
         },
         ownershipType: {
           type: 'STRING',
-          description: 'Ownership type (optional)',
+          description: 'Ownership type',
           enum: OWNERSHIP_TYPE_VALUES,
         },
       },
@@ -173,11 +171,11 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   {
     name: 'update_zameen',
     description:
-      'Update an existing zameen. Only pass fields to change. If changing area, pass both totalAreaValue and totalAreaUnit.',
+      'Update a zameen. Pass only changed fields; for area pass value and unit together.',
     parameters: {
       type: 'OBJECT',
       properties: {
-        zameenId: { type: 'STRING', description: 'Id of the zameen' },
+        zameenId: { type: 'STRING', description: 'Zameen id' },
         zameenName: { type: 'STRING', description: 'New name' },
         totalAreaValue: { type: 'NUMBER', description: 'New area value' },
         totalAreaUnit: areaUnitProperty,
@@ -196,11 +194,11 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   {
     name: 'delete_zameen',
     description:
-      'Delete a zameen permanently. This also deletes all crops, expenses and income under it. Only call after the user has explicitly confirmed the deletion in chat.',
+      'Delete a zameen and every record under it. Needs explicit user confirmation first.',
     parameters: {
       type: 'OBJECT',
       properties: {
-        zameenId: { type: 'STRING', description: 'Id of the zameen' },
+        zameenId: { type: 'STRING', description: 'Zameen id' },
       },
       required: ['zameenId'],
     },
@@ -208,13 +206,13 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   {
     name: 'list_crops',
     description:
-      'List crops of the user, optionally for one zameen, with area, status and season.',
+      'List crops with area, status and season. Optionally filter by zameen.',
     parameters: {
       type: 'OBJECT',
       properties: {
         zameenId: {
           type: 'STRING',
-          description: 'Filter by zameen id (optional)',
+          description: 'Filter by zameen id',
         },
       },
     },
@@ -222,39 +220,39 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   {
     name: 'create_crop',
     description:
-      'Add a new crop under a zameen. Crop area cannot exceed the available (unused) area of the zameen.',
+      'Add a crop under a zameen. Area must fit the zameen free area.',
     parameters: {
       type: 'OBJECT',
       properties: {
         zameenId: {
           type: 'STRING',
-          description: 'Id of the parent zameen (required)',
+          description: 'Parent zameen id',
         },
         cropName: {
           type: 'STRING',
-          description: 'Crop name, e.g. Wheat, Rice (required)',
+          description: 'Crop name',
         },
         cropAreaValue: {
           type: 'NUMBER',
-          description: 'Crop area value (required)',
+          description: 'Crop area value',
         },
         cropAreaUnit: areaUnitProperty,
         startMonth: {
           type: 'INTEGER',
-          description: 'Sowing month 1-12 (optional)',
+          description: 'Sowing month 1-12',
         },
-        startYear: { type: 'INTEGER', description: 'Sowing year (optional)' },
+        startYear: { type: 'INTEGER', description: 'Sowing year' },
         expectedEndMonth: {
           type: 'INTEGER',
-          description: 'Expected harvest month 1-12 (optional)',
+          description: 'Harvest month 1-12',
         },
         expectedEndYear: {
           type: 'INTEGER',
-          description: 'Expected harvest year (optional)',
+          description: 'Harvest year',
         },
         status: {
           type: 'STRING',
-          description: 'Crop status (optional, default Active)',
+          description: 'Crop status (default Active)',
           enum: CROP_STATUS_VALUES,
         },
       },
@@ -264,11 +262,11 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   {
     name: 'update_crop',
     description:
-      'Update an existing crop. Only pass fields to change. If changing area, pass both cropAreaValue and cropAreaUnit.',
+      'Update a crop. Pass only changed fields; for area pass value and unit together.',
     parameters: {
       type: 'OBJECT',
       properties: {
-        cropId: { type: 'STRING', description: 'Id of the crop' },
+        cropId: { type: 'STRING', description: 'Crop id' },
         cropName: { type: 'STRING', description: 'New crop name' },
         cropAreaValue: { type: 'NUMBER', description: 'New area value' },
         cropAreaUnit: areaUnitProperty,
@@ -276,11 +274,11 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
         startYear: { type: 'INTEGER', description: 'New sowing year' },
         expectedEndMonth: {
           type: 'INTEGER',
-          description: 'New expected harvest month 1-12',
+          description: 'New harvest month 1-12',
         },
         expectedEndYear: {
           type: 'INTEGER',
-          description: 'New expected harvest year',
+          description: 'New harvest year',
         },
         status: {
           type: 'STRING',
@@ -294,30 +292,29 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   {
     name: 'delete_crop',
     description:
-      'Delete a crop permanently. This also deletes all its expenses and income. Only call after the user has explicitly confirmed the deletion in chat.',
+      'Delete a crop and its expenses and income. Needs explicit user confirmation first.',
     parameters: {
       type: 'OBJECT',
       properties: {
-        cropId: { type: 'STRING', description: 'Id of the crop' },
+        cropId: { type: 'STRING', description: 'Crop id' },
       },
       required: ['cropId'],
     },
   },
   {
     name: 'list_expenses',
-    description:
-      'List expenses of the user. Filter by crop id and/or by year and month.',
+    description: 'List expenses. Filter by crop and/or year and month.',
     parameters: {
       type: 'OBJECT',
       properties: {
         cropId: {
           type: 'STRING',
-          description: 'Filter by crop id (optional)',
+          description: 'Filter by crop id',
         },
-        year: { type: 'INTEGER', description: 'Filter by year (optional)' },
+        year: { type: 'INTEGER', description: 'Year' },
         month: {
           type: 'INTEGER',
-          description: 'Filter by month 1-12 (optional, requires year)',
+          description: 'Month 1-12 (needs year)',
         },
       },
     },
@@ -330,28 +327,28 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
       properties: {
         cropId: {
           type: 'STRING',
-          description: 'Id of the crop (required)',
+          description: 'Crop id',
         },
         expenseCategory: {
           type: 'STRING',
-          description: 'Expense category (required)',
+          description: 'Expense category',
           enum: EXPENSE_CATEGORY_VALUES,
         },
         description: {
           type: 'STRING',
-          description: 'Short description of the expense (required)',
+          description: 'Short description',
         },
         amount: {
           type: 'NUMBER',
-          description: 'Amount in PKR (required)',
+          description: 'Amount PKR',
         },
         expenseDate: {
           type: 'STRING',
-          description: 'Date in YYYY-MM-DD format (required)',
+          description: 'Date YYYY-MM-DD',
         },
         paymentStatus: {
           type: 'STRING',
-          description: 'Payment status (optional, default Paid)',
+          description: 'Payment status (default Paid)',
           enum: ['Paid', 'Unpaid'],
         },
       },
@@ -366,21 +363,21 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   },
   {
     name: 'update_expense',
-    description: 'Update an existing expense. Only pass fields to change.',
+    description: 'Update an expense. Pass only changed fields.',
     parameters: {
       type: 'OBJECT',
       properties: {
-        expenseId: { type: 'STRING', description: 'Id of the expense' },
+        expenseId: { type: 'STRING', description: 'Expense id' },
         expenseCategory: {
           type: 'STRING',
           description: 'New category',
           enum: EXPENSE_CATEGORY_VALUES,
         },
         description: { type: 'STRING', description: 'New description' },
-        amount: { type: 'NUMBER', description: 'New amount in PKR' },
+        amount: { type: 'NUMBER', description: 'New amount PKR' },
         expenseDate: {
           type: 'STRING',
-          description: 'New date in YYYY-MM-DD format',
+          description: 'New date YYYY-MM-DD',
         },
         paymentStatus: {
           type: 'STRING',
@@ -393,31 +390,29 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   },
   {
     name: 'delete_expense',
-    description:
-      'Delete an expense permanently. Only call after the user has explicitly confirmed the deletion in chat.',
+    description: 'Delete an expense. Needs explicit user confirmation first.',
     parameters: {
       type: 'OBJECT',
       properties: {
-        expenseId: { type: 'STRING', description: 'Id of the expense' },
+        expenseId: { type: 'STRING', description: 'Expense id' },
       },
       required: ['expenseId'],
     },
   },
   {
     name: 'list_income',
-    description:
-      'List income records of the user. Filter by crop id and/or by year and month.',
+    description: 'List income. Filter by crop and/or year and month.',
     parameters: {
       type: 'OBJECT',
       properties: {
         cropId: {
           type: 'STRING',
-          description: 'Filter by crop id (optional)',
+          description: 'Filter by crop id',
         },
-        year: { type: 'INTEGER', description: 'Filter by year (optional)' },
+        year: { type: 'INTEGER', description: 'Year' },
         month: {
           type: 'INTEGER',
-          description: 'Filter by month 1-12 (optional, requires year)',
+          description: 'Month 1-12 (needs year)',
         },
       },
     },
@@ -425,57 +420,56 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   {
     name: 'create_income',
     description:
-      'Record income (sale) against a crop. If quantity and rate are given but no total, compute totalAmount = quantity * rate.',
+      'Record income against a crop. If quantity and rate are given, total = quantity * rate.',
     parameters: {
       type: 'OBJECT',
       properties: {
         cropId: {
           type: 'STRING',
-          description: 'Id of the crop (required)',
+          description: 'Crop id',
         },
         totalAmount: {
           type: 'NUMBER',
-          description: 'Total amount in PKR (required)',
+          description: 'Total amount PKR',
         },
         incomeDate: {
           type: 'STRING',
-          description: 'Date in YYYY-MM-DD format (required)',
+          description: 'Date YYYY-MM-DD',
         },
         quantity: {
           type: 'NUMBER',
-          description: 'Quantity sold (optional)',
+          description: 'Quantity sold',
         },
         quantityUnit: {
           type: 'STRING',
-          description: 'Unit of quantity (optional)',
+          description: 'Unit of quantity',
           enum: QUANTITY_UNIT_VALUES,
         },
         rate: {
           type: 'NUMBER',
-          description: 'Rate per unit in PKR (optional)',
+          description: 'Rate per unit PKR',
         },
         paymentStatus: {
           type: 'STRING',
-          description: 'Payment status (optional, default Received)',
+          description: 'Payment status (default Received)',
           enum: ['Received', 'Pending'],
         },
-        buyerName: { type: 'STRING', description: 'Buyer name (optional)' },
+        buyerName: { type: 'STRING', description: 'Buyer name' },
       },
       required: ['cropId', 'totalAmount', 'incomeDate'],
     },
   },
   {
     name: 'update_income',
-    description:
-      'Update an existing income record. Only pass fields to change.',
+    description: 'Update an income record. Pass only changed fields.',
     parameters: {
       type: 'OBJECT',
       properties: {
-        incomeId: { type: 'STRING', description: 'Id of the income record' },
-        totalAmount: { type: 'NUMBER', description: 'New total amount in PKR' },
+        incomeId: { type: 'STRING', description: 'Income record id' },
+        totalAmount: { type: 'NUMBER', description: 'New total PKR' },
         incomeDate: {
           type: 'STRING',
-          description: 'New date in YYYY-MM-DD format',
+          description: 'New date YYYY-MM-DD',
         },
         quantity: { type: 'NUMBER', description: 'New quantity' },
         quantityUnit: {
@@ -483,7 +477,7 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
           description: 'New quantity unit',
           enum: QUANTITY_UNIT_VALUES,
         },
-        rate: { type: 'NUMBER', description: 'New rate per unit in PKR' },
+        rate: { type: 'NUMBER', description: 'New rate PKR' },
         paymentStatus: {
           type: 'STRING',
           description: 'New payment status',
@@ -497,11 +491,11 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   {
     name: 'delete_income',
     description:
-      'Delete an income record permanently. Only call after the user has explicitly confirmed the deletion in chat.',
+      'Delete an income record. Needs explicit user confirmation first.',
     parameters: {
       type: 'OBJECT',
       properties: {
-        incomeId: { type: 'STRING', description: 'Id of the income record' },
+        incomeId: { type: 'STRING', description: 'Income record id' },
       },
       required: ['incomeId'],
     },
@@ -509,16 +503,14 @@ export const AGENT_FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   {
     name: 'get_report_summary',
     description:
-      'Get overall totals for the user: total income, total expense, net profit, and record counts.',
+      'Overall totals: income, expense, net profit and record counts.',
   },
   {
     name: 'get_crop_profitability',
-    description:
-      'Get per-crop profitability: total expense, total income and net profit for every crop.',
+    description: 'Per-crop expense, income and net profit.',
   },
   {
     name: 'get_monthly_summary',
-    description:
-      'Get month-by-month totals of income and expenses across the whole ledger.',
+    description: 'Month-by-month income and expense totals.',
   },
 ];

@@ -1,6 +1,7 @@
 import type { FunctionDeclaration } from '../agent-tools';
 import {
   LlmRequestError,
+  parseRetryAfterMs,
   type AgentToolCall,
   type AgentTurn,
   type CompleteInput,
@@ -152,6 +153,7 @@ export class OpenAiCompatibleProvider implements LlmProvider {
       throw new LlmRequestError(
         `${this.name} request failed with status ${response.status}: ${errorText.slice(0, 300)}`,
         response.status,
+        parseRetryAfterMs(response.headers, errorText),
       );
     }
 
