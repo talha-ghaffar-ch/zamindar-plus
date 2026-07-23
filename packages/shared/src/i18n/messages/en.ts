@@ -100,7 +100,7 @@ export const en = {
     suggestion4: 'How much profit did I make this year?',
     startVoice: 'Speak your message',
     stopVoice: 'Stop listening',
-    listening: 'Listening… speak now',
+    listening: 'Listening… tap the mic when you finish',
     voiceUnsupported: 'Voice input is not supported in this browser. Try Chrome or Edge.',
     voiceDenied: 'Microphone access was blocked. Allow it in your browser settings.',
     voiceNoSpeech: 'Nothing was heard. Please try again.',

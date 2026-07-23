@@ -98,7 +98,7 @@ export const roman: Messages = {
     suggestion4: 'Is saal maine kitna munafa kamaya?',
     startVoice: 'Bol kar message dein',
     stopVoice: 'Sunna band karein',
-    listening: 'Sun raha hoon… ab boliye',
+    listening: 'Sun raha hoon… baat mukammal hone par mic dabayein',
     voiceUnsupported: 'Is browser mein awaz ki sahulat nahi hai. Chrome ya Edge istemal karein.',
     voiceDenied: 'Mic ki ijazat nahi mili. Browser settings mein ijazat dein.',
     voiceNoSpeech: 'Kuch sunai nahi diya. Dobara koshish karein.',
