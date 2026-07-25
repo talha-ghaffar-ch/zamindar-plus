@@ -1,4 +1,19 @@
 services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-zamindar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-zamindar_plus}
+    volumes:
+      - zamindar_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-zamindar} -d ${POSTGRES_DB:-zamindar_plus}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: .
@@ -8,6 +23,9 @@ services:
       - ${APP_ENV_FILE:-.env.production}
     expose:
       - "3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000 >/dev/null 2>&1 || exit 1"]
       interval: 30s
@@ -38,3 +56,4 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+  zamindar_pgdata:
