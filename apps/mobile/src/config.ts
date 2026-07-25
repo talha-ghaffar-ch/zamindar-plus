@@ -1,14 +1,14 @@
 /**
  * App configuration.
  *
- * The mobile app talks ONLY to the live production backend (EC2 + RDS) — there
- * is no local/dev backend. Both debug (on-device dev) and release builds use
- * the same production API, reached through Caddy exactly like the website.
+ * The mobile app talks ONLY to the live production backend (EC2 + Docker) —
+ * there is no local/dev backend. Both debug (on-device dev) and release builds
+ * use the same production API, reached through Caddy exactly like the website.
  */
 
 // Live production API (Caddy strips the /api prefix and proxies to the Nest API
-// container). Health check: GET https://13.203.249.97.sslip.io/api/ -> { status: 'ok' }
-export const API_BASE_URL = 'https://13.203.249.97.sslip.io/api';
+// container). Health check: GET https://65.0.112.234.sslip.io/api/ -> { status: 'ok' }
+export const API_BASE_URL = 'https://65.0.112.234.sslip.io/api';
 
 // Google OAuth *Web* client ID — this is the audience the backend verifies the
 // ID token ("credential") against. Client IDs are not secrets (they ship in
