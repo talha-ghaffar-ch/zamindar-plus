@@ -4,7 +4,7 @@ import {API_BASE_URL} from './config';
 const AUTH_TOKEN_STORAGE_KEY = 'zamindar-plus-mobile-auth-token';
 const DEFAULT_TIMEOUT_MS = 20000;
 
-// The app connects only to the live production backend (EC2 + RDS), through
+// The app connects only to the live production backend (EC2 + Docker), through
 // Caddy — exactly like the website.
 export const API_URL = API_BASE_URL;
 

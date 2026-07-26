@@ -158,14 +158,14 @@ Confirm it's talking to the live backend and database:
 2. Sign in with a real account (email/password), or Google once the Android OAuth client
    above exists. A wrong password returns the backend's own message
    ("Invalid email or password.").
-3. The Dashboard, Records, Reports and Assistant then render data pulled live from RDS
-   through the backend API. Creating a record from the **Add** tab writes to RDS and
-   appears in the website too (shared database).
+3. The Dashboard, Records, Reports and Assistant then render data pulled live from the
+   production database through the backend API. Creating a record from the **Add** tab
+   writes to that database and appears in the website too (shared database).
 
 Quick backend reachability check from any machine:
 
 ```bash
-curl https://13.203.249.97.sslip.io/api/            # {"status":"ok"}
+curl https://65.0.112.234.sslip.io/api/             # {"status":"ok"}
 ```
 
 ---
