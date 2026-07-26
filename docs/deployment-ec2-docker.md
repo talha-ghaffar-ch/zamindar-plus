@@ -1,6 +1,6 @@
 # EC2 Docker Deployment
 
-This guide deploys Zamindar Plus on one EC2 instance with Docker Compose, Caddy HTTPS, AWS RDS PostgreSQL, Elastic IP, and `sslip.io`.
+This guide deploys Zamindar Plus on one EC2 instance with Docker Compose, Caddy HTTPS, a PostgreSQL 16 container, Elastic IP, and `sslip.io`.
 
 ## 1. AWS Resources
 
@@ -8,9 +8,11 @@ Create these in the same AWS region:
 
 - EC2 Ubuntu instance.
 - Elastic IP associated with the EC2 instance.
-- RDS PostgreSQL database.
 - EC2 security group allowing inbound `22`, `80`, and `443`.
-- RDS security group allowing PostgreSQL `5432` from the EC2 security group only.
+
+PostgreSQL runs as a container in `docker-compose.prod.yml` with its data in a
+named Docker volume, so no RDS instance is needed. The database port is never
+exposed publicly.
 
 The public host will be:
 
@@ -21,7 +23,7 @@ YOUR_ELASTIC_IP.sslip.io
 Example:
 
 ```text
-13.203.249.97.sslip.io
+65.0.112.234.sslip.io
 ```
 
 ## 2. EC2 Runtime
@@ -69,13 +71,12 @@ Set at least:
 - `APP_HOST`
 - `APP_URL`
 - `CORS_ORIGIN`
-- `DATABASE_URL`
+- `POSTGRES_PASSWORD` (and the matching password inside `DATABASE_URL`)
 - `JWT_SECRET`
 - `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
 - `VITE_GOOGLE_CLIENT_ID`
 - SMTP values
-- `GEMINI_API_KEY`
+- AI provider values (`AI_PROVIDER` plus its key, e.g. `GEMINI_API_KEY` or `AI_API_KEY`)
 
 Build and start:
 
@@ -107,10 +108,10 @@ git pull origin main
 docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
 ```
 
-Run seed users once if needed:
+Make a user an admin (after they sign up normally):
 
 ```bash
-docker compose --env-file .env.production -f docker-compose.prod.yml run --rm --no-deps api node dist/src/scripts/seed-users.js
+docker compose --env-file .env.production -f docker-compose.prod.yml exec postgres psql -U zamindar -d zamindar_plus -c "UPDATE \"User\" SET role='ADMIN' WHERE email='user@example.com';"
 ```
 
 ## 5. CI/CD Later

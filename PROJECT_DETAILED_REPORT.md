@@ -1,6 +1,6 @@
 # Zamindar Plus Detailed Project Report
 
-Last reviewed: 2026-06-19
+Last reviewed: 2026-06-19 (deployment sections updated 2026-07-26 — production now uses a PostgreSQL container on EC2 instead of RDS)
 
 This document explains the Zamindar Plus project from top to bottom: repository structure, frontend, backend, database, APIs, mobile app, Docker setup, CI/CD, deployment flow, security model, and how the pieces communicate.
 
@@ -114,7 +114,7 @@ The frontend does not directly talk to PostgreSQL. It talks to the NestJS API. T
 | `.gitattributes` | Forces LF line endings for shell/YAML/Docker/Caddy files so Linux deployment works correctly. |
 | `.dockerignore` | Keeps Docker build context smaller and prevents secrets/build artifacts from being copied into Docker images. |
 | `.env.example` | Root local environment template. Safe placeholder values only. |
-| `.env.production.example` | Production environment template for EC2/RDS/Caddy deployment. Safe placeholder values only. |
+| `.env.production.example` | Production environment template for the EC2/Docker/Caddy deployment (PostgreSQL container). Safe placeholder values only. |
 | `docker-compose.yml` | Local PostgreSQL-only runtime for development. |
 | `docker-compose.prod.yml` | Production Docker Compose file for API container and web/Caddy container. |
 | `PROJECT_DETAILED_REPORT.md` | This report. |
@@ -131,7 +131,7 @@ The frontend does not directly talk to PostgreSQL. It talks to the NestJS API. T
 | File | Purpose |
 | --- | --- |
 | `scripts/deploy-ec2-docker.sh` | Server-side deployment script. Extracts uploaded release archive or pulls Git, preserves `.env.production`, rebuilds Docker services, prunes unused Docker images. |
-| `docs/deployment-ec2-docker.md` | Human guide for EC2, Elastic IP, RDS, Docker, Caddy HTTPS, and GitHub Actions deployment. |
+| `docs/deployment-ec2-docker.md` | Human guide for EC2, Elastic IP, Docker (including the PostgreSQL container), Caddy HTTPS, and GitHub Actions deployment. |
 
 ### Shared Package
 
@@ -162,7 +162,6 @@ The frontend does not directly talk to PostgreSQL. It talks to the NestJS API. T
 | `apps/api/src/app.controller.ts` | Root health/basic route. Returns `Hello World!`. |
 | `apps/api/src/prisma/prisma.module.ts` | Provides Prisma service to other modules. |
 | `apps/api/src/prisma/prisma.service.ts` | Creates Prisma client using `DATABASE_URL` and Prisma PostgreSQL adapter. |
-| `apps/api/src/scripts/seed-users.ts` | Creates/updates seed admin and optional test user from env variables. |
 
 ### API Feature Folders
 
@@ -1160,7 +1159,7 @@ Browser at https://IP.sslip.io
   -> reverse_proxy api:3000
   -> NestJS API container
   -> Prisma
-  -> RDS PostgreSQL
+  -> PostgreSQL container
 ```
 
 ### Mobile Emulator Flow
@@ -1528,7 +1527,7 @@ These are not necessarily bugs, but future areas to consider:
 7. File/profile image upload is currently stored as data URL in user record; a real object storage solution is better for large/public production scale.
 8. Date format is displayed as DD/MM/YYYY in custom formatting, but native HTML date inputs still use browser-native date controls.
 9. CORS must include the exact frontend origin when web and API are on different origins.
-10. RDS security should allow DB access only from the EC2 security group.
+10. The PostgreSQL container is not exposed publicly; only Caddy's ports 80/443 are published on the EC2 host.
 
 ## 25. Short Mental Model
 

@@ -1,7 +1,7 @@
 # Zamindar Plus — Mobile Deployment & Connectivity Guide
 
 The Android app is a **React Native 0.86 (CLI, New Architecture + Hermes)** client that
-talks **only to the live production backend** (EC2 + RDS) — the same API the website
+talks **only to the live production backend** (EC2 + Docker) — the same API the website
 uses. There is no local/dev backend and no mock data.
 
 ---
@@ -11,7 +11,7 @@ uses. There is no local/dev backend and no mock data.
 All production config lives in one file: [`src/config.ts`](src/config.ts).
 
 ```ts
-export const API_BASE_URL = 'https://13.203.249.97.sslip.io/api';
+export const API_BASE_URL = 'https://65.0.112.234.sslip.io/api';
 export const GOOGLE_WEB_CLIENT_ID =
   '610341952875-kjn2ja26mnbt1f8o6kes7ke48p3dmo9u.apps.googleusercontent.com';
 ```
@@ -19,7 +19,7 @@ export const GOOGLE_WEB_CLIENT_ID =
 - **`API_BASE_URL`** — the live backend, fronted by Caddy on the EC2 host
   (`zamindar-plus-web-1` container, ports 80/443), which strips `/api` and proxies to
   the NestJS API container (`zamindar-plus-api-1`, internal `:3000`). Health check:
-  `GET https://13.203.249.97.sslip.io/api/` → `{"status":"ok"}`.
+  `GET https://65.0.112.234.sslip.io/api/` → `{"status":"ok"}`.
 - Both debug and release builds use this same production URL. The API client
   ([`src/api.ts`](src/api.ts)) sends the JWT as `Authorization: Bearer <token>`.
 - **`GOOGLE_WEB_CLIENT_ID`** — the OAuth **Web** client ID the backend verifies Google
@@ -152,7 +152,7 @@ adb install -r android/app/build/outputs/apk/release/app-release.apk
 # or copy app-release.apk to the phone and open it (allow "install unknown apps")
 ```
 
-Confirm it's talking to the live backend and RDS:
+Confirm it's talking to the live backend and database:
 
 1. Launch the app → the Login screen loads.
 2. Sign in with a real account (email/password), or Google once the Android OAuth client

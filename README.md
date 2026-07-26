@@ -136,8 +136,8 @@ npm run check            # build + typecheck + lint + test (full gate)
 
 ## Notes
 
-- Production deployment (EC2 + Docker + RDS) lives in `docker-compose.prod.yml`
-  and `docs/`.
+- Production deployment (EC2 + Docker + PostgreSQL container) lives in
+  `docker-compose.prod.yml` and `docs/`.
 - The real `.env.production` stays on the server and is never committed.
 - Real email delivery requires SMTP values in `apps/backend/.env`.
 - Google sign-in requires matching frontend and backend Google OAuth client IDs.
